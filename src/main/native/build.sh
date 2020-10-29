@@ -6,7 +6,7 @@ export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 # sbt compile
 # CP=/Users/slasch/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.13.3.jar
 # cd target/scala-2.13/classes/
-# javah -cp $CP:. TonSdkJniBridge
+# javah -cp $CP:. tonsdkjni.Bridge
 
 
 
