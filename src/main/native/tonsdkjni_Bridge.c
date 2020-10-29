@@ -48,7 +48,7 @@ static void java_callback(uint32_t request_id, tc_string_data_t params_json, uin
     (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     (*env)->ExceptionClear(env);
     jclass cls = (*env)->GetObjectClass(env, g_jobj);
-    jmethodID method = (*env)->GetMethodID(env, cls, "handle", "(JLjava/lang/String;JZ)V");
+    jmethodID method = (*env)->GetMethodID(env, cls, "apply", "(JLjava/lang/String;JZ)V");
     jstring data = to_jstring_from_data(env, params_json);
     (*env)->CallVoidMethod(env, g_jobj, method, (jlong)request_id, data, (jlong)response_type, (jboolean)finished);
     if ((*env)->ExceptionOccurred(env)) {

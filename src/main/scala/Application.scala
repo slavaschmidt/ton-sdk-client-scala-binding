@@ -1,4 +1,4 @@
-import tonsdkjni.{PrinterHandler, ResponseHandler, bridge}
+import tonsdkjni.{ResponseHandler, bridge}
 
 object Application extends App {
   // System.loadLibrary("ton_client")
@@ -11,7 +11,7 @@ object Application extends App {
   val id = result.filter(_.isDigit).toLong
   println(bridge.tcRequestSync(id, "client.build_info", ""))
   val callback = new ResponseHandler {
-    override def handle(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
+    override def apply(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
       println(s"$requestId, $paramsJson, $responseType, $finished, HAHAHAH")
     }
   }

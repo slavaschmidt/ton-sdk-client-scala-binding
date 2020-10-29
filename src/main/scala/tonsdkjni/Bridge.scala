@@ -13,13 +13,5 @@ class Bridge {
 }
 
 abstract class ResponseHandler {
-  def handle(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit
-
-  def dummy: Unit = println("WTF")
-}
-
-class PrinterHandler extends ResponseHandler {
-  override def handle(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
-    println(s"$requestId, $paramsJson, $responseType, $finished")
-  }
+  def apply(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit
 }
