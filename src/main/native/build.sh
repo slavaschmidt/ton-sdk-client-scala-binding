@@ -17,9 +17,10 @@ LIBS="$(pwd)/lib"
 
 echo $LIBS
 
-gcc -v \
+/usr/local/bin/gcc-10 \
   -dynamiclib \
   -shared \
+  -std=c99 \
   -I$JAVA_HOME/include \
   -I$JAVA_HOME/include/darwin \
   -I$JAVA_HOME/include/linux \

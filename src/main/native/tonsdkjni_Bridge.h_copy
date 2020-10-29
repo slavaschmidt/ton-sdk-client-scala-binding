@@ -12,7 +12,7 @@ extern "C" {
  * Method:    tcCreateContext
  * Signature: (Ljava/lang/String;)[B
  */
-JNIEXPORT jstring JNICALL Java_tonsdkjni_Bridge_tcCreateContext
+JNIEXPORT jbyteArray JNICALL Java_tonsdkjni_Bridge_tcCreateContext
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcRequest
  * Method:    tcRequestSync
  * Signature: (JLjava/lang/String;Ljava/lang/String;)[B
  */
-JNIEXPORT jstring JNICALL Java_tonsdkjni_Bridge_tcRequestSync
+JNIEXPORT jbyteArray JNICALL Java_tonsdkjni_Bridge_tcRequestSync
   (JNIEnv *, jobject, jlong, jstring, jstring);
 
 #ifdef __cplusplus
