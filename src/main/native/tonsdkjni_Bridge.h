@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcDestroyContext
  * Signature: (JLjava/lang/String;Ljava/lang/String;JLscala/Function4;)V
  */
 JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcRequest
-  (JNIEnv *, jobject, jlong, jstring, jstring, jlong, jobject);
+  (JNIEnv *, jobject, jlong, jstring, jstring, jlong);
 
 /*
  * Class:     tonsdkjni_Bridge

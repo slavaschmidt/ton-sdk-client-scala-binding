@@ -41,21 +41,24 @@ static jstring to_jstring(JNIEnv* env, const tc_string_handle_t* string_ptr) {
 }
 
 JavaVM* jvm;
-jobject g_jobj;
 
 static void java_callback(uint32_t request_id, tc_string_data_t params_json, uint32_t response_type, bool finished) {
     JNIEnv* env;
     (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     (*env)->ExceptionClear(env);
-    jclass cls = (*env)->GetObjectClass(env, g_jobj);
-    jmethodID method = (*env)->GetMethodID(env, cls, "apply", "(JLjava/lang/String;JZ)V");
+    jclass bridgeCls = (*env)->FindClass(env, "tonsdkjni/Bridge");
+    jmethodID bridgeNew = (*env)->GetMethodID(env, bridgeCls, "<init>", "()V");
+    jobject bridge = (*env)->NewObject(env, bridgeCls, bridgeNew);
+    jmethodID get_handler = (*env)->GetMethodID(env, bridgeCls, "handler", "(J)Ltonsdkjni/ResponseHandler;");
+    jobject handler = (*env)->CallStaticObjectMethod(env, bridge, get_handler, (jlong)request_id);
+    jclass handler_cls = (*env)->GetObjectClass(env, handler);
+    jmethodID method = (*env)->GetMethodID(env, handler_cls, "apply", "(JLjava/lang/String;JZ)V");
     jstring data = to_jstring_from_data(env, params_json);
-    (*env)->CallVoidMethod(env, g_jobj, method, (jlong)request_id, data, (jlong)response_type, (jboolean)finished);
+    (*env)->CallVoidMethod(env, handler, method, (jlong)request_id, data, (jlong)response_type, (jboolean)finished);
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
     }
-    (*env)->DeleteGlobalRef(env, g_jobj);
     (*jvm)->DetachCurrentThread(jvm);
 }
 
@@ -88,12 +91,10 @@ JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcDestroyContext
  * Signature: (JLjava/lang/String;Ljava/lang/String;JLscala/Function4;)V
  */
 JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcRequest
-  (JNIEnv * env, jobject jobj, const jlong context, jstring name, jstring params, jlong request, jobject handler) {
+  (JNIEnv * env, jobject jobj, const jlong context, jstring name, jstring params, jlong request) {
     const tc_string_data_t name_data = from_jstring(env, name);
     const tc_string_data_t params_data = from_jstring(env, params);
-    // FIXME make multithreaded
     (*env)->GetJavaVM(env, &jvm);
-    g_jobj = (*env)->NewGlobalRef(env, handler);
     tc_request((uint32_t)context, name_data, params_data, (uint32_t)request, java_callback);
     (*env)->ReleaseStringUTFChars(env, name, name_data.content);
     (*env)->ReleaseStringUTFChars(env, params, params_data.content);

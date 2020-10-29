@@ -10,13 +10,17 @@ object Application extends App {
   // {"error":{"code":23,"message":"Invalid parameters: EOF while parsing a string at line 1 column 5\nparams: { \" }","data":{"core_version":"1.0.0"}}}
   val id = result.filter(_.isDigit).toLong
   println(bridge.tcRequestSync(id, "client.build_info", ""))
-  val callback = new ResponseHandler {
-    override def apply(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
-      println(s"$requestId, $paramsJson, $responseType, $finished, HAHAHAH")
+  val callback = (paramsJson: String, responseType: Long, finished: Boolean) => {
+      println(s"$paramsJson, $responseType, $finished, HAHAHAH")
     }
+  val callback2 = (paramsJson: String, responseType: Long, finished: Boolean) => {
+    println(s"version: $paramsJson")
   }
 
-  bridge.tcRequest(1, "client.build_info", "", -1, callback)
+  bridge.request(1, "client.build_info", "", callback)
+
+  bridge.request(1, "client.version", "", callback2)
+
   Thread.sleep(100)
   bridge.tcDestroyContext(id)
 
