@@ -17,7 +17,7 @@ LIBS="$(pwd)/lib"
 
 echo $LIBS
 
-/usr/local/bin/gcc-10 \
+gcc \
   -dynamiclib \
   -shared \
   -std=c99 \
