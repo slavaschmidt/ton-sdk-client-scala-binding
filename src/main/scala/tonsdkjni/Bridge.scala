@@ -15,26 +15,21 @@ class Bridge {
 
   def request(context: Long, functionName: String, functionParamsJson: String, responseHandler: Bridge.Handler): Unit = {
     val id = Bridge.counter.incrementAndGet()
-    val internalHandler = new ResponseHandler {
-      override def apply(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
-        responseHandler(paramsJson, responseType, finished)
-        if (finished) Bridge.mapping.remove(requestId)
-      }
-    }
-    Bridge.mapping.put(id, internalHandler)
+    Bridge.mapping.put(id, responseHandler)
     tcRequest(context, functionName, functionParamsJson, id)
   }
 
-  def handler(requestId: Long): ResponseHandler = Bridge.mapping.get(requestId)
+  def handle(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit = {
+    val handler = Bridge.mapping.get(requestId)
+    // TODO add error handling
+    handler(requestId, paramsJson, responseType, finished)
+    if (finished) Bridge.mapping.remove(requestId)
+  }
 
 }
 
 object Bridge {
-  type Handler = (String, Long, Boolean) => Unit
-  private val mapping = new ConcurrentHashMap[Long, ResponseHandler]()
+  type Handler = (Long, String, Long, Boolean) => Unit
+  private val mapping = new ConcurrentHashMap[Long, Handler]()
   private val counter = new AtomicLong(0)
-}
-
-abstract class ResponseHandler {
-  def apply(requestId: Long, paramsJson: String, responseType: Long, finished: Boolean): Unit
 }

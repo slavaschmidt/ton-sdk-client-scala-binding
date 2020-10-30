@@ -1,4 +1,4 @@
-import tonsdkjni.{ResponseHandler, bridge}
+import tonsdkjni.{bridge}
 
 object Application extends App {
   // System.loadLibrary("ton_client")
@@ -10,10 +10,10 @@ object Application extends App {
   // {"error":{"code":23,"message":"Invalid parameters: EOF while parsing a string at line 1 column 5\nparams: { \" }","data":{"core_version":"1.0.0"}}}
   val id = result.filter(_.isDigit).toLong
   println(bridge.tcRequestSync(id, "client.build_info", ""))
-  val callback = (paramsJson: String, responseType: Long, finished: Boolean) => {
+  val callback = (_: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
       println(s"$paramsJson, $responseType, $finished, HAHAHAH")
     }
-  val callback2 = (paramsJson: String, responseType: Long, finished: Boolean) => {
+  val callback2 = (_: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
     println(s"version: $paramsJson")
   }
 

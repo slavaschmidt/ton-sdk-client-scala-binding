@@ -7,6 +7,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+jint JNI_OnLoad(JavaVM *vm, void *reserved);
+
 /*
  * Class:     tonsdkjni_Bridge
  * Method:    tcCreateContext

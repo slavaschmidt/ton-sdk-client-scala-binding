@@ -42,19 +42,21 @@ static jstring to_jstring(JNIEnv* env, const tc_string_handle_t* string_ptr) {
 
 JavaVM* jvm;
 
+jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    jvm = vm;
+    return JNI_VERSION_1_1;
+}
+
 static void java_callback(uint32_t request_id, tc_string_data_t params_json, uint32_t response_type, bool finished) {
     JNIEnv* env;
     (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     (*env)->ExceptionClear(env);
-    jclass bridgeCls = (*env)->FindClass(env, "tonsdkjni/Bridge");
-    jmethodID bridgeNew = (*env)->GetMethodID(env, bridgeCls, "<init>", "()V");
-    jobject bridge = (*env)->NewObject(env, bridgeCls, bridgeNew);
-    jmethodID get_handler = (*env)->GetMethodID(env, bridgeCls, "handler", "(J)Ltonsdkjni/ResponseHandler;");
-    jobject handler = (*env)->CallStaticObjectMethod(env, bridge, get_handler, (jlong)request_id);
-    jclass handler_cls = (*env)->GetObjectClass(env, handler);
-    jmethodID method = (*env)->GetMethodID(env, handler_cls, "apply", "(JLjava/lang/String;JZ)V");
+    jclass bridge_cls = (*env)->FindClass(env, "tonsdkjni/Bridge");
+    jmethodID bridge_new = (*env)->GetMethodID(env, bridge_cls, "<init>", "()V");
+    jobject bridge = (*env)->NewObject(env, bridge_cls, bridge_new);
+    jmethodID handler = (*env)->GetMethodID(env, bridge_cls, "handle", "(JLjava/lang/String;JZ)V");
     jstring data = to_jstring_from_data(env, params_json);
-    (*env)->CallVoidMethod(env, handler, method, (jlong)request_id, data, (jlong)response_type, (jboolean)finished);
+    (*env)->CallVoidMethod(env, bridge, handler, (jlong)request_id, data, (jlong)response_type, (jboolean)finished);
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
@@ -94,7 +96,6 @@ JNIEXPORT void JNICALL Java_tonsdkjni_Bridge_tcRequest
   (JNIEnv * env, jobject jobj, const jlong context, jstring name, jstring params, jlong request) {
     const tc_string_data_t name_data = from_jstring(env, name);
     const tc_string_data_t params_data = from_jstring(env, params);
-    (*env)->GetJavaVM(env, &jvm);
     tc_request((uint32_t)context, name_data, params_data, (uint32_t)request, java_callback);
     (*env)->ReleaseStringUTFChars(env, name, name_data.content);
     (*env)->ReleaseStringUTFChars(env, params, params_data.content);
