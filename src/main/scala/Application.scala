@@ -1,35 +1,63 @@
+import io.circe.parser.decode
 import ton.sdk.client.jni.{Binding, Handler}
+import ton.sdk.client.modules.Api._
+import ton.sdk.client.modules.Context
+
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 object Application extends App {
 
-  val result = Binding.tcCreateContext("""{ "servers": ["net.ton.dev"] }""")
-  println(result)
-  // {"result":1}
-  // {"result":{"build_info":{}}}
-  // {"error":{"code":23,"message":"Invalid parameters: EOF while parsing a string at line 1 column 5\nparams: { \" }","data":{"core_version":"1.0.0"}}}
-  val id = result.filter(_.isDigit).toLong
-  // println(Binding.tcRequestSync(id, "client.build_info", ""))
-  val callback: Handler = (rId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
-    println(s"$rId [$responseType]($finished): $paramsJson")
+  def testLowLevel() = {
+    val result = Binding.tcCreateContext("""{ "servers": ["net.ton.dev"] }""")
+    println(result)
+    // {"result":1}
+    // {"result":{"build_info":{}}}
+    // {"error":{"code":23,"message":"Invalid parameters: EOF while parsing a string at line 1 column 5\nparams: { \" }","data":{"core_version":"1.0.0"}}}
+    val id = result.filter(_.isDigit).toLong
+    // println(Binding.tcRequestSync(id, "client.build_info", ""))
+    val callback: Handler = (rId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
+      println(s"$rId [$responseType]($finished): $paramsJson")
+    }
+
+    Binding.request(1, "client.get_api_r eference", "", callback)
+    // Binding.request(1, "client.version", "", callback)
+    // Binding.request(1, "client.v ersion", "", callback)
+
+    // println(Binding.tcRequestSync(1, "client.get_api_reference", ""))
+
+    //Binding.request(1, "client.version", "", callback)
+    //  Binding.request(1, "client.get_api_reference", "", callback)
+    //  Binding.request(1, "client.get_api_reference", "", callback)
+    //  Binding.request(1, "client.get_api_reference", "", callback)
+    //  Binding.request(1, "client.get_api_reference", "", callback)
+    //  Binding.request(1, "client.get_api_reference", "", callback)
+
+    Binding.tcDestroyContext(id)
   }
-  val callback2 = (_: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
-    println(s"version: $paramsJson")
+  import scala.concurrent.ExecutionContext.Implicits.global
+  import Context._
+  def testBasicContext = {
+    local { implicit ctx =>
+      println(request("client.get_api_reference", ""))
+      println(request("client.version", ""))
+    }
+    devNet { implicit ctx =>
+      requestAsync("client.get_api_reference", "").map(println)
+      requestAsync("client.build_info", "").map(println)
+    }
   }
 
-  Binding.request(1, "client.get_api_reference", "", callback)
-  // Binding.request(1, "client.version", "", callback)
-  // Binding.request(1, "client.v ersion", "", callback)
+  testBasicContext.map(Await.result(_, 10.seconds))
 
-  // println(Binding.tcRequestSync(1, "client.get_api_reference", ""))
-
-  //Binding.request(1, "client.version", "", callback)
-  Binding.request(1, "client.get_api_reference", "", callback)
-  Binding.request(1, "client.get_api_reference", "", callback)
-  Binding.request(1, "client.get_api_reference", "", callback)
-  Binding.request(1, "client.get_api_reference", "", callback)
-  Binding.request(1, "client.get_api_reference", "", callback)
-
-  Binding.tcDestroyContext(id)
+  import io.circe.generic.auto._
+//
+//  def testEncoders(): Unit = {
+//    println(fromJson[Long]("""{"result":1}"""))
+//    println(decode[SdkError[Long]]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
+//    println(fromJson[Long]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
+//  }
+//  testEncoders()
 
 }
 // {"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}
