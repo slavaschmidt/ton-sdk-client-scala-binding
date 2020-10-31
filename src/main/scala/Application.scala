@@ -1,9 +1,11 @@
 import io.circe.parser.decode
 import ton.sdk.client.jni.{Binding, Handler}
+import ton.sdk.client.modules.Api.SdkResultOrError.fromJson
 import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.Context
+import ton.sdk.client.modules.{Client, Context}
+import ton.sdk.client.modules.Client._
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
 
 object Application extends App {
@@ -37,27 +39,51 @@ object Application extends App {
   }
   import scala.concurrent.ExecutionContext.Implicits.global
   import Context._
+
   def testBasicContext = {
     local { implicit ctx =>
-      println(request("client.get_api_reference", ""))
-      println(request("client.version", ""))
+      println(requestStr("client.build_info", ""))
+      println(requestStr("client.version", ""))
     }
     devNet { implicit ctx =>
-      requestAsync("client.get_api_reference", "").map(println)
-      requestAsync("client.build_info", "").map(println)
+      requestAsync("client.setup", "").onComplete(println)
+      val f = requestAsync("client.build_info", "")
+      f.onComplete(println)
+      f
     }
   }
 
-  testBasicContext.map(Await.result(_, 10.seconds))
+  // testBasicContext.map(Await.result(_, 10.seconds))
 
   import io.circe.generic.auto._
-//
-//  def testEncoders(): Unit = {
-//    println(fromJson[Long]("""{"result":1}"""))
-//    println(decode[SdkError[Long]]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
-//    println(fromJson[Long]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
-//  }
+
+  def testEncoders(): Unit = {
+    println(fromJson[Long]("""{"result":1}"""))
+    println(decode[SdkError[Long]]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
+    println(fromJson[Long]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
+  }
 //  testEncoders()
+
+  def testClientAsync = {
+    local { implicit ctx =>
+      import Client._
+      val f = request(Client.Request.Version)
+      f.onComplete(println)
+      val g = request((Client.Request.BuildInfo))
+      g.onComplete(println)
+      Future.sequence(Seq(f, g))
+//      println(request("client.version", ""))
+    }
+//    devNet { implicit ctx =>
+//      requestAsync("client.setup", "").onComplete(println)
+//      val f = requestAsync("client.build_info", "")
+//      f.onComplete(println)
+//      f
+//    }
+
+  }
+
+  testClientAsync.map(Await.result(_, 10.seconds))
 
 }
 // {"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}

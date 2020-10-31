@@ -1,8 +1,9 @@
 package ton.sdk.client.modules
 
-import io.circe.JsonObject
-
-import scala.util.{Failure, Success, Try}
+import io.circe.parser.decode
+import io.circe.syntax._
+import io.circe._
+import scala.util._
 
 object Api {
 
@@ -25,6 +26,7 @@ object Api {
 
   /**
     * @param code
+    * -1 -> JsonApiParsingError
     *
     * 1 ->  NotImplemented
     * 2 ->  InvalidHex
@@ -55,13 +57,14 @@ object Api {
     * @param message
     * @param data
     */
-  class SdkClientError(val code: Int, val message: String, val data: JsonObject) extends Exception(message)
+  class SdkClientError(val code: Int, val message: String, val data: Json) extends Exception(message)
   case class BindingError(cause:    Throwable) extends Exception(cause)
 
   object SdkClientError {
     import io.circe.generic.auto._
     import io.circe.parser._
     def apply(json: String): Try[SdkClientError] = decode[SdkClientError](json).toTry
+    def parsingError(data: Json) = new SdkClientError(-1, "Could not parse SDK json", data)
   }
 
   sealed trait SdkResultOrError[T]
@@ -82,5 +85,14 @@ object Api {
         case Right(SdkResult(t)) => Success(t)
       }
     }
+  }
+
+  abstract class SdkCall[P: Encoder, R: Decoder] {
+    def functionName: String
+    def fromJson(json: String): Try[R] = decode[R](json) match {
+      case Left(error) => Failure(SdkClientError.parsingError(error.getMessage.asJson))
+      case Right(r: R) => Success(r)
+    }
+    def toJson(parameters: P) = parameters.asJson
   }
 }

@@ -1,7 +1,10 @@
 package ton.sdk.client.modules
 
+import io.circe.{Decoder, Json}
+import ton.sdk.client.modules.Api.{SdkCall, SdkResultOrError}
+
 object Client {
-// Network endpoints: https://docs.ton.dev/86757ecb2/p/85c869-network-endpoints
+  // Network endpoints: https://docs.ton.dev/86757ecb2/p/85c869-network-endpoints
 
   final case class NetworkConfig(
     servers:                    Seq[String],
@@ -30,6 +33,27 @@ object Client {
     val devNet  = fromServer("net.ton.dev")
     val testNet = fromServer("testnet.ton.dev")
     val local   = fromServer("127.0.0.1")
+  }
+
+  object Request {
+    final case object Version
+    final case object BuildInfo
+  }
+  object Result {
+    final case class Version(version: String)
+    final case class BuildInfo(build_info: Json)
+  }
+
+  import io.circe.generic.auto._
+
+  implicit val version = new SdkCall[Request.Version.type, Result.Version] {
+    override val functionName: String = "client.version"
+    type R = Result.Version
+  }
+
+  implicit val buildInfo = new SdkCall[Request.BuildInfo.type, Result.BuildInfo] {
+    override val functionName: String = "client.build_info"
+    type R = Result.Version
   }
 
 }

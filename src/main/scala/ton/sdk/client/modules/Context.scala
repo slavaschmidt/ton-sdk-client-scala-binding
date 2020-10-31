@@ -11,8 +11,8 @@ import ton.sdk.client.modules.Context.{errUndefinedBehaviour, logger}
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.Client._
 
-import scala.concurrent.{Future, Promise}
-import scala.util.{Try, Using}
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success, Try, Using}
 
 /**
   * The context should be explicitly closed after it is not needed any more
@@ -32,7 +32,7 @@ final case class Context private (id: Long) extends Closeable {
     logger.warn(s"Context($id) was not closed as expected, this is a programming error")
   }
 
-  def request(functionName: String, functionParams: String): Try[String] = Try(Binding.tcRequestSync(id, functionName, functionParams))
+  def requestStr(functionName: String, functionParams: String): Try[String] = Try(Binding.tcRequestSync(id, functionName, functionParams))
   def requestAsync(functionName: String, functionParams: String): Future[String] = {
     val p   = Promise[String]()
     val buf = new StringBuilder
@@ -47,11 +47,24 @@ final case class Context private (id: Long) extends Closeable {
           // TODO As for now, the same as Result but probably should be something different
           buf.append(paramsJson)
       }
-      if (finished) p.success(buf.result())
+      if (finished && ! p.isCompleted) p.success(buf.result())
     }
     Binding.request(id, functionName, functionParams, handler)
     p.future
   }
+
+  private def asFuture[R](t: Try[R]) = t match {
+    case Success(r) => Future.successful(r)
+    case Failure(ex) => Future.failed(ex)
+  }
+
+  def request[P, R](params: P)(implicit call: SdkCall[P, R], ec: ExecutionContext): Future[R] = {
+    val fnName = call.functionName
+    val jsonIn = call.toJson(params).noSpaces
+    requestAsync(fnName, jsonIn).map(call.fromJson).map(asFuture).flatten
+  }
+
+  //
 }
 
 object Context {
@@ -71,9 +84,12 @@ object Context {
   def devNet[T](block: Context => T): Try[T] = Context.apply(ClientConfig.devNet)(block)
   def testNet[T](block: Context => T): Try[T] = Context.apply(ClientConfig.testNet)(block)
 
-  def request(functionName: String, functionParams: String)(implicit ctx: Context): Try[String] =
-    ctx.request(functionName, functionParams)
+  def requestStr(functionName: String, functionParams: String)(implicit ctx: Context): Try[String] =
+    ctx.requestStr(functionName, functionParams)
   def requestAsync(functionName: String, functionParams: String)(implicit ctx: Context): Future[String] =
     ctx.requestAsync(functionName, functionParams)
+
+  def request[P, R](params: P)(implicit call: SdkCall[P, R], ctx: Context, ec: ExecutionContext): Future[R] =
+    ctx.request(params)
 
 }
