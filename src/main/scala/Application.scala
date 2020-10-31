@@ -69,9 +69,11 @@ object Application extends App {
       import Client._
       val f = request(Client.Request.Version)
       f.onComplete(println)
-      val g = request((Client.Request.BuildInfo))
+      val g = request(Client.Request.BuildInfo)
       g.onComplete(println)
-      Future.sequence(Seq(f, g))
+      val h = request(Client.Request.ApiReference)
+      h.onComplete(println)
+      Future.sequence(Seq(f, g, h))
 //      println(request("client.version", ""))
     }
 //    devNet { implicit ctx =>
