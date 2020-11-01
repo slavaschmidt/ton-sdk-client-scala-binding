@@ -3,6 +3,7 @@ package ton.sdk.client.jni;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,6 +43,11 @@ public class Binding {
     private static final AtomicLong counter = new AtomicLong(0);
 
     static {
-        System.loadLibrary("TonSdkClientJniBinding");
+//        String path = new File("lib/").getAbsolutePath();
+//        System.out.println("loading from " + path);
+//        System.setProperty("java.library.path", path);
+//        System.loadLibrary("TonSdkClientJniBinding");
+         String path = new File("lib/libTonSdkClientJniBinding.dylib").getAbsolutePath();
+         System.load(path);
     }
 }

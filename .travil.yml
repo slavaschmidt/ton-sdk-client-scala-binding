@@ -1,0 +1,12 @@
+# configuration for build badge
+language: scala
+
+# configurations for codecov badge
+scala:
+  - 2.13.3
+
+script:
+  - sbt clean coverage test coverageReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
