@@ -12,20 +12,20 @@ typedef void (*j_tc_response_handler_t)(
     uint32_t response_type,
     bool finished);
 
-static tc_string_data_t from_jstring(JNIEnv *env, jstring string) {
+tc_string_data_t from_jstring(JNIEnv *env, jstring string) {
     const char* chars = (*env)->GetStringUTFChars(env, string, NULL);
     const size_t length = (size_t)(*env)->GetStringUTFLength(env, string);
     const tc_string_data_t data = {chars, length};
     return data;
 }
 
-static jbyteArray to_byte_array(JNIEnv *env, const tc_string_data_t string) {
+jbyteArray to_byte_array(JNIEnv *env, const tc_string_data_t string) {
     const jbyteArray array = (*env)->NewByteArray(env, string.len);
     (*env)->SetByteArrayRegion(env, array, 0, string.len, (jbyte*)string.content);
     return array;
 }
 
-static jstring to_jstring_from_data(JNIEnv* env, const tc_string_data_t string) {
+jstring to_jstring_from_data(JNIEnv* env, const tc_string_data_t string) {
     jclass str_class = (*env)->FindClass(env, "Ljava/lang/String;");
     jmethodID ctor_id = (*env)->GetMethodID(env, str_class, "<init>", "([BLjava/lang/String;)V");
     jstring encoding = (*env)->NewStringUTF(env, "utf-8");
@@ -33,7 +33,7 @@ static jstring to_jstring_from_data(JNIEnv* env, const tc_string_data_t string) 
     return (jstring)(*env)->NewObject(env, str_class, ctor_id, buf, encoding);
 }
 
-static jstring to_jstring(JNIEnv* env, const tc_string_handle_t* string_ptr) {
+jstring to_jstring(JNIEnv* env, const tc_string_handle_t* string_ptr) {
     const tc_string_data_t string = tc_read_string(string_ptr);
     const jstring result = to_jstring_from_data(env, string);
     tc_destroy_string(string_ptr);
@@ -44,7 +44,7 @@ JavaVM* jvm;
 jmethodID handler;
 jclass bridge_cls;
 
-static void init_handler() {
+void init_handler() {
     JNIEnv* env;
     (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     (*env)->ExceptionClear(env);
@@ -59,7 +59,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     return JNI_VERSION_1_1;
 }
 
-static void java_callback(uint32_t request_id, tc_string_data_t params_json, uint32_t response_type, bool finished) {
+void java_callback(uint32_t request_id, tc_string_data_t params_json, uint32_t response_type, bool finished) {
     JNIEnv* env;
     (*jvm)->AttachCurrentThread(jvm, (void**)&env, NULL);
     (*env)->ExceptionClear(env);

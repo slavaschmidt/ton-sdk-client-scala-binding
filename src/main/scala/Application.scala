@@ -2,7 +2,7 @@ import io.circe.parser.decode
 import ton.sdk.client.jni.{Binding, Handler}
 import ton.sdk.client.modules.Api.SdkResultOrError.fromJson
 import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.{Client, Context}
+import ton.sdk.client.modules.{Client, Context, Processing}
 import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{Await, Future}
@@ -41,10 +41,13 @@ object Application extends App {
   import Context._
 
   def testBasicContext = {
-    local { implicit ctx =>
+    Context.synchronous(ClientConfig.local) { implicit ctx =>
       println(requestStr("client.build_info", ""))
       println(requestStr("client.version", ""))
     }
+  }
+
+  def testBasicAsyncContext = {
     devNet { implicit ctx =>
       requestAsync("client.setup", "").onComplete(println)
       val f = requestAsync("client.build_info", "")
@@ -64,7 +67,7 @@ object Application extends App {
   }
 //  testEncoders()
 
-  def testClientAsync = {
+  def testClientAsync() = {
     local { implicit ctx =>
       import Client._
       val f = request(Client.Request.Version)
@@ -72,9 +75,19 @@ object Application extends App {
       val g = request(Client.Request.BuildInfo)
       g.onComplete(println)
       val h = request(Client.Request.ApiReference)
-      h.onComplete(println)
-      Future.sequence(Seq(f, g, h))
-//      println(request("client.version", ""))
+      h.onComplete { c =>
+        println("H:" + c)
+      }
+      val i = request(Client.Request.ApiReference)
+      i.onComplete { c =>
+        println("I:" + c)
+      }
+      val j = request(Client.Request.ApiReference)
+      j.onComplete { c =>
+        println("j:" + c)
+      }
+      Future.sequence(Seq(f, g, h, i, j))
+      //      println(request("client.version", ""))
     }
 //    devNet { implicit ctx =>
 //      requestAsync("client.setup", "").onComplete(println)
@@ -85,7 +98,26 @@ object Application extends App {
 
   }
 
-  testClientAsync.map(Await.result(_, 10.seconds))
+
+  def testProcessingAsync() = {
+    local { implicit ctx =>
+      import Processing._
+      request(Processing.Request.SendMessage("EEFFFEEC", true, None))
+    }
+  }
+
+  def testUtilAsync() = {
+    local { implicit ctx =>
+      import ton.sdk.client.modules.Utils._
+      request(Request.ConvertAddress("this is my address", Types.accountId))
+    }
+  }
+
+  val result = Await.result(testUtilAsync(), 10.seconds)
+  println(result)
+
+  // Thread.sleep(10000)
+  // testClientAsync.map(Await.ready(_, 10.seconds))
 
 }
 // {"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}

@@ -44,11 +44,11 @@ object Client {
     final case class Version(version: String)
     final case class BuildInfo(build_info: Json)
 
-    case class Generic_args(`type`: String, ref_name: String)
-    case class Params(name: String, `type`: String, generic_name: String, generic_args: List[Generic_args], summary: String, description: String)
-    //case class FnResult(`type`: String, generic_name: String, generic_args: List[Generic_args])
+    case class GenericArg(`type`: String, ref_name: String)
+    case class Param(name: String, `type`: String, generic_name: String, generic_args: List[GenericArg], summary: Option[String], description: Option[String])
+    case class FnResult(`type`: String, generic_name: String, generic_args: List[GenericArg])
     case class StructField(name: String, `type`: String, summary: Option[String], description: Option[String], ref_name: Option[String])
-    case class Functions(name: String, summary: Option[String], description: Option[String], params: List[Json], result: Json, errors: Option[String])
+    case class Functions(name: String, summary: Option[String], description: Option[String], params: List[Param], result: FnResult, errors: Option[String])
     case class Types(name: String, `type`: String, struct_fields: Option[Seq[StructField]], enum_types: Option[Seq[StructField]], summary: Option[String], description: Option[String])
     case class Module(name: String, summary: Option[String], description: Option[String], types: List[Types], functions: List[Json])
     case class Api(version: String, modules: List[Module])
@@ -59,16 +59,13 @@ object Client {
 
   implicit val version = new SdkCall[Request.Version.type, Result.Version] {
     override val functionName: String = "client.version"
-    type R = Result.Version
   }
 
   implicit val buildInfo = new SdkCall[Request.BuildInfo.type, Result.BuildInfo] {
     override val functionName: String = "client.build_info"
-    type R = Result.Version
   }
 
   implicit val apiReference = new SdkCall[Request.ApiReference.type, Result.ApiReference] {
     override val functionName: String = "client.get_api_reference"
-    type R = Result.Version
   }
 }

@@ -36,10 +36,10 @@ final case class Context private (id: Long) extends Closeable {
   def requestAsync(functionName: String, functionParams: String): Future[String] = {
     val p   = Promise[String]()
     val buf = new StringBuilder
-    val handler: Handler = (_: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
+    val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
       ResponseType(responseType) match {
         case ResponseTypeNop | ResponseTypeReserved(_) => // ignore
-        case ResponseTypeResult => buf.append(paramsJson)
+        case ResponseTypeResult                        => buf.append(paramsJson)
         case ResponseTypeError =>
           if (!finished) logger.warn(errUndefinedBehaviour)
           p.failure(SdkClientError(paramsJson).fold(BindingError, identity))
@@ -47,27 +47,29 @@ final case class Context private (id: Long) extends Closeable {
           // TODO As for now, the same as Result but probably should be something different
           buf.append(paramsJson)
       }
-      if (finished && ! p.isCompleted) p.success(buf.result())
+      if (finished && !p.isCompleted) {
+        p.success(buf.result())
+      }
     }
     Binding.request(id, functionName, functionParams, handler)
     p.future
   }
 
-  private def asFuture[R](t: Try[R]) = t match {
-    case Success(r) => Future.successful(r)
-    case Failure(ex) => Future.failed(ex)
-  }
-
   def request[P, R](params: P)(implicit call: SdkCall[P, R], ec: ExecutionContext): Future[R] = {
     val fnName = call.functionName
     val jsonIn = call.toJson(params).noSpaces
-    requestAsync(fnName, jsonIn).map(call.fromJson).map(asFuture).flatten
+    requestAsync(fnName, jsonIn).map(call.fromJson).map(Context.asFuture).flatten
   }
 
   //
 }
 
 object Context {
+  def asFuture[R](t: Try[R]): Future[R] = t match {
+    case Success(r)  => Future.successful(r)
+    case Failure(ex) => Future.failed(ex)
+  }
+
   private val errUndefinedBehaviour =
     "Got unfinished error response, the expected behaviour is not clear. Current implementation will continue to consume data but the result will be the first error"
   private val logger = LoggerFactory.getLogger(getClass)
@@ -77,12 +79,18 @@ object Context {
     val json = Binding.tcCreateContext(config.asJson.noSpaces)
     SdkResultOrError.fromJson[Long](json).map(Context.apply)
   }
-  def apply[T](config: ClientConfig)(block: Context => T): Try[T] = create(config).flatMap(Using(_)(block))
+  def synchronous[T](config: ClientConfig)(block: Context => T): Try[T] = create(config).flatMap(Using(_)(block))
+  def apply[T](config: ClientConfig)(block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] =
+    asFuture(create(config)).flatMap { context =>
+      val result = block(context)
+      result.onComplete(_ => context.close())
+      result
+    }
 
-  def local[T](block: Context => T): Try[T] = Context.apply(ClientConfig.local)(block)
-  def mainNet[T](block: Context => T): Try[T] = Context.apply(ClientConfig.mainNet)(block)
-  def devNet[T](block: Context => T): Try[T] = Context.apply(ClientConfig.devNet)(block)
-  def testNet[T](block: Context => T): Try[T] = Context.apply(ClientConfig.testNet)(block)
+  def local[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]   = Context(ClientConfig.local)(block)
+  def mainNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context(ClientConfig.mainNet)(block)
+  def devNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]  = Context(ClientConfig.devNet)(block)
+  def testNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context(ClientConfig.testNet)(block)
 
   def requestStr(functionName: String, functionParams: String)(implicit ctx: Context): Try[String] =
     ctx.requestStr(functionName, functionParams)

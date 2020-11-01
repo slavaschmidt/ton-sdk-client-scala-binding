@@ -1,9 +1,14 @@
 package ton.sdk.client.jni;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Binding {
+    private static final Logger logger = LoggerFactory.getLogger(Binding.class);
+
     public static native String tcCreateContext(String config);
 
     public static native void tcDestroyContext(long context);
@@ -15,13 +20,19 @@ public class Binding {
     public static void request(long context, String functionName, String functionParamsJson, Handler responseHandler) {
         long id = counter.incrementAndGet();
         mapping.put(id, responseHandler);
-        tcRequest(context, functionName, functionParamsJson, id);
+        try {
+            tcRequest(context, functionName, functionParamsJson, id);
+        } catch (Throwable ex) {
+            logger.error(ex.getMessage(), ex);
+        }
     }
 
     private static void handle(long requestId, String paramsJson, long responseType, boolean finished) {
         Handler handler = mapping.get(requestId);
         try {
             handler.handle(requestId, paramsJson, responseType, finished);
+        } catch (Throwable ex) {
+            logger.error(ex.getMessage(), ex);
         } finally {
             if (finished) mapping.remove(requestId);
         }
