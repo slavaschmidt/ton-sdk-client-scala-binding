@@ -12,7 +12,6 @@ Scala binding for freeton SDK client
 
 
 
-
 ## License
 ```
 This software is licensed under the Apache 2 license, quoted below.

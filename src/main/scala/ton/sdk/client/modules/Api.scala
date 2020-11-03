@@ -64,7 +64,8 @@ object Api {
     import io.circe.generic.auto._
     import io.circe.parser._
     def apply(json: String): Try[SdkClientError] = decode[SdkClientError](json).toTry
-    def parsingError(data: Json) = new SdkClientError(-1, "Could not parse SDK json", data)
+    def parsingError(data: Json) =
+      new SdkClientError(-1, "Could not parse SDK json", data)
   }
 
   sealed trait SdkResultOrError[T]

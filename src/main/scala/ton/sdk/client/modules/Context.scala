@@ -80,24 +80,24 @@ object Context {
     SdkResultOrError.fromJson[Long](json).map(Context.apply)
   }
   def synchronous[T](config: ClientConfig)(block: Context => T): Try[T] = create(config).flatMap(Using(_)(block))
-  def apply[T](config: ClientConfig)(block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] =
+  def async[T](config: ClientConfig)(block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] =
     asFuture(create(config)).flatMap { context =>
       val result = block(context)
       result.onComplete(_ => context.close())
       result
     }
 
-  def local[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]   = Context(ClientConfig.local)(block)
-  def mainNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context(ClientConfig.mainNet)(block)
-  def devNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]  = Context(ClientConfig.devNet)(block)
-  def testNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context(ClientConfig.testNet)(block)
+  def local[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]   = Context.async(ClientConfig.local)(block)
+  def mainNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context.async(ClientConfig.mainNet)(block)
+  def devNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T]  = Context.async(ClientConfig.devNet)(block)
+  def testNet[T](block: Context => Future[T])(implicit ec: ExecutionContext): Future[T] = Context.async(ClientConfig.testNet)(block)
 
   def requestStr(functionName: String, functionParams: String)(implicit ctx: Context): Try[String] =
     ctx.requestStr(functionName, functionParams)
   def requestAsync(functionName: String, functionParams: String)(implicit ctx: Context): Future[String] =
     ctx.requestAsync(functionName, functionParams)
 
-  def request[P, R](params: P)(implicit call: SdkCall[P, R], ctx: Context, ec: ExecutionContext): Future[R] =
+  def call[P, R](params: P)(implicit call: SdkCall[P, R], ctx: Context, ec: ExecutionContext): Future[R] =
     ctx.request(params)
 
 }

@@ -20,7 +20,7 @@ class UtilsSpec extends AsyncFlatSpec with should.Matchers {
 
   it should "not convert invalid address" in {
     val result = local { implicit ctx =>
-      request(Request.ConvertAddress("this is my address", Types.accountId))
+      call(Request.ConvertAddress("this is my address", Types.accountId))
     }
     result.map(_ => fail("Should not succeed")).recover {
       case ex: SdkClientError => assert(ex.message == "Invalid address [fatal error]: this is my address")
@@ -29,34 +29,34 @@ class UtilsSpec extends AsyncFlatSpec with should.Matchers {
 
   it should "convert accountId to HEX" in {
     local { implicit ctx =>
-      request(Request.ConvertAddress(accountId, Types.hex))
+      call(Request.ConvertAddress(accountId, Types.hex))
     }.map(assertResult(ConvertedAddress(hexWorkchain)))
   }
 
   it should "... and back" in {
     local { implicit ctx =>
       for {
-        converted <- request(Request.ConvertAddress(accountId, Types.hex))
-        result <- request(Request.ConvertAddress(converted.address, Types.accountId))
+        converted <- call(Request.ConvertAddress(accountId, Types.hex))
+        result <- call(Request.ConvertAddress(converted.address, Types.accountId))
       } yield result
     }.map(assertResult(ConvertedAddress(accountId)))
   }
 
   it should "convert hexMasterchain to base64" in {
     local { implicit ctx =>
-      request(Request.ConvertAddress(hexMainchain, Types.base64()))
+      call(Request.ConvertAddress(hexMainchain, Types.base64()))
     }.map(assertResult(ConvertedAddress(base64)))
   }
 
   it should "convert base64 address to base64url" in {
     local { implicit ctx =>
-      request(Request.ConvertAddress(base64, Types.base64(url = true, test = true, bounce = true)))
+      call(Request.ConvertAddress(base64, Types.base64(url = true, test = true, bounce = true)))
     }.map(assertResult(ConvertedAddress(base64url)))
   }
 
   it should "convert base64url address to hex" in {
     local { implicit ctx =>
-      request(Request.ConvertAddress(base64url, Types.hex))
+      call(Request.ConvertAddress(base64url, Types.hex))
     }.map(assertResult(ConvertedAddress(hexMainchain)))
   }
 

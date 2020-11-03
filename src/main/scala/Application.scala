@@ -70,19 +70,19 @@ object Application extends App {
   def testClientAsync() = {
     local { implicit ctx =>
       import Client._
-      val f = request(Client.Request.Version)
+      val f = call(Client.Request.Version)
       f.onComplete(println)
-      val g = request(Client.Request.BuildInfo)
+      val g = call(Client.Request.BuildInfo)
       g.onComplete(println)
-      val h = request(Client.Request.ApiReference)
+      val h = call(Client.Request.ApiReference)
       h.onComplete { c =>
         println("H:" + c)
       }
-      val i = request(Client.Request.ApiReference)
+      val i = call(Client.Request.ApiReference)
       i.onComplete { c =>
         println("I:" + c)
       }
-      val j = request(Client.Request.ApiReference)
+      val j = call(Client.Request.ApiReference)
       j.onComplete { c =>
         println("j:" + c)
       }
@@ -102,14 +102,14 @@ object Application extends App {
   def testProcessingAsync() = {
     local { implicit ctx =>
       import Processing._
-      request(Processing.Request.SendMessage("EEFFFEEC", true, None))
+      call(Processing.Request.SendMessage("EEFFFEEC", true, None))
     }
   }
 
   def testUtilAsync() = {
     local { implicit ctx =>
       import ton.sdk.client.modules.Utils._
-      request(Request.ConvertAddress("this is my address", Types.accountId))
+      call(Request.ConvertAddress("this is my address", Types.accountId))
     }
   }
 
