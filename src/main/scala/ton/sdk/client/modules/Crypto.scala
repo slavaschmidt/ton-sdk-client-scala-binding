@@ -7,16 +7,24 @@ object Crypto {
   val prefix = "crypto"
 
   object Request {
+    case object GenerateRandomSignKeys
     case class PublicKey(public_key: String)
     case class Factorize(composite: String)
     case class GenerateRandomBytes(length: Int)
-    case object GenerateRandomSignKeys
+    case class HdkeyDeriveFromXprv(xprv: String, child_index: Int, hardened: Boolean)
+    case class HdkeyDeriveFromXprvPath(xprv: String, path: String)
+    case class HdkeyXprvFromMnemonic(phrase: String)
+    case class HdkeySecretFromXprv(xprv: String)
+    case class HdkeyPublicFromXprv(xprv: String)
   }
   object Result {
     case class TonPublicKey(ton_public_key: String)
     case class Factors(factors: Seq[String])
     case class Bytes(bytes: String)
     case class SignKeys(public: String, secret: String)
+    case class Xprv(xprv: String)
+    case class SecretKey(secret: String)
+    case class PublicKey(public: String)
   }
 
   import io.circe.generic.auto._
@@ -24,16 +32,21 @@ object Crypto {
   implicit val convertPublicKeyToTonSafeFormat = new SdkCall[Request.PublicKey, Result.TonPublicKey] {
     override val functionName: String = s"$prefix.convert_public_key_to_ton_safe_format"
   }
-  implicit val factorize           = new SdkCall[Request.Factorize, Result.Factors]        { override val functionName: String = s"$prefix.factorize"             }
+  implicit val factorize           = new SdkCall[Request.Factorize, Result.Factors]         { override val functionName: String = s"$prefix.factorize"             }
   implicit val generateRandomBytes = new SdkCall[Request.GenerateRandomBytes, Result.Bytes] { override val functionName: String = s"$prefix.generate_random_bytes" }
-  implicit val generate_random_sign_keys = new SdkCall[Request.GenerateRandomSignKeys.type,Result.SignKeys] { override val functionName: String = s"$prefix.generate_random_sign_keys" }
+  implicit val generateRandomSignKeys = new SdkCall[Request.GenerateRandomSignKeys.type, Result.SignKeys] {
+    override val functionName: String = s"$prefix.generate_random_sign_keys"
+  }
+  implicit val hdkeyDeriveFromXprv = new SdkCall[Request.HdkeyDeriveFromXprv, Result.Xprv] { override val functionName: String = s"$prefix.hdkey_derive_from_xprv" }
+  implicit val hdkeyDeriveFromXprvPath = new SdkCall[Request.HdkeyDeriveFromXprvPath, Result.Xprv] {
+    override val functionName: String = s"$prefix.hdkey_derive_from_xprv_path"
+  }
 
-//  implicit val hdkey_derive_from_xprv = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.hdkey_derive_from_xprv" }
-//  implicit val hdkey_derive_from_xprv_path = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.hdkey_derive_from_xprv_path" }
-//  implicit val hdkey_public_from_xprv = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.hdkey_public_from_xprv" }
-//  implicit val hdkey_secret_from_xprv = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.hdkey_secret_from_xprv" }
-//  implicit val hdkey_xprv_from_mnemonic = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.hdkey_xprv_from_mnemonic" }
-//  implicit val mnemonic_derive_sign_keys = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
+  implicit val hdkeyPublicFromXprv   = new SdkCall[Request.HdkeyPublicFromXprv, Result.PublicKey]   { override val functionName: String = s"$prefix.hdkey_public_from_xprv"   }
+  implicit val hdkeySecretFromXprv   = new SdkCall[Request.HdkeySecretFromXprv, Result.SecretKey]   { override val functionName: String = s"$prefix.hdkey_secret_from_xprv"   }
+  implicit val hdkeyXprvFromMnemonic = new SdkCall[Request.HdkeyXprvFromMnemonic, Result.Xprv] { override val functionName: String = s"$prefix.hdkey_xprv_from_mnemonic" }
+
+  //  implicit val mnemonic_derive_sign_keys = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
 //  implicit val mnemonic_from_entropy = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_from_entropy" }
 //  implicit val mnemonic_from_random = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_from_random" }
 //  implicit val mnemonic_verify = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_verify" }
