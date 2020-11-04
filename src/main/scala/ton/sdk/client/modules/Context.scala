@@ -9,11 +9,11 @@ import org.slf4j.LoggerFactory
 import ton.sdk.client.jni.{Binding, Handler}
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.Client._
-import ton.sdk.client.modules.Context.{logger, Effect}
+import ton.sdk.client.modules.Context.{Effect, logger}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success, Try, Using}
+import scala.util.{Failure, Success, Try}
 
 /**
   * The context should be explicitly closed after it is not needed any more
@@ -71,6 +71,7 @@ object Context {
     def fromTry[R](t: Try[R]): T[R]
     def flatMap[P, R](in: T[P])(f: P => T[R]): T[R]
     def map[P, R](in: T[P])(f: P => R): T[R]
+    def recover[R, U >: R](in: T[R])(pf: PartialFunction[Throwable, U]): T[U]
     def fromJson[R](str: T[String])(implicit call: SdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
     def managed[R](config: ClientConfig)(block: Context => T[R]): T[R]
     def unsafeGet[R](a: T[R]): R
@@ -95,6 +96,8 @@ object Context {
     override def flatMap[P, R](in: Try[P])(f: P => Try[R]): Try[R] = in.flatMap(f)
     override def map[P, R](in: Try[P])(f: P => R): Try[R]          = in.map(f)
     override def unsafeGet[R](a: Try[R]): R                        = a.get
+
+    override def recover[R, U >: R](in: Try[R])(pf: PartialFunction[Throwable, U]): Try[U] = in.recover(pf)
   }
 
   def futureEffect(implicit ec: ExecutionContext): Effect[Future] = new Effect[Future] {
@@ -135,8 +138,10 @@ object Context {
       }
     override def flatMap[P, R](in: Future[P])(f: P => Future[R]): Future[R] = in.flatMap(f)
     override def map[P, R](in: Future[P])(f: P => R): Future[R]             = in.map(f)
+    override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
     override def unsafeGet[R](a: Future[R]): R = Await.result(a, 10.seconds)
+
   }
 
   def fromTry[R](t: Try[R]): Future[R] = t match {
