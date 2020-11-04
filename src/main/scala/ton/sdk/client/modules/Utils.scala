@@ -9,7 +9,7 @@ object Utils {
 
   object Types {
     val accountId: AddressOutputFormat = AddressOutputFormat("AccountId")
-    val hex: AddressOutputFormat = AddressOutputFormat("Hex")
+    val hex: AddressOutputFormat       = AddressOutputFormat("Hex")
     def base64(url: Boolean = false, test: Boolean = false, bounce: Boolean = false): AddressOutputFormat =
       AddressOutputFormat("Base64", Option(url), Option(test), Option(bounce))
   }

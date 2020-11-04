@@ -8,11 +8,11 @@ import scala.util._
 object Api {
 
   sealed trait ResponseType
-  case object ResponseTypeResult extends ResponseType
-  case object ResponseTypeError extends ResponseType
-  case object ResponseTypeNop extends ResponseType
+  case object ResponseTypeResult              extends ResponseType
+  case object ResponseTypeError               extends ResponseType
+  case object ResponseTypeNop                 extends ResponseType
   case class ResponseTypeReserved(code: Long) extends ResponseType
-  case class ResponseTypeStream(code: Long) extends ResponseType
+  case class ResponseTypeStream(code: Long)   extends ResponseType
 
   object ResponseType {
     def apply(code: Long): ResponseType = code match {
@@ -58,19 +58,23 @@ object Api {
     * @param data
     */
   class SdkClientError(val code: Int, val message: String, val data: Json) extends Exception(message)
-  case class BindingError(cause:    Throwable) extends Exception(cause)
+  class ContextSdkClientError(override val code: Int, override val message: String, context: Context, requestId: Long, override val data: Json)
+      extends SdkClientError(code, s"[$code] $message. [$context:$requestId]", data)
+
+  case class BindingError(cause: Throwable) extends Exception(cause)
 
   object SdkClientError {
     import io.circe.generic.auto._
     import io.circe.parser._
-    def apply(json: String): Try[SdkClientError] = decode[SdkClientError](json).toTry
+    def apply(c: Context, requestId: Long, json: String): Try[ContextSdkClientError] =
+      decode[SdkClientError](json).toTry.map(e => new ContextSdkClientError(e.code, e.message, c, requestId, e.data))
     def parsingError(data: Json) =
       new SdkClientError(-1, "Could not parse SDK json", data)
   }
 
   sealed trait SdkResultOrError[T]
   final case class SdkResult[T](result: T) extends SdkResultOrError[T]
-  final case class SdkError[T](error:  SdkClientError) extends SdkResultOrError[T] {
+  final case class SdkError[T](error: SdkClientError) extends SdkResultOrError[T] {
     override def toString: String = error.toString
   }
 
@@ -78,21 +82,26 @@ object Api {
     import io.circe.generic.auto._
     import io.circe.parser._
 
-    def fromJson[T](json: String)(implicit decoder: io.circe.Decoder[SdkResult[T]]): Try[T] = {
+    def fromJson[T](json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = {
       val resp: Either[io.circe.Error, SdkResultOrError[T]] = decode[SdkResult[T]](json).orElse(decode[SdkError[T]](json))
       resp match {
-        case Left(error) => Failure(error)
+        case Left(error)            => Failure(error)
         case Right(SdkError(error)) => Failure(error)
-        case Right(SdkResult(t)) => Success(t)
+        case Right(SdkResult(t))    => Success(t)
       }
     }
   }
 
   abstract class SdkCall[P: Encoder, R: Decoder] {
     def functionName: String
-    def fromJson(json: String): Try[R] = decode[R](json) match {
+    def fromJson(json: String): Try[R] = if (wrapped(json)) SdkResultOrError.fromJson(json) else fromPlainJson(json)
+    private def fromPlainJson(json: String): Try[R] = decode[R](json) match {
       case Left(error) => Failure(SdkClientError.parsingError(error.getMessage.asJson))
       case Right(r: R) => Success(r)
+    }
+    private def wrapped(json: String): Boolean = {
+      val prefix = json.take(8).filter(_.isLetter)
+      prefix == "result" || prefix == "error"
     }
     def toJson(parameters: P) = parameters.asJson
   }

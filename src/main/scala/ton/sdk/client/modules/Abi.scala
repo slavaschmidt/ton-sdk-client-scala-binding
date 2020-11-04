@@ -12,8 +12,5 @@ object Abi {
     case class Abi(contract: AbiContract)
     case class Handle(handle: AbiHandle)
   }
-  object Result {
-
-
-  }
+  object Result {}
 }

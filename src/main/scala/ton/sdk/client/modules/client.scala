@@ -49,7 +49,14 @@ object Client {
     case class FnResult(`type`: String, generic_name: String, generic_args: List[GenericArg])
     case class StructField(name: String, `type`: String, summary: Option[String], description: Option[String], ref_name: Option[String])
     case class Functions(name: String, summary: Option[String], description: Option[String], params: List[Param], result: FnResult, errors: Option[String])
-    case class Types(name: String, `type`: String, struct_fields: Option[Seq[StructField]], enum_types: Option[Seq[StructField]], summary: Option[String], description: Option[String])
+    case class Types(
+      name: String,
+      `type`: String,
+      struct_fields: Option[Seq[StructField]],
+      enum_types: Option[Seq[StructField]],
+      summary: Option[String],
+      description: Option[String]
+    )
     case class Module(name: String, summary: Option[String], description: Option[String], types: List[Types], functions: List[Json])
     case class Api(version: String, modules: List[Module])
     case class ApiReference(api: Api)

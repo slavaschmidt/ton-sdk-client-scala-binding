@@ -40,21 +40,21 @@ object Application extends App {
   import scala.concurrent.ExecutionContext.Implicits.global
   import Context._
 
-  def testBasicContext = {
-    Context.synchronous(ClientConfig.local) { implicit ctx =>
-      println(requestStr("client.build_info", ""))
-      println(requestStr("client.version", ""))
-    }
-  }
-
-  def testBasicAsyncContext = {
-    devNet { implicit ctx =>
-      requestAsync("client.setup", "").onComplete(println)
-      val f = requestAsync("client.build_info", "")
-      f.onComplete(println)
-      f
-    }
-  }
+//  def testBasicContext = {
+//    Context.synchronous(ClientConfig.local) { implicit ctx =>
+//      println(requestSync("client.build_info", ""))
+//      println(requestSync("client.version", ""))
+//    }
+//  }
+//
+//  def testBasicAsyncContext = {
+//    devNet { implicit ctx =>
+//      requestAsync("client.setup", "").onComplete(println)
+//      val f = requestAsync("client.build_info", "")
+//      f.onComplete(println)
+//      f
+//    }
+//  }
 
   // testBasicContext.map(Await.result(_, 10.seconds))
 
@@ -68,6 +68,7 @@ object Application extends App {
 //  testEncoders()
 
   def testClientAsync() = {
+    implicit val fe = futureEffect
     local { implicit ctx =>
       import Client._
       val f = call(Client.Request.Version)
@@ -87,7 +88,7 @@ object Application extends App {
         println("j:" + c)
       }
       Future.sequence(Seq(f, g, h, i, j))
-      //      println(request("client.version", ""))
+    //      println(request("client.version", ""))
     }
 //    devNet { implicit ctx =>
 //      requestAsync("client.setup", "").onComplete(println)
@@ -98,8 +99,8 @@ object Application extends App {
 
   }
 
-
   def testProcessingAsync() = {
+    implicit val fe = futureEffect
     local { implicit ctx =>
       import Processing._
       call(Processing.Request.SendMessage("EEFFFEEC", true, None))
@@ -107,12 +108,20 @@ object Application extends App {
   }
 
   def testUtilAsync() = {
+    implicit val fe = futureEffect
     local { implicit ctx =>
       import ton.sdk.client.modules.Utils._
       call(Request.ConvertAddress("this is my address", Types.accountId))
     }
   }
 
+  def testUtilSync() = {
+    implicit val fe = tryEffect
+    local { implicit ctx =>
+      import ton.sdk.client.modules.Utils._
+      call(Request.ConvertAddress("this is my address", Types.accountId))
+    }
+  }
   val result = Await.result(testUtilAsync(), 10.seconds)
   println(result)
 

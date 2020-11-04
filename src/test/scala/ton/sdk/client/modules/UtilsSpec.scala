@@ -3,12 +3,13 @@ package ton.sdk.client.modules
 import org.scalatest._
 import flatspec._
 import matchers._
-import ton.sdk.client.modules.Api.SdkClientError
 import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Utils.Result.ConvertedAddress
 import ton.sdk.client.modules.Utils._
 
-class UtilsSpec extends AsyncFlatSpec with should.Matchers {
+abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with should.Matchers {
+
+  implicit val fe: Effect[T]
 
   behavior of "Utils"
 
@@ -18,46 +19,32 @@ class UtilsSpec extends AsyncFlatSpec with should.Matchers {
   val base64       = "Uf/8uRo6OBbQ97jCx2EIuKm8Wmt6Vb15+KsQHFLbKSMiYG+9"
   val base64url    = "kf_8uRo6OBbQ97jCx2EIuKm8Wmt6Vb15-KsQHFLbKSMiYIny"
 
-  it should "not convert invalid address" in {
-    val result = local { implicit ctx =>
-      call(Request.ConvertAddress("this is my address", Types.accountId))
-    }
-    result.map(_ => fail("Should not succeed")).recover {
-      case ex: SdkClientError => assert(ex.message == "Invalid address [fatal error]: this is my address")
-    }
-  }
-
   it should "convert accountId to HEX" in {
-    local { implicit ctx =>
+    val result = local { implicit ctx =>
       call(Request.ConvertAddress(accountId, Types.hex))
-    }.map(assertResult(ConvertedAddress(hexWorkchain)))
-  }
-
-  it should "... and back" in {
-    local { implicit ctx =>
-      for {
-        converted <- call(Request.ConvertAddress(accountId, Types.hex))
-        result <- call(Request.ConvertAddress(converted.address, Types.accountId))
-      } yield result
-    }.map(assertResult(ConvertedAddress(accountId)))
+    }
+    fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(hexWorkchain))))
   }
 
   it should "convert hexMasterchain to base64" in {
-    local { implicit ctx =>
+    val result = local { implicit ctx =>
       call(Request.ConvertAddress(hexMainchain, Types.base64()))
-    }.map(assertResult(ConvertedAddress(base64)))
+    }
+    fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(base64))))
   }
 
   it should "convert base64 address to base64url" in {
-    local { implicit ctx =>
+    val result = local { implicit ctx =>
       call(Request.ConvertAddress(base64, Types.base64(url = true, test = true, bounce = true)))
-    }.map(assertResult(ConvertedAddress(base64url)))
+    }
+    fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(base64url))))
   }
 
   it should "convert base64url address to hex" in {
-    local { implicit ctx =>
+    val result = local { implicit ctx =>
       call(Request.ConvertAddress(base64url, Types.hex))
-    }.map(assertResult(ConvertedAddress(hexMainchain)))
+    }
+    fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(hexMainchain))))
   }
 
 }

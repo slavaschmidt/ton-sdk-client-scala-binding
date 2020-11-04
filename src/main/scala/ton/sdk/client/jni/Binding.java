@@ -35,7 +35,9 @@ public class Binding {
         } catch (Throwable ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
-            if (finished) mapping.remove(requestId);
+            if (finished) {
+                mapping.remove(requestId);
+            }
         }
     }
 
@@ -47,7 +49,7 @@ public class Binding {
 //        System.out.println("loading from " + path);
 //        System.setProperty("java.library.path", path);
 //        System.loadLibrary("TonSdkClientJniBinding");
-         String path = new File("lib/libTonSdkClientJniBinding.dylib").getAbsolutePath();
-         System.load(path);
+        String path = new File("lib/libTonSdkClientJniBinding.dylib").getAbsolutePath();
+        System.load(path);
     }
 }
