@@ -6,16 +6,36 @@ object Crypto {
 
   val prefix = "crypto"
 
+  val DEFAULT_MNEMONIC_DICTIONARY = 1
+  val DEFAULT_MNEMONIC_WORD_COUNT = 12
+  val DEFAULT_HDKEY_DERIVATION_PATH = "m/44'/396'/0'/0/0"
+
+
+  val MNEMONIC_DICTIONARY_TON = 0
+  val MNEMONIC_DICTIONARY_ENGLISH = 1
+  val MNEMONIC_DICTIONARY_CHINESE_SIMPLIFIED = 2
+  val MNEMONIC_DICTIONARY_CHINESE_TRADITIONAL = 3
+  val MNEMONIC_DICTIONARY_FRENCH = 4
+  val MNEMONIC_DICTIONARY_ITALIAN = 5
+  val MNEMONIC_DICTIONARY_JAPANESE = 6
+  val MNEMONIC_DICTIONARY_KOREAN = 7
+  val MNEMONIC_DICTIONARY_SPANISH = 8
+
   object Request {
     case object GenerateRandomSignKeys
     case class PublicKey(public_key: String)
     case class Factorize(composite: String)
     case class GenerateRandomBytes(length: Int)
     case class HdkeyDeriveFromXprv(xprv: String, child_index: Int, hardened: Boolean)
-    case class HdkeyDeriveFromXprvPath(xprv: String, path: String)
+    case class HdkeyDeriveFromXprvPath(xprv: String, path: String = DEFAULT_HDKEY_DERIVATION_PATH)
     case class HdkeyXprvFromMnemonic(phrase: String)
     case class HdkeySecretFromXprv(xprv: String)
     case class HdkeyPublicFromXprv(xprv: String)
+    case class MnemonicWords(dictionary: Int = DEFAULT_MNEMONIC_DICTIONARY)
+    case class MnemonicFromRandom(dictionary: Int, word_count: Int)
+    case class MnemonicFromEntropy(entropy: String)
+    case class MnemonicVerify(phrase: String, word_count: Int = DEFAULT_MNEMONIC_WORD_COUNT, dictionary: Int = DEFAULT_MNEMONIC_DICTIONARY)
+    case class MnemonicDeriveSignKeys(phrase: String, path: String = DEFAULT_HDKEY_DERIVATION_PATH, word_count: Int = DEFAULT_MNEMONIC_WORD_COUNT, dictionary: Int = DEFAULT_MNEMONIC_DICTIONARY)
   }
   object Result {
     case class TonPublicKey(ton_public_key: String)
@@ -25,6 +45,14 @@ object Crypto {
     case class Xprv(xprv: String)
     case class SecretKey(secret: String)
     case class PublicKey(public: String)
+    case class MnemonicWords(words: String) {
+      def wordCount: Int = words.split(" ").length
+    }
+    case class MnemonicPhrase(phrase: String) {
+      def wordCount: Int = phrase.split(" ").length
+    }
+    case class Validity(valid: Boolean)
+    case class PublicSafe(public_safe: String)
   }
 
   import io.circe.generic.auto._
@@ -41,16 +69,18 @@ object Crypto {
   implicit val hdkeyDeriveFromXprvPath = new SdkCall[Request.HdkeyDeriveFromXprvPath, Result.Xprv] {
     override val functionName: String = s"$prefix.hdkey_derive_from_xprv_path"
   }
+  implicit val hdkeyPublicFromXprv   = new SdkCall[Request.HdkeyPublicFromXprv, Result.PublicKey] { override val functionName: String = s"$prefix.hdkey_public_from_xprv"   }
+  implicit val hdkeySecretFromXprv   = new SdkCall[Request.HdkeySecretFromXprv, Result.SecretKey] { override val functionName: String = s"$prefix.hdkey_secret_from_xprv"   }
+  implicit val hdkeyXprvFromMnemonic = new SdkCall[Request.HdkeyXprvFromMnemonic, Result.Xprv]    { override val functionName: String = s"$prefix.hdkey_xprv_from_mnemonic" }
 
-  implicit val hdkeyPublicFromXprv   = new SdkCall[Request.HdkeyPublicFromXprv, Result.PublicKey]   { override val functionName: String = s"$prefix.hdkey_public_from_xprv"   }
-  implicit val hdkeySecretFromXprv   = new SdkCall[Request.HdkeySecretFromXprv, Result.SecretKey]   { override val functionName: String = s"$prefix.hdkey_secret_from_xprv"   }
-  implicit val hdkeyXprvFromMnemonic = new SdkCall[Request.HdkeyXprvFromMnemonic, Result.Xprv] { override val functionName: String = s"$prefix.hdkey_xprv_from_mnemonic" }
+  implicit val mnemonicWords       = new SdkCall[Request.MnemonicWords, Result.MnemonicWords]        { override val functionName: String = s"$prefix.mnemonic_words"        }
+  implicit val mnemonicFromRandom  = new SdkCall[Request.MnemonicFromRandom, Result.MnemonicPhrase]  { override val functionName: String = s"$prefix.mnemonic_from_random"  }
+  implicit val mnemonicFromEntropy = new SdkCall[Request.MnemonicFromEntropy, Result.MnemonicPhrase] { override val functionName: String = s"$prefix.mnemonic_from_entropy" }
+  implicit val mnemonicVerify      = new SdkCall[Request.MnemonicVerify, Result.Validity]            { override val functionName: String = s"$prefix.mnemonic_verify"       }
 
-  //  implicit val mnemonic_derive_sign_keys = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
-//  implicit val mnemonic_from_entropy = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_from_entropy" }
-//  implicit val mnemonic_from_random = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_from_random" }
-//  implicit val mnemonic_verify = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_verify" }
-//  implicit val mnemonic_words = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.mnemonic_words" }
+  implicit val mnemonicDeriveSignKeys = new SdkCall[Request.MnemonicDeriveSignKeys,Result.PublicKey] { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
+
+
 //  implicit val modular_power = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.modular_power" }
 //  implicit val nacl_box = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_box" }
 //  implicit val nacl_box_keypair = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_box_keypair" }
@@ -62,6 +92,7 @@ object Crypto {
 //  implicit val nacl_sign_detached = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_sign_detached" }
 //  implicit val nacl_sign_keypair_from_secret_key = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_sign_keypair_from_secret_key" }
 //  implicit val nacl_sign_open = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_sign_open" }
+
 //  implicit val scrypt = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.scrypt" }
 //  implicit val sha256 = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sha256" }
 //  implicit val sha512 = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sha512" }
