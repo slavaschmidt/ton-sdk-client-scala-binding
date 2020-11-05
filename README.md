@@ -1,4 +1,5 @@
-# Freeton SDK client scala
+# ton-sdk-client-scala-binding
+Scala binding for FreeTON SDK client
 
 Scala binding for freeton SDK client
 
