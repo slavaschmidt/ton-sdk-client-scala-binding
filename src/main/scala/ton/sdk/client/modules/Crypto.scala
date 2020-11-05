@@ -50,13 +50,18 @@ object Crypto {
     case class NaclSign(unsigned: String, secret: String)
     case class NaclSignOpen(signed: String, public: String)
     case class NaclSignDetached(unsigned: String, secret: String)
+    case class NaclSignKeypairFromSecretKey(secret: String)
+    case class Scrypt(password: String, salt: String, log_n: Int, r: Int, p: Int, dk_len: Int)
+    case class Sha256(data: String)
+    case class Sha512(data: String)
+    case class TonCrc16(data: String)
   }
 
   object Result {
     case class TonPublicKey(ton_public_key: String)
     case class Factors(factors: Seq[String])
     case class Bytes(bytes: String)
-    case class SignKeys(public: String, secret: String)
+    case class KeyPair(public: String, secret: String)
     case class Xprv(xprv: String)
     case class SecretKey(secret: String)
     case class PublicKey(public: String)
@@ -74,6 +79,9 @@ object Crypto {
     case class Signed(signed: String)
     case class Unsigned(unsigned: String)
     case class Signature(signature: String)
+    case class Key(key: String)
+    case class Hash(hash: String)
+    case class Crc(crc: Long)
   }
 
   import io.circe.generic.auto._
@@ -83,7 +91,7 @@ object Crypto {
   }
   implicit val factorize           = new SdkCall[Request.Factorize, Result.Factors]         { override val functionName: String = s"$prefix.factorize"             }
   implicit val generateRandomBytes = new SdkCall[Request.GenerateRandomBytes, Result.Bytes] { override val functionName: String = s"$prefix.generate_random_bytes" }
-  implicit val generateRandomSignKeys = new SdkCall[Request.GenerateRandomSignKeys.type, Result.SignKeys] {
+  implicit val generateRandomSignKeys = new SdkCall[Request.GenerateRandomSignKeys.type, Result.KeyPair] {
     override val functionName: String = s"$prefix.generate_random_sign_keys"
   }
   implicit val hdkeyDeriveFromXprv = new SdkCall[Request.HdkeyDeriveFromXprv, Result.Xprv] { override val functionName: String = s"$prefix.hdkey_derive_from_xprv" }
@@ -100,8 +108,8 @@ object Crypto {
   implicit val mnemonicVerify         = new SdkCall[Request.MnemonicVerify, Result.Validity]            { override val functionName: String = s"$prefix.mnemonic_verify"           }
   implicit val mnemonicDeriveSignKeys = new SdkCall[Request.MnemonicDeriveSignKeys, Result.PublicKey]   { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
   implicit val modularPower           = new SdkCall[Request.ModularPower, Result.ModularPower]          { override val functionName: String = s"$prefix.modular_power"             }
-  implicit val naclBoxKeypair         = new SdkCall[Request.NaclBoxKeyPair.type, Result.SignKeys]       { override val functionName: String = s"$prefix.nacl_box_keypair"          }
-  implicit val naclBoxKeypairFromSecretKey = new SdkCall[Request.NaclBoxKeyPairFromSecretKey, Result.SignKeys] {
+  implicit val naclBoxKeypair         = new SdkCall[Request.NaclBoxKeyPair.type, Result.KeyPair]        { override val functionName: String = s"$prefix.nacl_box_keypair"          }
+  implicit val naclBoxKeypairFromSecretKey = new SdkCall[Request.NaclBoxKeyPairFromSecretKey, Result.KeyPair] {
     override val functionName: String = s"$prefix.nacl_box_keypair_from_secret_key"
   }
 
@@ -112,13 +120,15 @@ object Crypto {
   implicit val naclSign          = new SdkCall[Request.NaclSign, Result.Signed]             { override val functionName: String = s"$prefix.nacl_sign"            }
   implicit val naclSignOpen      = new SdkCall[Request.NaclSignOpen, Result.Unsigned]       { override val functionName: String = s"$prefix.nacl_sign_open"       }
   implicit val naclSignDetached  = new SdkCall[Request.NaclSignDetached, Result.Signature]  { override val functionName: String = s"$prefix.nacl_sign_detached"   }
-//  implicit val nacl_sign_keypair_from_secret_key = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.nacl_sign_keypair_from_secret_key" }
+  implicit val naclSignKeypairFromSecretKey = new SdkCall[Request.NaclSignKeypairFromSecretKey, Result.PublicKey] {
+    override val functionName: String = s"$prefix.nacl_sign_keypair_from_secret_key"
+  }
+  implicit val scrypt = new SdkCall[Request.Scrypt, Result.Key]  { override val functionName: String = s"$prefix.scrypt" }
+  implicit val sha256 = new SdkCall[Request.Sha256, Result.Hash] { override val functionName: String = s"$prefix.sha256" }
+  implicit val sha512 = new SdkCall[Request.Sha512, Result.Hash] { override val functionName: String = s"$prefix.sha512" }
+  implicit val tonCrc16 = new SdkCall[Request.TonCrc16,Result.Crc] { override val functionName: String = s"$prefix.ton_crc16" }
 
-//  implicit val scrypt = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.scrypt" }
-//  implicit val sha256 = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sha256" }
-//  implicit val sha512 = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sha512" }
 //  implicit val sign = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sign" }
-//  implicit val ton_crc16 = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.ton_crc16" }
 //  implicit val verify_signature = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.verify_signature" }
 
 }

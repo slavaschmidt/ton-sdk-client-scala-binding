@@ -289,7 +289,7 @@ class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[Future] {
       call(Request.NaclBoxKeyPairFromSecretKey("e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4"))
     }
     assertValue(result)(
-      Result.SignKeys("a53b003d3ffc1e159355cb37332d67fc235a7feb6381e36c803274074dc3933a", "e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4")
+      Result.KeyPair("a53b003d3ffc1e159355cb37332d67fc235a7feb6381e36c803274074dc3933a", "e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4")
     )
   }
 
@@ -400,4 +400,77 @@ class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[Future] {
     }
     assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [OOOOoooooopppppps]")
   }
+
+  it should "nacl_sign_keypair_from_secret_key" in {
+    val result = local { implicit ctx =>
+      call(Request.NaclSignKeypairFromSecretKey("8fb4f2d256e57138fb310b0a6dac5bbc4bee09eb4821223a720e5b8e1f3dd674"))
+    }
+    assertValue(result)(Result.PublicKey("aa5533618573860a7e1bf19f34bd292871710ed5b2eafa0dcdbb33405f2231c6"))
+  }
+
+  it should "not nacl_sign_keypair_from_secret_key" in {
+    val result = local { implicit ctx =>
+      call(Request.NaclSignKeypairFromSecretKey("Not a secret really"))
+    }
+    assertSdkError(result)("Invalid secret key [Odd number of digits]: Not a secret really")
+  }
+
+  it should "crypt" in {
+    val result = local { implicit ctx =>
+      call(Request.Scrypt("TG9uZyBsaXZlIEZyZWUgVE9O", "c2FsdHk=", 10, 8, 16, 64))
+    }
+    assertValue(result)(Result.Key("4610e17fe3055ceb89859f45a68086b60a885b895e1dcc614008bb709c5af5b18c697cbabdb49707d805da01daad09c9966ee31c12f6f1bb5486cc705c58253b"))
+  }
+
+  it should "not crypt" in {
+    val result = local { implicit ctx =>
+      call(Request.Scrypt("TG9uZyBsaXZlIEZyZWUgVE9O", "c2FsdHk=", 10, 1, 1, 0))
+    }
+    assertSdkError(result)("Scrypt failed: invalid output buffer length")
+  }
+
+  it should "sha256" in {
+    val result = local { implicit ctx =>
+      call(Request.Sha256(base64("Medio tutissimus ibis")))
+    }
+    assertValue(result)(Result.Hash("717e2ee94a89967347caf50f05bd7acc2bff19e5d0697ca43e5b5c098ece13f7"))
+  }
+
+  it should "not sha256" in {
+    val result = local { implicit ctx =>
+      call(Request.Sha256("I'm not base 64, dude"))
+    }
+    assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [I'm not base 64, dude]")
+  }
+
+  it should "sha512" in {
+    val result = local { implicit ctx =>
+      call(Request.Sha512(base64("Medio tutissimus ibis")))
+    }
+    assertValue(result)(Result.Hash("2e650c387eb4278d451bc3ef0d9f6ed97fba771610f473cb21df81062e17a3cd5f55e88170b1335e526114a063fd2d7ed5f19ba1a6437b9d9d9073ac2548eaa3"))
+  }
+
+  it should "not sha512" in {
+    val result = local { implicit ctx =>
+      call(Request.Sha512("I'm not base 64, dude"))
+    }
+    assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [I'm not base 64, dude]")
+  }
+
+
+  it should "ton_crc16" in {
+    val result = local { implicit ctx =>
+      call(Request.TonCrc16(base64("Medio tutissimus ibis")))
+    }
+    assertValue(result)(Result.Crc(13957))
+  }
+
+  it should "not ton_crc16" in {
+    val result = local { implicit ctx =>
+      call(Request.TonCrc16("I'm not base 64, dude"))
+    }
+    assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [I'm not base 64, dude]")
+  }
+
+  private def base64(s: String) = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
 }
