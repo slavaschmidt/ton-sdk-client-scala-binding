@@ -20,6 +20,8 @@ object Crypto {
   val MNEMONIC_DICTIONARY_KOREAN              = 7
   val MNEMONIC_DICTIONARY_SPANISH             = 8
 
+  case class KeyPair(public: String, secret: String)
+
   object Request {
     case object GenerateRandomSignKeys
     case class PublicKey(public_key: String)
@@ -55,13 +57,14 @@ object Crypto {
     case class Sha256(data: String)
     case class Sha512(data: String)
     case class TonCrc16(data: String)
+    case class Sign(unsigned: String, keys: KeyPair)
+    case class VerifySignature(signed: String, public: String)
   }
 
   object Result {
     case class TonPublicKey(ton_public_key: String)
     case class Factors(factors: Seq[String])
     case class Bytes(bytes: String)
-    case class KeyPair(public: String, secret: String)
     case class Xprv(xprv: String)
     case class SecretKey(secret: String)
     case class PublicKey(public: String)
@@ -76,7 +79,7 @@ object Crypto {
     case class ModularPower(modular_power: String)
     case class Encrypted(encrypted: String)
     case class Decrypted(decrypted: String)
-    case class Signed(signed: String)
+    case class Signed(signed: String, signature: Option[String])
     case class Unsigned(unsigned: String)
     case class Signature(signature: String)
     case class Key(key: String)
@@ -91,7 +94,7 @@ object Crypto {
   }
   implicit val factorize           = new SdkCall[Request.Factorize, Result.Factors]         { override val functionName: String = s"$prefix.factorize"             }
   implicit val generateRandomBytes = new SdkCall[Request.GenerateRandomBytes, Result.Bytes] { override val functionName: String = s"$prefix.generate_random_bytes" }
-  implicit val generateRandomSignKeys = new SdkCall[Request.GenerateRandomSignKeys.type, Result.KeyPair] {
+  implicit val generateRandomSignKeys = new SdkCall[Request.GenerateRandomSignKeys.type, KeyPair] {
     override val functionName: String = s"$prefix.generate_random_sign_keys"
   }
   implicit val hdkeyDeriveFromXprv = new SdkCall[Request.HdkeyDeriveFromXprv, Result.Xprv] { override val functionName: String = s"$prefix.hdkey_derive_from_xprv" }
@@ -108,8 +111,8 @@ object Crypto {
   implicit val mnemonicVerify         = new SdkCall[Request.MnemonicVerify, Result.Validity]            { override val functionName: String = s"$prefix.mnemonic_verify"           }
   implicit val mnemonicDeriveSignKeys = new SdkCall[Request.MnemonicDeriveSignKeys, Result.PublicKey]   { override val functionName: String = s"$prefix.mnemonic_derive_sign_keys" }
   implicit val modularPower           = new SdkCall[Request.ModularPower, Result.ModularPower]          { override val functionName: String = s"$prefix.modular_power"             }
-  implicit val naclBoxKeypair         = new SdkCall[Request.NaclBoxKeyPair.type, Result.KeyPair]        { override val functionName: String = s"$prefix.nacl_box_keypair"          }
-  implicit val naclBoxKeypairFromSecretKey = new SdkCall[Request.NaclBoxKeyPairFromSecretKey, Result.KeyPair] {
+  implicit val naclBoxKeypair         = new SdkCall[Request.NaclBoxKeyPair.type, KeyPair]               { override val functionName: String = s"$prefix.nacl_box_keypair"          }
+  implicit val naclBoxKeypairFromSecretKey = new SdkCall[Request.NaclBoxKeyPairFromSecretKey, KeyPair] {
     override val functionName: String = s"$prefix.nacl_box_keypair_from_secret_key"
   }
 
@@ -123,12 +126,11 @@ object Crypto {
   implicit val naclSignKeypairFromSecretKey = new SdkCall[Request.NaclSignKeypairFromSecretKey, Result.PublicKey] {
     override val functionName: String = s"$prefix.nacl_sign_keypair_from_secret_key"
   }
-  implicit val scrypt = new SdkCall[Request.Scrypt, Result.Key]  { override val functionName: String = s"$prefix.scrypt" }
-  implicit val sha256 = new SdkCall[Request.Sha256, Result.Hash] { override val functionName: String = s"$prefix.sha256" }
-  implicit val sha512 = new SdkCall[Request.Sha512, Result.Hash] { override val functionName: String = s"$prefix.sha512" }
-  implicit val tonCrc16 = new SdkCall[Request.TonCrc16,Result.Crc] { override val functionName: String = s"$prefix.ton_crc16" }
-
-//  implicit val sign = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.sign" }
-//  implicit val verify_signature = new SdkCall[Request.,Result.] { override val functionName: String = s"$prefix.verify_signature" }
+  implicit val scrypt          = new SdkCall[Request.Scrypt, Result.Key]               { override val functionName: String = s"$prefix.scrypt"           }
+  implicit val sha256          = new SdkCall[Request.Sha256, Result.Hash]              { override val functionName: String = s"$prefix.sha256"           }
+  implicit val sha512          = new SdkCall[Request.Sha512, Result.Hash]              { override val functionName: String = s"$prefix.sha512"           }
+  implicit val tonCrc16        = new SdkCall[Request.TonCrc16, Result.Crc]             { override val functionName: String = s"$prefix.ton_crc16"        }
+  implicit val verifySignature = new SdkCall[Request.VerifySignature, Result.Unsigned] { override val functionName: String = s"$prefix.verify_signature" }
+  implicit val sign            = new SdkCall[Request.Sign, Result.Signed]              { override val functionName: String = s"$prefix.sign"             }
 
 }

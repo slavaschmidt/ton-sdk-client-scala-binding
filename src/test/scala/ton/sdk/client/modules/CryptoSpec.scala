@@ -289,7 +289,7 @@ class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[Future] {
       call(Request.NaclBoxKeyPairFromSecretKey("e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4"))
     }
     assertValue(result)(
-      Result.KeyPair("a53b003d3ffc1e159355cb37332d67fc235a7feb6381e36c803274074dc3933a", "e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4")
+      KeyPair("a53b003d3ffc1e159355cb37332d67fc235a7feb6381e36c803274074dc3933a", "e207b5966fb2c5be1b71ed94ea813202706ab84253bdf4dc55232f82a1caf0d4")
     )
   }
 
@@ -356,7 +356,7 @@ class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[Future] {
   }
 
   val signSecret       = "56b6a77093d6fdf14e593f36275d872d75de5b341942376b2a08759f3cbae78f1869b7ef29d58026217e9cf163cbfbd0de889bdf1bf4daebf5433a312f5b8d6e"
-  val naclSignExpected = Result.Signed("i7MMLJ8a5vUdNPenG6pV2JFC8KeE0EeEera9NmxRe+wazZ1Jx4h8rhMlyIagPRW8zYemO4RAocJefrBxG+XmCExvbmcgbGl2ZSBGcmVlIFRPTg==")
+  val naclSignExpected = Result.Signed("i7MMLJ8a5vUdNPenG6pV2JFC8KeE0EeEera9NmxRe+wazZ1Jx4h8rhMlyIagPRW8zYemO4RAocJefrBxG+XmCExvbmcgbGl2ZSBGcmVlIFRPTg==", None)
   val unsigned         = "TG9uZyBsaXZlIEZyZWUgVE9O"
 
   it should "nacl_sign" in {
@@ -470,6 +470,43 @@ class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[Future] {
       call(Request.TonCrc16("I'm not base 64, dude"))
     }
     assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [I'm not base 64, dude]")
+  }
+
+  val signingKeypair = KeyPair(
+    public="1869b7ef29d58026217e9cf163cbfbd0de889bdf1bf4daebf5433a312f5b8d6e",
+    secret="56b6a77093d6fdf14e593f36275d872d75de5b341942376b2a08759f3cbae78f"
+  )
+
+  it should "sign and verify_signature in different contexts" in {
+
+    val expectedSignature = Result.Signed(
+      "JuEmQPJJx/T4q2mbEnEqG2p2MCH/6EPNd3nDoJyEYmHr2jvdecnzeux/sHePq18cj9gSndiz2ozmemImW3E0B0xvb2sgaG93IHVuc2lnbmVkIEknbQ==",
+      Some("26e12640f249c7f4f8ab699b12712a1b6a763021ffe843cd7779c3a09c846261ebda3bdd79c9f37aec7fb0778fab5f1c8fd8129dd8b3da8ce67a62265b713407"))
+    val unsigned = base64("Look how unsigned I'm")
+    val signedF = local { implicit ctx =>
+      call(Request.Sign(unsigned, signingKeypair))
+    }
+    val signed = fe.unsafeGet(signedF)
+    assert(signed == expectedSignature)
+    val verifiedF = local { implicit ctx =>
+      call(Request.VerifySignature(signed.signed, signingKeypair.public))
+    }
+    val verified = fe.unsafeGet(verifiedF)
+    assert(unsigned == verified.unsigned)
+  }
+
+  it should "not sign" in {
+    val result = local { implicit ctx =>
+      call(Request.Sign(base64("I will not be signed"), KeyPair("1", "2")))
+    }
+    assertSdkError(result)("Invalid key [Odd number of digits]: 1")
+  }
+
+  it should "not verify_signature" in {
+    val result = local { implicit ctx =>
+      call(Request.VerifySignature("This never happened, and now again...", signingKeypair.public))
+    }
+    assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [This never happened, and now again...]")
   }
 
   private def base64(s: String) = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
