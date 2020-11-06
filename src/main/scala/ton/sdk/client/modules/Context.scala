@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import ton.sdk.client.jni.{Binding, Handler}
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.Client._
-import ton.sdk.client.modules.Context.{Effect, logger}
+import ton.sdk.client.modules.Context.{logger, Effect}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -33,7 +33,7 @@ final case class Context private (id: Long) extends Closeable {
     logger.warn(s"Context($id) was not closed as expected, this is a programming error")
   }
 
-  def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
+  def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = { // Effect[E[R]]
     implicit val context: Context = this
     val fnName                    = call.functionName
     val jsonIn                    = call.toJson(params).noSpaces
@@ -75,6 +75,7 @@ object Context {
     def fromJson[R](str: T[String])(implicit call: SdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
     def managed[R](config: ClientConfig)(block: Context => T[R]): T[R]
     def unsafeGet[R](a: T[R]): R
+    def init[R](a: R): T[R]
   }
 
   val tryEffect: Effect[Try] = new Effect[Try] {
@@ -93,10 +94,10 @@ object Context {
         result
       }
     }
-    override def flatMap[P, R](in: Try[P])(f: P => Try[R]): Try[R] = in.flatMap(f)
-    override def map[P, R](in: Try[P])(f: P => R): Try[R]          = in.map(f)
-    override def unsafeGet[R](a: Try[R]): R                        = a.get
-
+    override def flatMap[P, R](in: Try[P])(f: P => Try[R]): Try[R]                         = in.flatMap(f)
+    override def map[P, R](in: Try[P])(f: P => R): Try[R]                                  = in.map(f)
+    override def unsafeGet[R](a: Try[R]): R                                                = a.get
+    override def init[R](a: R): Try[R]                                                     = Try(a)
     override def recover[R, U >: R](in: Try[R])(pf: PartialFunction[Throwable, U]): Try[U] = in.recover(pf)
   }
 
@@ -136,12 +137,12 @@ object Context {
         result.onComplete(_ => context.close())
         result
       }
-    override def flatMap[P, R](in: Future[P])(f: P => Future[R]): Future[R] = in.flatMap(f)
-    override def map[P, R](in: Future[P])(f: P => R): Future[R]             = in.map(f)
+    override def flatMap[P, R](in: Future[P])(f: P => Future[R]): Future[R]                      = in.flatMap(f)
+    override def map[P, R](in: Future[P])(f: P => R): Future[R]                                  = in.map(f)
     override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
     override def unsafeGet[R](a: Future[R]): R = Await.result(a, 10.seconds)
-
+    override def init[R](a: R): Future[R]      = Future(a)
   }
 
   def fromTry[R](t: Try[R]): Future[R] = t match {

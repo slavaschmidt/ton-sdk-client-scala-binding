@@ -1,0 +1,22 @@
+# temporary folders
+target
+project/project
+project/target
+tmp
+dist
+out
+
+# IDE-related folders & files
+.idea/
+*.uml
+*.ipr
+*.iws
+*.sc
+
+#SBT
+.bloop
+.bsp
+.metals
+.vscode
+project/.ploop
+project/metals.sbt
