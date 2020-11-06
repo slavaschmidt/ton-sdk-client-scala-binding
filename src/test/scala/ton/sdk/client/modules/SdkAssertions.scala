@@ -14,4 +14,5 @@ trait SdkAssertions[T[_]] extends Assertions {
     }
     fe.unsafeGet(error)
   }
+  def base64(s: String) = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
 }

@@ -31,6 +31,6 @@ abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with should.Matchers {
     }
     val api = fe.map(result)(_.api)
     fe.unsafeGet(fe.map(api)(api => assert(api.version == "1.0.0" && api.modules.length == 8 &&
-      api.modules.map(_.name).sorted == List("client", "utils", "crypto", "abi", "boc", "processing", "tvm", "net").sorted)))
+      api.modules.map(_.name).sorted == List("client", "utils", "crypto", "boc", "abi", "processing", "tvm", "net").sorted)))
   }
 }

@@ -2,8 +2,8 @@ package ton.sdk.client.modules
 
 import org.scalatest.flatspec._
 import org.scalatest.matchers._
+import ton.sdk.client.binding.ClientConfig
 import ton.sdk.client.modules.Api.SdkClientError
-import ton.sdk.client.modules.Client.ClientConfig
 import ton.sdk.client.modules.Crypto._
 import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Crypto.Result.{Signature, Validity}
@@ -507,5 +507,4 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [This never happened, and now again...]")
   }
 
-  private def base64(s: String) = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
 }

@@ -25,7 +25,8 @@ object Boc {
     bounced: Boolean,
     value: String,
     created_lt: String,
-    created_at: Long
+    created_at: Long,
+    body: String // TODO was absent
   )
 
   case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)

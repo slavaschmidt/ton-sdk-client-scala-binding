@@ -3,13 +3,15 @@ package ton.sdk.client.modules
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
+import io.circe.Printer
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.slf4j.LoggerFactory
+import ton.sdk.client.binding.ClientConfig
 import ton.sdk.client.jni.{Binding, Handler}
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.Client._
-import ton.sdk.client.modules.Context.{logger, Effect}
+import ton.sdk.client.modules.Context.{Effect, jsonPrinter, logger}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
@@ -20,7 +22,6 @@ import scala.util.{Failure, Success, Try}
   */
 final case class Context private (id: Long) extends Closeable {
   val isOpen = new AtomicBoolean(true)
-
   @throws[Exception]
   override def close(): Unit =
     try {
@@ -36,20 +37,21 @@ final case class Context private (id: Long) extends Closeable {
   def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = { // Effect[E[R]]
     implicit val context: Context = this
     val fnName                    = call.functionName
-    val jsonIn                    = call.toJson(params).noSpaces
-    effect.fromJson(effect.request(fnName, jsonIn))
+    val jsonIn                    = call.toJson(params)
+    effect.fromJson(effect.request(fnName, jsonPrinter.print(jsonIn)))
   }
 
 }
 
 object Context {
+  private val jsonPrinter = Printer.spaces2.copy(dropNullValues = true)
 
   private val errUndefinedBehaviour =
     "Got unfinished error response, the expected behaviour is not clear. Current implementation will continue to consume data but the result will be the first error"
   private val logger = LoggerFactory.getLogger(getClass)
 
   def create(config: ClientConfig): Try[Context] = this.synchronized {
-    val json = Binding.tcCreateContext(config.asJson.noSpaces)
+    val json = Binding.tcCreateContext(jsonPrinter.print(config.asJson))
     SdkResultOrError.fromJson[Long](json).map(Context.apply)
   }
 

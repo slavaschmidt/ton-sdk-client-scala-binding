@@ -18,9 +18,9 @@ object Processing {
     case class KeysSigner(keys: KeyPaar)          extends Signer
     case class SigningBoxSigner(handler: Int)     extends Signer
 
-    case class SendMessage(message: String, send_events: Boolean, abi: Option[Abi.Request.Abi] = None)
+    case class SendMessage(message: String, send_events: Boolean, abi: Option[Abi.Abi] = None)
     case class ProcessMessage(
-      abi: Abi.Request.Abi,
+      abi: Abi.Abi,
       signer: Signer,
       send_events: Boolean,
       address: Option[String] = None,
@@ -29,7 +29,7 @@ object Processing {
       processing_try_index: Int = 0
     )
 
-    case class ParamsOfWaitForTransaction(message: String, abi: Option[Abi.Request.Abi], shard_block_id: String, send_events: Boolean)
+    case class ParamsOfWaitForTransaction(message: String, abi: Option[Abi.Abi], shard_block_id: String, send_events: Boolean)
     case class WaitForTransaction(params: Json /*, callback: Callback*/ )
     case class ParamsOfProcessMessage(message_encode_params: String, send_events: Boolean)
   }
