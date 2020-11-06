@@ -40,3 +40,5 @@ object ClientConfig {
 final case class OrderBy(path: String, direction: String)
 
 final case class ClientResult[T](result: T)
+
+final case class KeyPair(public: String, secret: String)

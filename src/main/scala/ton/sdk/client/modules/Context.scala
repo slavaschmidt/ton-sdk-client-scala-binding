@@ -1,6 +1,7 @@
 package ton.sdk.client.modules
 
 import java.io.Closeable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 import io.circe.Printer
@@ -34,7 +35,7 @@ final case class Context private (id: Long) extends Closeable {
     logger.warn(s"Context($id) was not closed as expected, this is a programming error")
   }
 
-  def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = { // Effect[E[R]]
+  def request[P, R, E[_]](params: P)(implicit call: PlainSdkCall[P, R], effect: Effect[E]): E[R] = { // Effect[E[R]]
     implicit val context: Context = this
     val fnName                    = call.functionName
     val jsonIn                    = call.toJson(params)
@@ -65,8 +66,13 @@ object Context {
 //  def requestAsync(functionName: String, functionParams: String)(implicit ctx: Context): Future[String] =
 //    ctx.requestAsync(functionName, functionParams)
 
-  def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
+  def call[P, R, E[_]](params: P)(implicit call: PlainSdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
     ctx.request(params)
+
+  // TODO
+//  def call[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], ctx: Context, eff: Effect[E]): E[R] = {
+//    ctx.request(params)
+//  }
 
   trait Effect[T[_]] {
     def request(functionName: String, functionParams: String)(implicit c: Context): T[String]
@@ -74,7 +80,7 @@ object Context {
     def flatMap[P, R](in: T[P])(f: P => T[R]): T[R]
     def map[P, R](in: T[P])(f: P => R): T[R]
     def recover[R, U >: R](in: T[R])(pf: PartialFunction[Throwable, U]): T[U]
-    def fromJson[R](str: T[String])(implicit call: SdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
+    def fromJson[R](str: T[String])(implicit call: PlainSdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
     def managed[R](config: ClientConfig)(block: Context => T[R]): T[R]
     def unsafeGet[R](a: T[R]): R
     def init[R](a: R): T[R]

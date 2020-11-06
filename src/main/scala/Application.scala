@@ -111,7 +111,7 @@ object Application extends App {
     implicit val fe = futureEffect
     local { implicit ctx =>
       import ton.sdk.client.modules.Utils._
-      call(Request.ConvertAddress("this is my address", Types.accountId))
+      call(Request.ConvertAddress("this is my address", AddressOutputFormat.accountId))
     }
   }
 
@@ -119,7 +119,7 @@ object Application extends App {
     implicit val fe = tryEffect
     local { implicit ctx =>
       import ton.sdk.client.modules.Utils._
-      call(Request.ConvertAddress("this is my address", Types.accountId))
+      call(Request.ConvertAddress("this is my address", AddressOutputFormat.accountId))
     }
   }
   val result = Await.result(testUtilAsync(), 10.seconds)

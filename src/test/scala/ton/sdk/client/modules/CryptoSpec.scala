@@ -2,7 +2,7 @@ package ton.sdk.client.modules
 
 import org.scalatest.flatspec._
 import org.scalatest.matchers._
-import ton.sdk.client.binding.ClientConfig
+import ton.sdk.client.binding.{ClientConfig, KeyPair}
 import ton.sdk.client.modules.Api.SdkClientError
 import ton.sdk.client.modules.Crypto._
 import ton.sdk.client.modules.Context._

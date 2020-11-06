@@ -105,4 +105,10 @@ object Api {
     }
     def toJson(parameters: P) = parameters.asJson
   }
+
+  abstract class PlainSdkCall[P: Encoder, R: Decoder] extends SdkCall[P, R]
+
+  abstract class StreamingSdkCall[P: Encoder, R: Decoder, S] extends SdkCall[P, R] {
+
+  }
 }

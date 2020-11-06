@@ -2,11 +2,10 @@ package ton.sdk.client.modules
 
 import io.circe.parser.decode
 import io.circe.generic.auto._
-
 import org.scalatest.flatspec._
+import ton.sdk.client.binding.KeyPair
 import ton.sdk.client.modules.Abi._
 import ton.sdk.client.modules.Context._
-import ton.sdk.client.modules.Crypto.KeyPair
 
 import scala.io.Source
 import scala.util.Try

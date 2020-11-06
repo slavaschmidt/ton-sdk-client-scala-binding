@@ -21,28 +21,28 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with should.Matchers {
 
   it should "convert accountId to HEX" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(accountId, Types.hex))
+      call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
     }
     fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(hexWorkchain))))
   }
 
   it should "convert hexMasterchain to base64" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(hexMainchain, Types.base64()))
+      call(Request.ConvertAddress(hexMainchain, AddressOutputFormat.base64()))
     }
     fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(base64))))
   }
 
   it should "convert base64 address to base64url" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(base64, Types.base64(url = true, test = true, bounce = true)))
+      call(Request.ConvertAddress(base64, AddressOutputFormat.base64(url = true, test = true, bounce = true)))
     }
     fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(base64url))))
   }
 
   it should "convert base64url address to hex" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(base64url, Types.hex))
+      call(Request.ConvertAddress(base64url, AddressOutputFormat.hex))
     }
     fe.unsafeGet(fe.map(result)(assertResult(ConvertedAddress(hexMainchain))))
   }

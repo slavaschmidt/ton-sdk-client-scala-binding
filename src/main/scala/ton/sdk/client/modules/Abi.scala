@@ -2,7 +2,7 @@ package ton.sdk.client.modules
 
 import ton.sdk.client.modules.Api._
 
-// TODO this module is WIP
+// TODO status WIP
 object Abi {
 
   private val prefix = "abi"
@@ -39,7 +39,7 @@ object Abi {
 
   import io.circe.generic.auto._
 
-  implicit val decodeMessage = new SdkCall[Request.DecodeMessage, String] {
+  implicit val decodeMessage = new PlainSdkCall[Request.DecodeMessage, String] {
     override val functionName: String = s"$prefix.decode_message"
   }
 }
