@@ -10,17 +10,17 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 class SyncUtilsSpec extends UtilsSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 }
 
 class AsyncUtilsSpec extends UtilsSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  implicit override val fe: Context.Effect[Future]         = futureEffect
+  implicit override val ef: Context.Effect[Future]         = futureEffect
 }
 
 abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   behavior of "Utils"
 
@@ -67,7 +67,7 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "convert it back" in {
     val result = local { implicit ctx =>
-      fe.flatMap {
+      ef.flatMap {
         call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
       } { converted =>
         call(Request.ConvertAddress(converted.address, AddressOutputFormat.accountId))

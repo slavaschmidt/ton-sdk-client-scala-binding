@@ -10,7 +10,7 @@ import scala.util.{Success, Try}
 
 class AsyncClientSpec extends ClientSpec[Future] {
   override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val fe: Context.Effect[Future] = futureEffect
+  override implicit val ef: Context.Effect[Future] = futureEffect
 
   it should "be able to do stuff in parallel in single context and in multiple contexts" in {
     val r1 = local { implicit ctx =>
@@ -29,7 +29,7 @@ class AsyncClientSpec extends ClientSpec[Future] {
 }
 
 class SyncClientSpec extends ClientSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 
   it should "be able to do stuff in sequentially in single context and in multiple contexts" in {
     val r1 = local { implicit ctx =>
@@ -46,7 +46,7 @@ class SyncClientSpec extends ClientSpec[Try] {
 
 abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   behavior of "Client"
 
@@ -68,7 +68,7 @@ abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.ApiReference)
     }
-    val api = fe.map(result)(_.api)
+    val api = ef.map(result)(_.api)
     assertExpression(api)(r => r.version == "1.0.0" && r.modules.length == 8 &&
       r.modules.map(_.name).sorted == List("client", "utils", "crypto", "boc", "abi", "processing", "tvm", "net").sorted)
   }

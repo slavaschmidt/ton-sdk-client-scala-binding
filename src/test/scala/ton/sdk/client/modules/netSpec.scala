@@ -12,14 +12,14 @@ import scala.util.Try
 
 class AsyncNetSpec extends NetSpec[Future] {
   override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val fe: Context.Effect[Future] = futureEffect
+  override implicit val ef: Context.Effect[Future] = futureEffect
 }
 class SyncNetSpec extends NetSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 }
 abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   behavior of "Net"
 
@@ -42,7 +42,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val resultF = devNet { implicit ctx =>
       call(Request.QueryCollection("messages", filter = Option(filter), result = "body created_at", order = Option(Seq(OrderBy("created_at", "DESC"))), limit = Option(10)))
     }
-    val result = fe.unsafeGet(resultF)
+    val result = ef.unsafeGet(resultF)
     val bodies = result.result.flatMap(_ \\ "body")
     val times  = result.result.flatMap((_ \\ "created_at")).map(_.as[Long].toOption.get)
     assert(bodies.count(_ != Json.Null) <= 10)
@@ -67,7 +67,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val resultF = devNet { implicit ctx =>
       call(Request.WaitForCollection("transactions", filter = Option(filter), result = "id now"))
     }
-    val result = fe.unsafeGet(resultF)
+    val result = ef.unsafeGet(resultF)
     assert(result.result.\\("now").forall(_.as[Long].toOption.get > 1562342740L))
   }
 
@@ -84,7 +84,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val resultF = devNet { implicit ctx =>
       call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"))
     }
-    val result = fe.unsafeGet(resultF)
+    val result = ef.unsafeGet(resultF)
     val messages = result.elements.take(10)
 
     assert(messages.size == 10) // TODO check something else

@@ -12,25 +12,25 @@ import scala.util.Try
 
 class AsyncBocSpec extends BocSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  implicit override val fe: Context.Effect[Future]         = futureEffect
+  implicit override val ef: Context.Effect[Future]         = futureEffect
 }
 
 class SyncBocSpec extends BocSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 }
 
 abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   behavior of "Boc"
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   it should "parse message" in {
     val message = "te6ccgEBAQEAWAAAq2n+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE/zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzSsG8DgAAAAAjuOu9NAL7BxYpA"
     val result = local { implicit ctx =>
       call(Request.ParseMessage(message))
     }
-    fe.unsafeGet(fe.map(result)(assertResult(Result.Parsed(expectedMessage))))
+    assertValue(result)(Result.Parsed(expectedMessage))
   }
 
   it should "parse transaction" in {
@@ -39,7 +39,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.ParseTransaction(transaction))
     }
-    fe.unsafeGet(fe.map(result)(assertResult(Result.Parsed(expectedTransaction))))
+    assertValue(result)(Result.Parsed(expectedTransaction))
   }
 
   it should "parse account" in {
@@ -48,8 +48,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.ParseAccount(account))
     }
-    fe.unsafeGet(fe.map(result)(assertResult(Result.Parsed(expectedAccount))))
-    succeed
+    assertValue(result)(Result.Parsed(expectedAccount))
   }
 
   it should "parse block" in {
@@ -58,7 +57,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.ParseBlock(block))
     }
-    fe.unsafeGet(fe.map(result)(assertResult(Result.Parsed(expectedBlock))))
+    assertValue(result)(Result.Parsed(expectedBlock))
   }
 
   it should "get blockchain config" in {
@@ -67,7 +66,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.GetBlockchainConfig(block))
     }
-    fe.unsafeGet(fe.map(result)(assertResult(expectedBlockchainConfig)))
+    assertValue(result)(expectedBlockchainConfig)
   }
 
   it should "fail to parse message" in {
@@ -106,7 +105,6 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     import Decoders.decodeCompute
     val json = """{"success":true,"msg_state_used":false,"account_activated":false,"gas_fees":"0x598210","gas_used":5866,"gas_limit":10000,"mode":0,"exit_code":0,"vm_steps":119,"vm_init_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","vm_final_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","compute_type":1,"compute_type_name":"vm"}"""
     val result = decode[Compute](json)
-    println(result)
     assert(result.isRight)
   }
 

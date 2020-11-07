@@ -11,14 +11,14 @@ import scala.util.Try
 
 class AsyncTvmSpec extends TvmSpec[Future] {
   override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val fe: Context.Effect[Future] = futureEffect
+  override implicit val ef: Context.Effect[Future] = futureEffect
 }
 class SyncTvmSpec extends TvmSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 }
 abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   behavior of "Tvm"
 
@@ -27,14 +27,14 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "run_executor acc_none" in {
     val message = "te6ccgEBAQEAXAAAs0gAV2lB0HI8/VEO/pBKDJJJeoOcIh+dL9JzpmRzM8PfdicAPGNEGwRWGaJsR6UYmnsFVC2llSo1ZZN5mgUnCiHf7ZaUBKgXyAAGFFhgAAAB69+UmQS/LjmiQA=="
     val result = devNet { implicit ctx =>
-      fe.flatMap(call(Request.RunExecutor(message, AccountForExecutor.none, true))) { result =>
+      ef.flatMap(call(Request.RunExecutor(message, AccountForExecutor.none, true))) { result =>
         call(Boc.Request.ParseAccount(result.account))
       }
     }
     assertExpression(result)(p => p.parsed.id === "0:f18d106c11586689b11e946269ec1550b69654a8d5964de668149c28877fb65a"&& p.parsed.acc_type_name === "Uninit")
   }
 
-  // TODO test other funcitons
+  // TODO test other functions
 
   it should "decode transaction" in {
     import io.circe.generic.auto._

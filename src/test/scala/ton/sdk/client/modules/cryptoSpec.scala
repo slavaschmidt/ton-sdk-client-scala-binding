@@ -13,16 +13,16 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class AsyncCryptoSpec extends CryptoSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  implicit override val fe: Context.Effect[Future]         = futureEffect
+  implicit override val ef: Context.Effect[Future]         = futureEffect
 }
 
 class SyncCryptoSpec extends CryptoSpec[Try] {
-  implicit override val fe: Context.Effect[Try] = tryEffect
+  implicit override val ef: Context.Effect[Try] = tryEffect
 }
 
 abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
-  implicit val fe: Effect[T]
+  implicit val ef: Effect[T]
 
   behavior of "Crypto"
 
@@ -168,12 +168,12 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "mnemonic_from_random" in {
     val resultF = local { implicit ctx =>
-      fe.init(for {
+      ef.init(for {
         dictionary <- dictionaries
         count      <- wordCounts
       } yield call(Request.MnemonicFromRandom(dictionary, count)))
     }
-    val result = fe.unsafeGet(resultF).map(fe.unsafeGet)
+    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
     assert(result.zipWithIndex.forall { case (m, i) => m.wordCount === wordCounts(i % 5) })
   }
 
@@ -207,17 +207,17 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "mnemonic_verify" in {
     val resultF = local { implicit ctx =>
-      fe.init {
+      ef.init {
         for {
           dictionary <- dictionaries
           count      <- wordCounts
         } yield {
-          val randomMnemonic = fe.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
+          val randomMnemonic = ef.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
           call(Request.MnemonicVerify(randomMnemonic.phrase, count, dictionary))
         }
       }
     }
-    val result = fe.unsafeGet(resultF).map(fe.unsafeGet)
+    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
     assert(result.forall(_.valid))
   }
 
@@ -233,7 +233,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   // explicit context with closing
   it should "mnemonic_derive_sign_keys 1" in {
     implicit val ctx = Context.create(ClientConfig.local).get
-    val keyPair      = fe.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
+    val keyPair      = ef.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
     val publicSafe   = Context.call(Request.PublicKey(keyPair.public))
     val result       = assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))
     // ctx.close() TODO in async execution this will close context too early
@@ -243,7 +243,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   // implicit auto-closing context
   it should "mnemonic_derive_sign_keys 2" in {
     val result = local { implicit ctx =>
-      fe.flatMap {
+      ef.flatMap {
         call(Request.MnemonicDeriveSignKeys(phrase, path = "m", dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24))
       } { keypair =>
         call(Request.PublicKey(keypair.public))
@@ -255,15 +255,15 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "mnemonic_derive_sign_keys 3" in {
     val phrase = "abandon math mimic master filter design carbon crystal rookie group knife young"
     val result = local { implicit ctx =>
-      fe.flatMap(call(Request.MnemonicDeriveSignKeys(phrase)))(keypair => call(Request.PublicKey(keypair.public)))
+      ef.flatMap(call(Request.MnemonicDeriveSignKeys(phrase)))(keypair => call(Request.PublicKey(keypair.public)))
     }
     assertValue(result)(Result.TonPublicKey("PuZhw8W5ejPJwKA68RL7sn4_RNmeH4BIU_mEK7em5d4_-cIx"))
   }
 
   it should "mnemonic_derive_sign_keys 4" in {
     val result = local { implicit ctx =>
-      fe.flatMap(call(Request.MnemonicFromEntropy("2199ebe996f14d9e4e2595113ad1e627"))) { mnemonic =>
-        fe.flatMap(call(Request.MnemonicDeriveSignKeys(mnemonic.phrase))) { keypair =>
+      ef.flatMap(call(Request.MnemonicFromEntropy("2199ebe996f14d9e4e2595113ad1e627"))) { mnemonic =>
+        ef.flatMap(call(Request.MnemonicDeriveSignKeys(mnemonic.phrase))) { keypair =>
           call(Request.PublicKey(keypair.public))
         }
       }
@@ -324,13 +324,13 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "nacl_box and nacl_box_open and not nacl_box_open" in {
     val decrypted = "TG9uZyBsaXZlIEZyZWUgVE9O"
     val result = local { implicit ctx =>
-      fe.flatMap(call(Request.NaclBox(decrypted, nonce1, theirPublic, secret))) { box =>
-        fe.map(call(Request.NaclBoxOpen(box.encrypted, nonce1, theirPublic, secret)))(box -> _)
+      ef.flatMap(call(Request.NaclBox(decrypted, nonce1, theirPublic, secret))) { box =>
+        ef.map(call(Request.NaclBoxOpen(box.encrypted, nonce1, theirPublic, secret)))(box -> _)
       }
     }
-    assertValue(fe.map(result)(_._2))(Result.Decrypted(decrypted))
+    assertValue(ef.map(result)(_._2))(Result.Decrypted(decrypted))
     val error = local { implicit ctx =>
-      call(Request.NaclBoxOpen(fe.unsafeGet(result)._1.encrypted, nonce1, theirPublic, ""))
+      call(Request.NaclBoxOpen(ef.unsafeGet(result)._1.encrypted, nonce1, theirPublic, ""))
     }
     assertSdkError(error)("Invalid key size 0. Expected 32.")
   }
@@ -338,12 +338,12 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "nacl_secret_box and nacl_secret_box_open" in {
     val decrypted = "eyBMb25nIGxpdmUgRnJlZSBUT04gd2l0aCBzcGVjaWFsIGNoYXJzICcgIiB9ICQ9LD8gXQ=="
     val result = local { implicit ctx =>
-      fe.flatMap(call(Request.NaclSecretBox(decrypted, nonce2, secret))) { box =>
-        fe.map(call(Request.NaclSecretBoxOpen(box.encrypted, nonce2, secret)))(box -> _)
+      ef.flatMap(call(Request.NaclSecretBox(decrypted, nonce2, secret))) { box =>
+        ef.map(call(Request.NaclSecretBoxOpen(box.encrypted, nonce2, secret)))(box -> _)
       }
     }
-    assertValue(fe.map(result)(_._1))(Result.Encrypted("Q+jzxpEfrW3Zm13eohpaPNKNLxM7FeZXQG5nB5yIPWGsa0YEqBlnA45KdgqWB4AiR4QSjFxnM/W3Z3Bh7NN+WFQwNkM="))
-    assertValue(fe.map(result)(_._2))(Result.Decrypted(decrypted))
+    assertValue(ef.map(result)(_._1))(Result.Encrypted("Q+jzxpEfrW3Zm13eohpaPNKNLxM7FeZXQG5nB5yIPWGsa0YEqBlnA45KdgqWB4AiR4QSjFxnM/W3Z3Bh7NN+WFQwNkM="))
+    assertValue(ef.map(result)(_._2))(Result.Decrypted(decrypted))
   }
 
   it should "not nacl_secret_box" in {
@@ -491,12 +491,12 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val signedF = local { implicit ctx =>
       call(Request.Sign(unsigned, signingKeypair))
     }
-    val signed = fe.unsafeGet(signedF)
+    val signed = ef.unsafeGet(signedF)
     assert(signed == expectedSignature)
     val verifiedF = local { implicit ctx =>
       call(Request.VerifySignature(signed.signed, signingKeypair.public))
     }
-    val verified = fe.unsafeGet(verifiedF)
+    val verified = ef.unsafeGet(verifiedF)
     assert(unsigned == verified.unsigned)
   }
 
