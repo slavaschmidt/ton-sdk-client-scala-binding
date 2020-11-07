@@ -6,7 +6,7 @@ import ton.sdk.client.modules.Api._
 
 import scala.io.Source
 
-// TODO status WIP
+// TODO status FAILING
 object Abi {
 
   private val prefix = "abi"
@@ -76,14 +76,14 @@ object Abi {
   object MessageSource {
     def fromEncoded(message: String, abi: Option[Abi]) = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)
     def fromEncodingParams(p: Request.EncodeMessage) = {
-      MessageSource("EncodingParams", None, Option(p.abi), p.address, p.deploy_set, p.call_set, Option(p.signer), p.processing_try_index)
+      MessageSource("EncodingParams", None, Option(p.abi), p.address, p.deploy_set, p.call_set, Option(p.signer), Option(p.processing_try_index))
     }
   }
 
   object Request {
     final case class EncodeMessageBody(abi: Abi, call_set: AbiCallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])
     final case class AttachSignatureToMessageBody(abi: Abi, public_key: String, message: String, signature: String)
-    final case class EncodeMessage(abi: Abi, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Option[Int])
+    final case class EncodeMessage(abi: Abi, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Int = 0)
     final case class AttachSignature(abi: Abi, public_key: String, message: String, signature: String)
     final case class DecodeMessage(abi: Abi, message: String)
     final case class DecodeMessageBody(abi: Abi, body: String, is_internal: Boolean)
