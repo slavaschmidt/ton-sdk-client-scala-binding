@@ -1,5 +1,8 @@
 package ton.sdk.client.modules
 
+import java.io.File
+import java.nio.file.Files
+
 import io.circe.literal._
 import io.circe.syntax._
 import org.scalatest.flatspec._
@@ -27,7 +30,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   val keyPair      = KeyPair(public = "4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499", secret = "cc8929d635719612a9478b9cd17675a39cfad52d8959e8a177389b8c0b9122a7")
   val abi          = Abi.fromFile(getClass.getClassLoader.getResource("Events.abi.json").getFile).toOption.get
-  val tvcSrc       = getClass.getClassLoader.getResourceAsStream("Events.tvc").readAllBytes()
+  val tvcSrc       = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Events.tvc").getFile).toPath)
   val tvc          = base64(tvcSrc)
   val eventsTime   = 1599458364291L
   val eventsExpire = 1599458404
