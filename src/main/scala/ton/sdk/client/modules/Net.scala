@@ -24,18 +24,18 @@ object Net {
   import io.circe.generic.auto._
 
   implicit val queryCollection = new SdkCall[Request.QueryCollection, Result.QueryCollection] {
-    override val functionName: String = s"$prefix.query_collection"
+    override val function: String = s"$prefix.query_collection"
   }
 
   implicit val waitForCollection = new SdkCall[Request.WaitForCollection, Result.WaitForCollection] {
-    override val functionName: String = s"$prefix.wait_for_collection"
+    override val function: String = s"$prefix.wait_for_collection"
   }
 
   implicit val subscribeCollection = new SdkCall[Request.SubscribeCollection, Result.Handle] {
-    override val functionName: String = s"$prefix.subscribe_collection"
+    override val function: String = s"$prefix.subscribe_collection"
   }
 
   implicit val unsubscribe = new SdkCall[Request.Unsubscribe, Json] {
-    override val functionName: String = s"$prefix.unsubscribe"
+    override val function: String = s"$prefix.unsubscribe"
   }
 }

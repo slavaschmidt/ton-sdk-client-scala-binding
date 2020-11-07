@@ -138,7 +138,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     "finalized",
     Storage("0xa", 0, "unchanged"),
     Credit("0x989680"),
-    Compute(
+    ComputeVm(
       true,
       false,
       false,
@@ -149,9 +149,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       0,
       119,
       "0000000000000000000000000000000000000000000000000000000000000000",
-      "0000000000000000000000000000000000000000000000000000000000000000",
-      1,
-      "vm"
+      "0000000000000000000000000000000000000000000000000000000000000000"
     ),
     Action(true, true, false, 0, 0, 0, 0, 0, 0, "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7", 0, 0),
     false,

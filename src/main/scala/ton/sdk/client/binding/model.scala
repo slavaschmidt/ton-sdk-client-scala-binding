@@ -1,6 +1,8 @@
 package ton.sdk.client.binding
 
-// Network endpoints: https://docs.ton.dev/86757ecb2/p/85c869-network-endpoints
+import io.circe.{Decoder, HCursor, Json}
+import io.circe.generic.auto._
+import ton.sdk.client.modules.Abi.Abi
 
 final case class NetworkConfig(
   server_address: String,
@@ -53,7 +55,11 @@ case class Fees(
 )
 case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)
 case class Credit(credit: String)
-case class Compute(
+sealed trait Compute {
+  val compute_type: Int
+  val compute_type_name: String
+}
+final case class ComputeVm(
   success: Boolean,
   msg_state_used: Boolean,
   account_activated: Boolean,
@@ -64,10 +70,18 @@ case class Compute(
   exit_code: Int,
   vm_steps: Int,
   vm_init_state_hash: String,
-  vm_final_state_hash: String,
-  compute_type: Int,
-  compute_type_name: String
-)
+  vm_final_state_hash: String
+) extends Compute {
+  override val compute_type: Int         = 1
+  override val compute_type_name: String = "vm"
+}
+final case class ComputeSkipped(
+  skipped_reason: Int,
+  skipped_reason_name: String
+) extends Compute {
+  override val compute_type: Int         = 0
+  override val compute_type_name: String = "skipped"
+}
 case class Action(
   success: Boolean,
   valid: Boolean,
@@ -114,3 +128,26 @@ case class Transaction(
   old_hash: String,
   new_hash: String
 )
+
+final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, inputs: Option[Map[String, Json]] = None)
+final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
+
+sealed trait Signer
+final case object NoSigner                          extends Signer
+final case class ExternalSigner(public_key: String) extends Signer
+final case class KeysSigner(keys: KeyPair)          extends Signer
+final case class SigningBoxSigner(handler: Int)     extends Signer
+
+
+
+final case class FunctionHeader(expire: Option[Long], time: Option[BigInt], pubkey: Option[String])
+
+//object Decoders {
+//  implicit val decodeCompute: Decoder[Compute] = (c: HCursor) => for {
+//    foo <- c.downField("compute_type").as[Int]
+//    result <- foo match {
+//      case 0 => Decoder[ComputeSkipped].apply(c)
+//      case 1 => Decoder[ComputeVm].apply(c)
+//    }
+//  } yield result
+//}

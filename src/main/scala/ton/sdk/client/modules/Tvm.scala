@@ -39,18 +39,18 @@ object Tvm {
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }
   object Result {
-    final case class RunExecutor(transaction: Json, out_messages: Seq[String], decoded: Option[String], account: String, fees: Fees)
+    final case class RunExecutor(transaction: Transaction, out_messages: Seq[String], decoded: Option[String], account: String, fees: Fees)
   }
 
   import io.circe.generic.auto._
 
   implicit val runExecutor = new SdkCall[Request.RunExecutor, Result.RunExecutor] {
-    override val functionName: String = s"$prefix.run_executor"
+    override val function: String = s"$prefix.run_executor"
   }
   implicit val runTvm = new SdkCall[Request.RunTvm, String] {
-    override val functionName: String = s"$prefix.run_tvm"
+    override val function: String = s"$prefix.run_tvm"
   }
   implicit val runGet = new SdkCall[Request.RunGet, String] {
-    override val functionName: String = s"$prefix.run_get"
+    override val function: String = s"$prefix.run_get"
   }
 }

@@ -12,11 +12,7 @@ libraryDependencies ++= Seq(
   "org.scalatest"  %% "scalatest"      % "3.2.2" % Test
 )
 
-libraryDependencies ++= Seq(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
+libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal").map("io.circe" %% _ % circeVersion)
 
 scalacOptions in Compile ++= Seq(
   "-Xlog-reflective-calls",

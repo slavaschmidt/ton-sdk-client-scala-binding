@@ -97,7 +97,7 @@ object Api {
   }
 
   abstract class SdkCall[P: Encoder, R: Decoder] {
-    def functionName: String
+    def function: String
     // def fromJson(json: String): Try[R]
     def toJson(parameters: P) = parameters.asJson
     implicit val decoder = implicitly[Decoder[R]]

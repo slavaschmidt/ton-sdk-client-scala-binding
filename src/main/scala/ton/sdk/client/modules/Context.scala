@@ -36,7 +36,7 @@ final case class Context private (id: Long) extends Closeable {
 
   def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
     implicit val context: Context = this
-    val fnName                    = call.functionName
+    val fnName                    = call.function
     val jsonIn                    = call.toJson(params)
     import call.decoder
     effect.request(fnName, jsonPrinter.print(jsonIn))

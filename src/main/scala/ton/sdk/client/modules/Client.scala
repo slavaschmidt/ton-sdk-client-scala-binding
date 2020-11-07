@@ -35,14 +35,14 @@ object Client {
   import io.circe.generic.auto._
 
   implicit val version = new SdkCall[Request.Version.type, Result.Version] {
-    override val functionName: String = "client.version"
+    override val function: String = "client.version"
   }
 
   implicit val buildInfo = new SdkCall[Request.BuildInfo.type, Result.BuildInfo] {
-    override val functionName: String = "client.build_info"
+    override val function: String = "client.build_info"
   }
 
   implicit val apiReference = new SdkCall[Request.ApiReference.type, Result.ApiReference] {
-    override val functionName: String = "client.get_api_reference"
+    override val function: String = "client.get_api_reference"
   }
 }

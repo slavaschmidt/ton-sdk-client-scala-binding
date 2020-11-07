@@ -25,7 +25,7 @@ object Utils {
   import io.circe.generic.auto._
 
   implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.ConvertedAddress] {
-    override val functionName: String = s"$prefix.convert_address"
+    override val function: String = s"$prefix.convert_address"
   }
 
 }

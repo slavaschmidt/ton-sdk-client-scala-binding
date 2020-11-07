@@ -1,6 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
+import ton.sdk.client.binding.{CallSet, DeploySet, KeyPair, Signer}
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.Net.Result.Handle
 
@@ -9,17 +10,6 @@ import ton.sdk.client.modules.Net.Result.Handle
 object Processing {
 
   private val prefix = "processing"
-
-  case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, inputs: Option[Map[String, Json]] = None)
-  case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
-  case class KeyPaar(public: String, secret: String)
-
-  sealed trait Signer
-  case object NoSigner                          extends Signer
-  case class ExternalSigner(public_key: String) extends Signer
-  case class KeysSigner(keys: KeyPaar)          extends Signer
-  case class SigningBoxSigner(handler: Int)     extends Signer
-
 
   case class ParamsOfWaitForTransaction(message: String, abi: Option[Abi.Abi], shard_block_id: String, send_events: Boolean)
   case class ParamsOfProcessMessage(message_encode_params: String, send_events: Boolean)
@@ -39,14 +29,14 @@ object Processing {
   import io.circe.generic.auto._
 
   implicit val sendMessage = new SdkCall[Request.SendMessage, Result.SendMessage] {
-    override val functionName: String = s"$prefix.send_message"
+    override val function: String = s"$prefix.send_message"
   }
 
   implicit val waitForTransaction = new SdkCall[Request.WaitForTransaction, Result.ResultOfProcessMessage] {
-    override val functionName: String = s"$prefix.wait_for_transaction"
+    override val function: String = s"$prefix.wait_for_transaction"
   }
 
   implicit val processMessage = new SdkCall[Request.ProcessMessage, Result.ResultOfProcessMessage] {
-    override val functionName: String = s"$prefix.process_message"
+    override val function: String = s"$prefix.process_message"
   }
 }
