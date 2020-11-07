@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.modules.Api.PlainSdkCall
+import ton.sdk.client.modules.Api.SdkCall
 
 object Client {
 
@@ -34,15 +34,15 @@ object Client {
 
   import io.circe.generic.auto._
 
-  implicit val version = new PlainSdkCall[Request.Version.type, Result.Version] {
+  implicit val version = new SdkCall[Request.Version.type, Result.Version] {
     override val functionName: String = "client.version"
   }
 
-  implicit val buildInfo = new PlainSdkCall[Request.BuildInfo.type, Result.BuildInfo] {
+  implicit val buildInfo = new SdkCall[Request.BuildInfo.type, Result.BuildInfo] {
     override val functionName: String = "client.build_info"
   }
 
-  implicit val apiReference = new PlainSdkCall[Request.ApiReference.type, Result.ApiReference] {
+  implicit val apiReference = new SdkCall[Request.ApiReference.type, Result.ApiReference] {
     override val functionName: String = "client.get_api_reference"
   }
 }

@@ -12,8 +12,8 @@ import ton.sdk.client.modules.Context.futureEffect
 import scala.concurrent.{ExecutionContext, Future}
 
 class AsyncCryptoSpec extends CryptoSpec[Future] {
-  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val fe: Context.Effect[Future] = futureEffect
+  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  implicit override val fe: Context.Effect[Future]         = futureEffect
 }
 
 class SyncCryptoSpec extends CryptoSpec[Try] {
@@ -235,42 +235,41 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     implicit val ctx = Context.create(ClientConfig.local).get
     val keyPair      = fe.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
     val publicSafe   = Context.call(Request.PublicKey(keyPair.public))
-    assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))
+    val result       = assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))
+    // ctx.close() TODO in async execution this will close context too early
+    result
   }
 
   // implicit auto-closing context
-  // TODO change map and flatmap in effect
-//  it should "mnemonic_derive_sign_keys 2" in {
-//    val result = local { implicit ctx =>
-//      for {
-//        keypair    <- call(Request.MnemonicDeriveSignKeys(phrase, path = "m", dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24))
-//        publicSafe <- call(Request.PublicKey(keypair.public))
-//      } yield publicSafe
-//    }
-//    assertValue(result)(Result.TonPublicKey("PubDdJkMyss2qHywFuVP1vzww0TpsLxnRNnbifTCcu-XEgW0"))
-//  }
-//
-//  it should "mnemonic_derive_sign_keys 3" in {
-//    val phrase = "abandon math mimic master filter design carbon crystal rookie group knife young"
-//    val result = local { implicit ctx =>
-//      for {
-//        keypair    <- call(Request.MnemonicDeriveSignKeys(phrase))
-//        publicSafe <- call(Request.PublicKey(keypair.public))
-//      } yield publicSafe
-//    }
-//    assertValue(result)(Result.TonPublicKey("PuZhw8W5ejPJwKA68RL7sn4_RNmeH4BIU_mEK7em5d4_-cIx"))
-//  }
-//
-//  it should "mnemonic_derive_sign_keys 4" in {
-//    val result = local { implicit ctx =>
-//      for {
-//        mnemonic   <- call(Request.MnemonicFromEntropy("2199ebe996f14d9e4e2595113ad1e627"))
-//        keypair    <- call(Request.MnemonicDeriveSignKeys(mnemonic.phrase))
-//        publicSafe <- call(Request.PublicKey(keypair.public))
-//      } yield publicSafe
-//    }
-//    assertValue(result)(Result.TonPublicKey("PuZdw_KyXIzo8IksTrERN3_WoAoYTyK7OvM-yaLk711sUIB3"))
-//  }
+  it should "mnemonic_derive_sign_keys 2" in {
+    val result = local { implicit ctx =>
+      fe.flatMap {
+        call(Request.MnemonicDeriveSignKeys(phrase, path = "m", dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24))
+      } { keypair =>
+        call(Request.PublicKey(keypair.public))
+      }
+    }
+    assertValue(result)(Result.TonPublicKey("PubDdJkMyss2qHywFuVP1vzww0TpsLxnRNnbifTCcu-XEgW0"))
+  }
+
+  it should "mnemonic_derive_sign_keys 3" in {
+    val phrase = "abandon math mimic master filter design carbon crystal rookie group knife young"
+    val result = local { implicit ctx =>
+      fe.flatMap(call(Request.MnemonicDeriveSignKeys(phrase)))(keypair => call(Request.PublicKey(keypair.public)))
+    }
+    assertValue(result)(Result.TonPublicKey("PuZhw8W5ejPJwKA68RL7sn4_RNmeH4BIU_mEK7em5d4_-cIx"))
+  }
+
+  it should "mnemonic_derive_sign_keys 4" in {
+    val result = local { implicit ctx =>
+      fe.flatMap(call(Request.MnemonicFromEntropy("2199ebe996f14d9e4e2595113ad1e627"))) { mnemonic =>
+        fe.flatMap(call(Request.MnemonicDeriveSignKeys(mnemonic.phrase))) { keypair =>
+          call(Request.PublicKey(keypair.public))
+        }
+      }
+    }
+    assertValue(result)(Result.TonPublicKey("PuZdw_KyXIzo8IksTrERN3_WoAoYTyK7OvM-yaLk711sUIB3"))
+  }
 
   it should "modular_power" in {
     val result = local { implicit ctx =>
@@ -322,34 +321,30 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid key size 0. Expected 32.")
   }
 
-  // FIXME
-//  it should "nacl_box and nacl_box_open and not nacl_box_open" in {
-//    val decrypted = "TG9uZyBsaXZlIEZyZWUgVE9O"
-//    val result = local { implicit ctx =>
-//      for {
-//        box    <- call(Request.NaclBox(decrypted, nonce1, theirPublic, secret))
-//        opened <- call(Request.NaclBoxOpen(box.encrypted, nonce1, theirPublic, secret))
-//      } yield (box, opened)
-//    }
-//    assertValue(result.map(_._2))(Result.Decrypted(decrypted))
-//    val error = local { implicit ctx =>
-//      call(Request.NaclBoxOpen(fe.unsafeGet(result)._1.encrypted, nonce1, theirPublic, ""))
-//    }
-//    assertSdkError(error)("Invalid key size 0. Expected 32.")
-//  }
+  it should "nacl_box and nacl_box_open and not nacl_box_open" in {
+    val decrypted = "TG9uZyBsaXZlIEZyZWUgVE9O"
+    val result = local { implicit ctx =>
+      fe.flatMap(call(Request.NaclBox(decrypted, nonce1, theirPublic, secret))) { box =>
+        fe.map(call(Request.NaclBoxOpen(box.encrypted, nonce1, theirPublic, secret)))(box -> _)
+      }
+    }
+    assertValue(fe.map(result)(_._2))(Result.Decrypted(decrypted))
+    val error = local { implicit ctx =>
+      call(Request.NaclBoxOpen(fe.unsafeGet(result)._1.encrypted, nonce1, theirPublic, ""))
+    }
+    assertSdkError(error)("Invalid key size 0. Expected 32.")
+  }
 
-//
-//  it should "nacl_secret_box and nacl_secret_box_open" in {
-//    val decrypted = "eyBMb25nIGxpdmUgRnJlZSBUT04gd2l0aCBzcGVjaWFsIGNoYXJzICcgIiB9ICQ9LD8gXQ=="
-//    val result = local { implicit ctx =>
-//      for {
-//        box    <- call(Request.NaclSecretBox(decrypted, nonce2, secret))
-//        opened <- call(Request.NaclSecretBoxOpen(box.encrypted, nonce2, secret))
-//      } yield (box, opened)
-//    }
-//    assertValue(result.map(_._1))(Result.Encrypted("Q+jzxpEfrW3Zm13eohpaPNKNLxM7FeZXQG5nB5yIPWGsa0YEqBlnA45KdgqWB4AiR4QSjFxnM/W3Z3Bh7NN+WFQwNkM="))
-//    assertValue(result.map(_._2))(Result.Decrypted(decrypted))
-//  }
+  it should "nacl_secret_box and nacl_secret_box_open" in {
+    val decrypted = "eyBMb25nIGxpdmUgRnJlZSBUT04gd2l0aCBzcGVjaWFsIGNoYXJzICcgIiB9ICQ9LD8gXQ=="
+    val result = local { implicit ctx =>
+      fe.flatMap(call(Request.NaclSecretBox(decrypted, nonce2, secret))) { box =>
+        fe.map(call(Request.NaclSecretBoxOpen(box.encrypted, nonce2, secret)))(box -> _)
+      }
+    }
+    assertValue(fe.map(result)(_._1))(Result.Encrypted("Q+jzxpEfrW3Zm13eohpaPNKNLxM7FeZXQG5nB5yIPWGsa0YEqBlnA45KdgqWB4AiR4QSjFxnM/W3Z3Bh7NN+WFQwNkM="))
+    assertValue(fe.map(result)(_._2))(Result.Decrypted(decrypted))
+  }
 
   it should "not nacl_secret_box" in {
     val result = local { implicit ctx =>

@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.modules.Api.PlainSdkCall
+import ton.sdk.client.modules.Api.SdkCall
 
 object Boc {
 
@@ -214,19 +214,19 @@ object Boc {
 
   import io.circe.generic.auto._
 
-  implicit val parseMessage = new PlainSdkCall[Request.ParseMessage, Result.Parsed[Message]] {
+  implicit val parseMessage = new SdkCall[Request.ParseMessage, Result.Parsed[Message]] {
     override val functionName: String = s"$prefix.parse_message"
   }
-  implicit val parseTransaction = new PlainSdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] {
+  implicit val parseTransaction = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] {
     override val functionName: String = s"$prefix.parse_transaction"
   }
-  implicit val parseAccount = new PlainSdkCall[Request.ParseAccount, Result.Parsed[Account]] {
+  implicit val parseAccount = new SdkCall[Request.ParseAccount, Result.Parsed[Account]] {
     override val functionName: String = s"$prefix.parse_account"
   }
-  implicit val parseBlock = new PlainSdkCall[Request.ParseBlock, Result.Parsed[Block]] {
+  implicit val parseBlock = new SdkCall[Request.ParseBlock, Result.Parsed[Block]] {
     override val functionName: String = s"$prefix.parse_block"
   }
-  implicit val getBlockchainConfig = new PlainSdkCall[Request.GetBlockchainConfig, Result.ConfigBoc] {
+  implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc] {
     override val functionName: String = s"$prefix.get_blockchain_config"
   }
 

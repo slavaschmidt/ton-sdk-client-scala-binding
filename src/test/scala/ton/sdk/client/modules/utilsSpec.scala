@@ -2,7 +2,6 @@ package ton.sdk.client.modules
 
 import org.scalatest._
 import flatspec._
-import ton.sdk.client.modules.Api.SdkClientError
 import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Utils.Result.ConvertedAddress
 import ton.sdk.client.modules.Utils._
@@ -11,35 +10,12 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 class SyncUtilsSpec extends UtilsSpec[Try] {
-
   implicit override val fe: Context.Effect[Try] = tryEffect
-
-  it should "convert it back" in {
-    val result = local { implicit ctx =>
-      for {
-        converted <- call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
-        result    <- call(Request.ConvertAddress(converted.address, AddressOutputFormat.accountId))
-      } yield result
-    }
-    assertValue(result)(ConvertedAddress(accountId))
-  }
-
 }
 
 class AsyncUtilsSpec extends UtilsSpec[Future] {
-
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val fe: Context.Effect[Future]         = futureEffect
-
-  it should "convert it back" in {
-    val result = local { implicit ctx =>
-      for {
-        converted <- call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
-        result    <- call(Request.ConvertAddress(converted.address, AddressOutputFormat.accountId))
-      } yield result
-    }
-    assertValue(result)(ConvertedAddress(accountId))
-  }
 }
 
 abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
@@ -89,4 +65,14 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertValue(result)(ConvertedAddress(hexMainchain))
   }
 
+  it should "convert it back" in {
+    val result = local { implicit ctx =>
+      fe.flatMap {
+        call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
+      } { converted =>
+        call(Request.ConvertAddress(converted.address, AddressOutputFormat.accountId))
+      }
+    }
+    assertValue(result)(ConvertedAddress(accountId))
+  }
 }

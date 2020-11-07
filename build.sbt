@@ -31,3 +31,5 @@ scalacOptions in Compile ++= Seq(
   "-Yrangepos"
   // "-Xfatal-warnings"
 )
+
+fork in Test := true

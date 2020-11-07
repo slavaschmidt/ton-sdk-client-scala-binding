@@ -1,14 +1,14 @@
 import io.circe.parser.decode
 import ton.sdk.client.jni.{Binding, Handler}
-import ton.sdk.client.modules.Api.SdkResultOrError.fromJson
+import ton.sdk.client.modules.Api.SdkResultOrError._
 import ton.sdk.client.modules.Api._
 import ton.sdk.client.modules.{Client, Context, Processing}
-import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
 
 object Application extends App {
+  Binding.loadNativeLibrary()
 
   def testLowLevel() = {
     val result = Binding.tcCreateContext("""{ "servers": ["net.ton.dev"] }""")
@@ -61,9 +61,9 @@ object Application extends App {
   import io.circe.generic.auto._
 
   def testEncoders(): Unit = {
-    println(fromJson[Long]("""{"result":1}"""))
+    println(fromJsonWrapped[Long]("""{"result":1}"""))
     println(decode[SdkError[Long]]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
-    println(fromJson[Long]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
+    println(fromJsonWrapped[Long]("""{"error":{"code":25,"message":"Unknown function: version","data":{"core_version":"1.0.0"}}}"""))
   }
 //  testEncoders()
 

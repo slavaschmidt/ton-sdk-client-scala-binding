@@ -1,6 +1,6 @@
 package ton.sdk.client.modules
 
-import ton.sdk.client.modules.Api.PlainSdkCall
+import ton.sdk.client.modules.Api.SdkCall
 
 object Utils {
 
@@ -24,7 +24,7 @@ object Utils {
 
   import io.circe.generic.auto._
 
-  implicit val convertAddress = new PlainSdkCall[Request.ConvertAddress, Result.ConvertedAddress] {
+  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.ConvertedAddress] {
     override val functionName: String = s"$prefix.convert_address"
   }
 

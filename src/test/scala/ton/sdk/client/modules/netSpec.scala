@@ -5,7 +5,7 @@ import io.circe.syntax._
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, OrderBy}
 import ton.sdk.client.modules.Context._
-import ton.sdk.client.modules.Net.{Request, Result}
+import ton.sdk.client.modules.Net.Request
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -78,6 +78,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("WaitFor failed: Can not send http request: error sending request for url (https://net.ton.dev/graphql): operation timed out")
   }
 
+  // TODO implementation is missing yet
   it should "subscribe_collection" in {
     val filter = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
     val resultF = devNet { implicit ctx =>
@@ -91,15 +92,14 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val un = devNet { implicit ctx =>
       call(Request.Unsubscribe(100500))
     }
-    assertExpression(un)(_.result == 1)
+    assertValue(un)(Json.Null)
 
   }
 
-  // Fails because "result" conflicts with SdkResultError
   it should "unsubscribe handle that does not exist" in {
     val result = devNet { implicit ctx =>
       call(Request.Unsubscribe(100500))
     }
-    assertExpression(result)(_.result == 1)
+    assertValue(result)(Json.Null)
   }
 }

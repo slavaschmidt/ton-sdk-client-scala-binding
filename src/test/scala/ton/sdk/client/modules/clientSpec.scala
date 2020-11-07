@@ -5,6 +5,7 @@ import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.{Success, Try}
 
 class AsyncClientSpec extends ClientSpec[Future] {
@@ -40,9 +41,7 @@ class SyncClientSpec extends ClientSpec[Try] {
     val result1 = r1.collect { case Success(s) => s }
     val result2 = r2.collect { case Success(s) => s }
     assert(result1 == result2 && result1.size == 10)
-    succeed
   }
-
 }
 
 abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {

@@ -38,15 +38,15 @@ object Processing {
 
   import io.circe.generic.auto._
 
-  implicit val sendMessage = new PlainSdkCall[Request.SendMessage, Result.SendMessage] {
+  implicit val sendMessage = new SdkCall[Request.SendMessage, Result.SendMessage] {
     override val functionName: String = s"$prefix.send_message"
   }
 
-  implicit val waitForTransaction = new PlainSdkCall[Request.WaitForTransaction, Result.ResultOfProcessMessage] {
+  implicit val waitForTransaction = new SdkCall[Request.WaitForTransaction, Result.ResultOfProcessMessage] {
     override val functionName: String = s"$prefix.wait_for_transaction"
   }
 
-  implicit val processMessage = new PlainSdkCall[Request.ProcessMessage, Result.ResultOfProcessMessage] {
+  implicit val processMessage = new SdkCall[Request.ProcessMessage, Result.ResultOfProcessMessage] {
     override val functionName: String = s"$prefix.process_message"
   }
 }

@@ -44,7 +44,7 @@ public class Binding {
     private static final ConcurrentHashMap<Long, Handler> mapping = new ConcurrentHashMap<>();
     private static final AtomicLong counter = new AtomicLong(0);
 
-    static {
+    public static void loadNativeLibrary() {
 //        String path = new File("lib/").getAbsolutePath();
 //        System.out.println("loading from " + path);
 //        System.setProperty("java.library.path", path);

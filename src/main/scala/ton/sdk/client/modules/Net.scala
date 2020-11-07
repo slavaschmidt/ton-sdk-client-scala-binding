@@ -2,7 +2,7 @@ package ton.sdk.client.modules
 
 import io.circe.Json
 import ton.sdk.client.binding.{ClientResult, OrderBy}
-import ton.sdk.client.modules.Api.PlainSdkCall
+import ton.sdk.client.modules.Api.SdkCall
 
 // TODO Status: WIP
 object Net {
@@ -23,19 +23,19 @@ object Net {
 
   import io.circe.generic.auto._
 
-  implicit val queryCollection = new PlainSdkCall[Request.QueryCollection, Result.QueryCollection] {
+  implicit val queryCollection = new SdkCall[Request.QueryCollection, Result.QueryCollection] {
     override val functionName: String = s"$prefix.query_collection"
   }
 
-  implicit val waitForCollection = new PlainSdkCall[Request.WaitForCollection, Result.WaitForCollection] {
+  implicit val waitForCollection = new SdkCall[Request.WaitForCollection, Result.WaitForCollection] {
     override val functionName: String = s"$prefix.wait_for_collection"
   }
 
-  implicit val subscribeCollection = new PlainSdkCall[Request.SubscribeCollection, Result.Handle] {
+  implicit val subscribeCollection = new SdkCall[Request.SubscribeCollection, Result.Handle] {
     override val functionName: String = s"$prefix.subscribe_collection"
   }
 
-  implicit val unsubscribe = new PlainSdkCall[Request.Unsubscribe, ClientResult[Int]] {
+  implicit val unsubscribe = new SdkCall[Request.Unsubscribe, Json] {
     override val functionName: String = s"$prefix.unsubscribe"
   }
 }

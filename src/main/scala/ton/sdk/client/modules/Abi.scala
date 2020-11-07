@@ -39,7 +39,7 @@ object Abi {
 
   import io.circe.generic.auto._
 
-  implicit val decodeMessage = new PlainSdkCall[Request.DecodeMessage, String] {
+  implicit val decodeMessage = new SdkCall[Request.DecodeMessage, String] {
     override val functionName: String = s"$prefix.decode_message"
   }
 }

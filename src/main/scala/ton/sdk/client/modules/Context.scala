@@ -1,7 +1,6 @@
 package ton.sdk.client.modules
 
 import java.io.Closeable
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 import io.circe.Printer
@@ -11,11 +10,11 @@ import org.slf4j.LoggerFactory
 import ton.sdk.client.binding.ClientConfig
 import ton.sdk.client.jni.{Binding, Handler}
 import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.Client._
 import ton.sdk.client.modules.Context.{Effect, jsonPrinter, logger}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -35,17 +34,18 @@ final case class Context private (id: Long) extends Closeable {
     logger.warn(s"Context($id) was not closed as expected, this is a programming error")
   }
 
-  def request[P, R, E[_]](params: P)(implicit call: PlainSdkCall[P, R], effect: Effect[E]): E[R] = { // Effect[E[R]]
+  def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
     implicit val context: Context = this
     val fnName                    = call.functionName
     val jsonIn                    = call.toJson(params)
-    effect.fromJson(effect.request(fnName, jsonPrinter.print(jsonIn)))
+    import call.decoder
+    effect.request(fnName, jsonPrinter.print(jsonIn))
   }
 
 }
 
 object Context {
-  private val jsonPrinter = Printer.spaces2.copy(dropNullValues = true)
+  private val jsonPrinter = Printer.noSpaces.copy(dropNullValues = true)
 
   private val errUndefinedBehaviour =
     "Got unfinished error response, the expected behaviour is not clear. Current implementation will continue to consume data but the result will be the first error"
@@ -53,7 +53,7 @@ object Context {
 
   def create(config: ClientConfig): Try[Context] = this.synchronized {
     val json = Binding.tcCreateContext(jsonPrinter.print(config.asJson))
-    SdkResultOrError.fromJson[Long](json).map(Context.apply)
+    SdkResultOrError.fromJsonWrapped[Long](json).map(Context.apply)
   }
 
   def local[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]   = effect.managed(ClientConfig.local)(block)
@@ -61,37 +61,30 @@ object Context {
   def devNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]  = effect.managed(ClientConfig.devNet)(block)
   def testNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T] = effect.managed(ClientConfig.testNet)(block)
 
-//  def requestSync(functionName: String, functionParams: String)(implicit ctx: Context): Try[String] =
-//    ctx.request(functionName, functionParams)
-//  def requestAsync(functionName: String, functionParams: String)(implicit ctx: Context): Future[String] =
-//    ctx.requestAsync(functionName, functionParams)
-
-  def call[P, R, E[_]](params: P)(implicit call: PlainSdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
+  def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
     ctx.request(params)
 
-  // TODO
-//  def call[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], ctx: Context, eff: Effect[E]): E[R] = {
-//    ctx.request(params)
-//  }
-
   trait Effect[T[_]] {
-    def request(functionName: String, functionParams: String)(implicit c: Context): T[String]
+    def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
     def fromTry[R](t: Try[R]): T[R]
     def flatMap[P, R](in: T[P])(f: P => T[R]): T[R]
     def map[P, R](in: T[P])(f: P => R): T[R]
     def recover[R, U >: R](in: T[R])(pf: PartialFunction[Throwable, U]): T[U]
-    def fromJson[R](str: T[String])(implicit call: PlainSdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
+    //def fromJson[R](str: T[String])(implicit call: SdkCall[_, R]): T[R] = flatMap(str)(s => fromTry(call.fromJson(s)))
     def managed[R](config: ClientConfig)(block: Context => T[R]): T[R]
     def unsafeGet[R](a: T[R]): R
     def init[R](a: R): T[R]
   }
 
   val tryEffect: Effect[Try] = new Effect[Try] {
-    override def request(functionName: String, functionParams: String)(implicit c: Context): Try[String] = {
+    override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
       if (!c.isOpen.get()) {
         Failure(new IllegalStateException(s"Request(sync) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        Try(Binding.tcRequestSync(c.id, functionName, functionParams))
+        Try {
+          val json = Binding.tcRequestSync(c.id, functionName, functionParams)
+          SdkResultOrError.fromJsonWrapped(json)
+        }.flatten
       }
     }
     override def fromTry[R](t: Try[R]): Try[R] = identity(t)
@@ -110,23 +103,23 @@ object Context {
   }
 
   def futureEffect(implicit ec: ExecutionContext): Effect[Future] = new Effect[Future] {
-    override def request(functionName: String, functionParams: String)(implicit c: Context): Future[String] = {
-      val p   = Promise[String]()
+    override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Future[R] = {
+      val p   = Promise[R]()
       val buf = new StringBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            if (finished) p.success(buf.result())
+            successIfFinished(finished, p, buf)
           case ResponseTypeResult =>
             buf.append(paramsJson)
-            if (finished) p.success(buf.result())
+            successIfFinished(finished, p, buf)
           case ResponseTypeError =>
             if (!finished) logger.warn(errUndefinedBehaviour)
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
           case ResponseTypeStream(code) =>
             // TODO As for now, the same as Result but probably should be something different
             buf.append(paramsJson)
-            if (finished) p.success(buf.result())
+            successIfFinished(finished, p, buf)
         }
       }
       if (!c.isOpen.get()) {
@@ -136,6 +129,10 @@ object Context {
       }
       p.future
     }
+
+    private def successIfFinished[R](finished: Boolean, p: Promise[R], buf: StringBuilder)(implicit decoder: io.circe.Decoder[R]): Unit =
+      if (finished)
+        SdkResultOrError.fromJsonPlain(buf.result()).fold(ex => p.failure(SdkClientError.parsingError(ex.getMessage, buf.result().asJson)), p.success(_))
 
     override def fromTry[R](t: Try[R]): Future[R] = Context.fromTry(t)
 

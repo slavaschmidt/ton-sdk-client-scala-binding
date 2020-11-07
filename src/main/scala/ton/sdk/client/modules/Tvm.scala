@@ -42,13 +42,13 @@ object Tvm {
 
   import io.circe.generic.auto._
 
-  implicit val runExecutor = new PlainSdkCall[Request.RunExecutor, Result.RunExecutor] {
+  implicit val runExecutor = new SdkCall[Request.RunExecutor, Result.RunExecutor] {
     override val functionName: String = s"$prefix.run_executor"
   }
-  implicit val runTvm = new PlainSdkCall[Request.RunTvm, String] {
+  implicit val runTvm = new SdkCall[Request.RunTvm, String] {
     override val functionName: String = s"$prefix.run_tvm"
   }
-  implicit val runGet = new PlainSdkCall[Request.RunGet, String] {
+  implicit val runGet = new SdkCall[Request.RunGet, String] {
     override val functionName: String = s"$prefix.run_get"
   }
 }
