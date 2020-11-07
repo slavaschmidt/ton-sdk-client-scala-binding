@@ -99,10 +99,6 @@ object Api {
       case Left(error) => Failure(SdkClientError.parsingError(error.getMessage.asJson))
       case Right(r: R) => Success(r)
     }
-    private def wrapped(json: String): Boolean = {
-      val prefix = json.take(8).filter(_.isLetter)
-      prefix == "result" || prefix == "error"
-    }
     def toJson(parameters: P) = parameters.asJson
   }
 

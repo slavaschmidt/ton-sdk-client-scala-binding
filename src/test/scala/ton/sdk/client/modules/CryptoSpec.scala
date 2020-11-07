@@ -1,12 +1,24 @@
 package ton.sdk.client.modules
 
 import org.scalatest.flatspec._
-import org.scalatest.matchers._
 import ton.sdk.client.binding.{ClientConfig, KeyPair}
-import ton.sdk.client.modules.Api.SdkClientError
+import ton.sdk.client.modules.Context.tryEffect
+import scala.util.Try
 import ton.sdk.client.modules.Crypto._
 import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Crypto.Result.{Signature, Validity}
+
+import ton.sdk.client.modules.Context.futureEffect
+import scala.concurrent.{ExecutionContext, Future}
+
+class AsyncCryptoSpec extends CryptoSpec[Future] {
+  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  override implicit val fe: Context.Effect[Future] = futureEffect
+}
+
+class SyncCryptoSpec extends CryptoSpec[Try] {
+  implicit override val fe: Context.Effect[Try] = tryEffect
+}
 
 abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 

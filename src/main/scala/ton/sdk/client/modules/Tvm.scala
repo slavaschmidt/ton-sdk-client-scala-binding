@@ -4,6 +4,7 @@ import io.circe.Json
 import ton.sdk.client.modules.Abi.Abi
 import ton.sdk.client.modules.Api._
 
+// TODO status WIP
 object Tvm {
 
   private val prefix = "tvm"
@@ -11,18 +12,21 @@ object Tvm {
   case class AccountForExecutor(name: String, boc: Option[String], unlimited_balance: Option[Boolean])
   case class ExecutionOptions(blockchain_config: Option[String] = None, block_time: Option[Int] = None, block_lt: Option[Int] = None, transaction_lt: Option[Int] = None)
 
-  val emptyExecutionOptions                                    = ExecutionOptions()
-  val none                                                     = AccountForExecutor("None", None, None)
-  val uninit                                                   = AccountForExecutor("Uninit", None, None)
-  def account(boc: String, unlimited_balance: Option[Boolean]) = AccountForExecutor("Account", Option(boc), unlimited_balance)
+  val emptyExecutionOptions = ExecutionOptions()
+  object AccountForExecutor {
+    val none   = AccountForExecutor("None", None, None)
+    val uninit = AccountForExecutor("Uninit", None, None)
+
+    def from_account(boc: String, unlimited_balance: Option[Boolean]) = AccountForExecutor("Account", Option(boc), unlimited_balance)
+  }
 
   object Request {
     final case class RunExecutor(
       message: String,
       account: AccountForExecutor,
-      abi: Option[Abi] = None,
       skip_transaction_check: Boolean = false,
-      executionOptions: ExecutionOptions = emptyExecutionOptions
+      executionOptions: ExecutionOptions = emptyExecutionOptions,
+      abi: Option[Abi] = None
     )
     final case class RunTvm(
       message: String,
@@ -38,13 +42,13 @@ object Tvm {
 
   import io.circe.generic.auto._
 
-  implicit val runExecutor = new SdkCall[Request.RunExecutor, Result.RunExecutor] {
+  implicit val runExecutor = new PlainSdkCall[Request.RunExecutor, Result.RunExecutor] {
     override val functionName: String = s"$prefix.run_executor"
   }
-  implicit val runTvm = new SdkCall[Request.RunTvm, String] {
+  implicit val runTvm = new PlainSdkCall[Request.RunTvm, String] {
     override val functionName: String = s"$prefix.run_tvm"
   }
-  implicit val runGet = new SdkCall[Request.RunGet, String] {
+  implicit val runGet = new PlainSdkCall[Request.RunGet, String] {
     override val functionName: String = s"$prefix.run_get"
   }
 }

@@ -7,8 +7,13 @@ import ton.sdk.client.binding.{ClientConfig, OrderBy}
 import ton.sdk.client.modules.Context._
 import ton.sdk.client.modules.Net.{Request, Result}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
+class AsyncNetSpec extends NetSpec[Future] {
+  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  override implicit val fe: Context.Effect[Future] = futureEffect
+}
 class SyncNetSpec extends NetSpec[Try] {
   implicit override val fe: Context.Effect[Try] = tryEffect
 }
