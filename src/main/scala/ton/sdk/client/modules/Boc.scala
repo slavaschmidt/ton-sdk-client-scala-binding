@@ -17,18 +17,20 @@ object Boc {
     msg_type: Int,
     msg_type_name: String,
     src: String,
-    src_workchain_id: Int,
+    src_workchain_id: Option[Int],
     dst: String,
     dst_workchain_id: Int,
-    ihr_disabled: Boolean,
-    ihr_fee: String,
-    fwd_fee: String,
-    bounce: Boolean,
-    bounced: Boolean,
-    value: String,
-    created_lt: String,
-    created_at: Long,
-    body: String // TODO was absent
+    ihr_disabled: Option[Boolean],
+    ihr_fee: Option[String],
+    fwd_fee: Option[String],
+    bounce: Option[Boolean],
+    bounced: Option[Boolean],
+    value: Option[String],
+    created_lt: Option[String],
+    created_at: Option[Long],
+    body: Option[String],
+    body_hash: Option[String],
+    import_fee: Option[String]
   )
 
 

@@ -132,13 +132,14 @@ case class Transaction(
 final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, inputs: Option[Map[String, Json]] = None)
 final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
 
-sealed trait Signer
-final case object NoSigner                          extends Signer
-final case class ExternalSigner(public_key: String) extends Signer
-final case class KeysSigner(keys: KeyPair)          extends Signer
-final case class SigningBoxSigner(handler: Int)     extends Signer
+final case class Signer(`type`: String, keys: Option[KeyPair] = None, public_key: Option[String] = None, handle: Option[Int] = None)
 
-
+object Signer {
+  val none                         = Signer("None")
+  def fromKeypair(keys: KeyPair)   = Signer("Keys", keys = Option(keys))
+  def fromExternal(public: String) = Signer("External", public_key = Option(public))
+  def fromHandle(handle: Int)      = Signer("SigningBox", handle = Option(handle))
+}
 
 final case class FunctionHeader(expire: Option[Long], time: Option[BigInt], pubkey: Option[String])
 

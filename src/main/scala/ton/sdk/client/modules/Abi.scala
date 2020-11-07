@@ -32,15 +32,6 @@ object Abi {
     def fromFile(path: String): Either[ParsingFailure, Abi]      = fromString(Source.fromFile(path).mkString)
   }
 
-//  final case class AbiHandle(handle: Int) extends Abi
-//  final case class AbiContract(
-//    `ABI version`: Double,
-//    header: List[String],
-//    functions: List[Function],
-//    data: Option[List[String]], // TODO empty array, need more examples
-//    events: List[Function]
-//  ) extends Abi
-
   final case class StateInitParams(abi: Abi, value: Json)
 
   case class AbiCallSet(function_name: String, header: Option[FunctionHeader] = None, input: Option[Map[String, Json]] = None)
@@ -53,14 +44,41 @@ object Abi {
     val event          = "Event"
   }
 
-  sealed trait StateInitSource
-  final case class MessageStateInitSource(source: MessageSource)                                                     extends StateInitSource
-  final case class StateStateInitSource(code: String, data: String, library: Option[String])                         extends StateInitSource
-  final case class TvcStateInitSource(tvc: String, public_key: Option[String], init_params: Option[StateInitParams]) extends StateInitSource
+  final case class StateInitSource(
+    `type`: String,
+    code: Option[String],
+    data: Option[String],
+    library: Option[String],
+    tvc: Option[String],
+    public_key: Option[String],
+    init_params: Option[StateInitParams],
+    source: Option[MessageSource]
+  )
+  object StateInitSource {
+    def fromMessage(source: MessageSource) =
+      StateInitSource("Message", None, None, None, None, None, None, Option(source))
+    def fromStateInit(code: String, data: String, library: Option[String]) =
+      StateInitSource("StateInitSource", Option(code), Option(data), library, None, None, None, None)
+    def fromTvc(tvc: String, public_key: Option[String], init_params: Option[StateInitParams]) =
+      StateInitSource("Tvc", None, None, None, Option(tvc), public_key, init_params, None)
+  }
 
-  sealed trait MessageSource
-  final case class EncodedMessageSource(message: String, abi: Option[Abi])    extends MessageSource
-  final case class EncodingParamsMessageSource(params: Request.EncodeMessage) extends MessageSource
+  final case class MessageSource(
+    `type`: String,
+    message: Option[String],
+    abi: Option[Abi],
+    address: Option[String],
+    deploy_set: Option[DeploySet],
+    call_set: Option[CallSet],
+    signer: Option[Signer],
+    processing_try_index: Option[Int]
+  )
+  object MessageSource {
+    def fromEncoded(message: String, abi: Option[Abi]) = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)
+    def fromEncodingParams(p: Request.EncodeMessage) = {
+      MessageSource("EncodingParams", None, Option(p.abi), p.address, p.deploy_set, p.call_set, Option(p.signer), p.processing_try_index)
+    }
+  }
 
   object Request {
     final case class EncodeMessageBody(abi: Abi, call_set: AbiCallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])

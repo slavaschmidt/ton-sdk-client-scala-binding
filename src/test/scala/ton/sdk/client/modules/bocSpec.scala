@@ -10,12 +10,12 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 class AsyncBocSpec extends BocSpec[Future] {
-  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val fe: Context.Effect[Future] = futureEffect
+  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  implicit override val fe: Context.Effect[Future]         = futureEffect
 }
 
 class SyncBocSpec extends BocSpec[Try] {
-  override implicit val fe: Context.Effect[Try] = tryEffect
+  implicit override val fe: Context.Effect[Try] = tryEffect
 }
 
 abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
@@ -40,7 +40,6 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     fe.unsafeGet(fe.map(result)(assertResult(Result.Parsed(expectedTransaction))))
   }
-
 
   it should "parse account" in {
     val account =
@@ -116,18 +115,20 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     0,
     "internal",
     "-1:0000000000000000000000000000000000000000000000000000000000000000",
-    -1,
+    Option(-1),
     "-1:3333333333333333333333333333333333333333333333333333333333333333",
     -1,
-    true,
-    "0x0",
-    "0x0",
-    true,
-    false,
-    "0xac1bc0e0",
-    "0x4771d77a680",
-    1600185029,
-    ""
+    Option(true),
+    Option("0x0"),
+    Option("0x0"),
+    Option(true),
+    Option(false),
+    Option("0xac1bc0e0"),
+    Option("0x4771d77a680"),
+    Option(1600185029),
+    Option(""),
+    None,
+    None
   )
 
   val expectedTransaction = Transaction(
@@ -183,7 +184,9 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     1600186063,
     "0x20eadff7e03",
     "0x958a26eb8e7a18d",
-    Option("te6ccgECGgEAA2wAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBwQBAv8FAf5/Ie1E0CDXScIBn9P/0wD0Bfhqf/hh+Gb4Yo4b9AVt+GpwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4SgQIA1xgg+QFY+EIg+GX5EPKo3iP4RSBukjBw3vhCuvLgZSHTP9MfNCD4I7zyuSL5ACD4SoEBAPQOIJEx3vLQZvgABgA2IPhKI8jLP1mBAQD0Q/hqXwTTHwHwAfhHbvJ8AgEgDggCAVgMCQEJuOiY/FAKAdb4QW6OEu1E0NP/0wD0Bfhqf/hh+Gb4Yt7RcG1vAvhKgQEA9IaVAdcLP3+TcHBw4pEgjjJfM8gizwv/Ic8LPzExAW8iIaQDWYAg9ENvAjQi+EqBAQD0fJUB1ws/f5NwcHDiAjUzMehfAyHA/wsAmI4uI9DTAfpAMDHIz4cgzo0EAAAAAAAAAAAAAAAAD3RMfijPFiFvIgLLH/QAyXH7AN4wwP+OEvhCyMv/+EbPCwD4SgH0AMntVN5/+GcBCbkWq+fwDQC2+EFujjbtRNAg10nCAZ/T/9MA9AX4an/4Yfhm+GKOG/QFbfhqcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLe+Ebyc3H4ZtH4APhCyMv/+EbPCwD4SgH0AMntVH/4ZwIBIBIPAQm7Fe+TWBABtvhBbo4S7UTQ0//TAPQF+Gp/+GH4Zvhi3vpA1w1/ldTR0NN/39cMAJXU0dDSAN/RVHEgyM+FgMoAc89AzgH6AoBrz0DJc/sA+EqBAQD0hpUB1ws/f5NwcHDikSARAISOKCH4I7ubIvhKgQEA9Fsw+GreIvhKgQEA9HyVAdcLP3+TcHBw4gI1MzHoXwb4QsjL//hGzwsA+EoB9ADJ7VR/+GcCASAVEwEJuORhh1AUAL74QW6OEu1E0NP/0wD0Bfhqf/hh+Gb4Yt7U0fhFIG6SMHDe+EK68uBl+AD4QsjL//hGzwsA+EoB9ADJ7VT4DyD7BCDQ7R7tU/ACMPhCyMv/+EbPCwD4SgH0AMntVH/4ZwIC2hgWAQFIFwAs+ELIy//4Rs8LAPhKAfQAye1U+A/yAAEBSBkAWHAi0NYCMdIAMNwhxwDcIdcNH/K8UxHdwQQighD////9vLHyfAHwAfhHbvJ8"),
+    Option(
+      "te6ccgECGgEAA2wAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBwQBAv8FAf5/Ie1E0CDXScIBn9P/0wD0Bfhqf/hh+Gb4Yo4b9AVt+GpwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4SgQIA1xgg+QFY+EIg+GX5EPKo3iP4RSBukjBw3vhCuvLgZSHTP9MfNCD4I7zyuSL5ACD4SoEBAPQOIJEx3vLQZvgABgA2IPhKI8jLP1mBAQD0Q/hqXwTTHwHwAfhHbvJ8AgEgDggCAVgMCQEJuOiY/FAKAdb4QW6OEu1E0NP/0wD0Bfhqf/hh+Gb4Yt7RcG1vAvhKgQEA9IaVAdcLP3+TcHBw4pEgjjJfM8gizwv/Ic8LPzExAW8iIaQDWYAg9ENvAjQi+EqBAQD0fJUB1ws/f5NwcHDiAjUzMehfAyHA/wsAmI4uI9DTAfpAMDHIz4cgzo0EAAAAAAAAAAAAAAAAD3RMfijPFiFvIgLLH/QAyXH7AN4wwP+OEvhCyMv/+EbPCwD4SgH0AMntVN5/+GcBCbkWq+fwDQC2+EFujjbtRNAg10nCAZ/T/9MA9AX4an/4Yfhm+GKOG/QFbfhqcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLe+Ebyc3H4ZtH4APhCyMv/+EbPCwD4SgH0AMntVH/4ZwIBIBIPAQm7Fe+TWBABtvhBbo4S7UTQ0//TAPQF+Gp/+GH4Zvhi3vpA1w1/ldTR0NN/39cMAJXU0dDSAN/RVHEgyM+FgMoAc89AzgH6AoBrz0DJc/sA+EqBAQD0hpUB1ws/f5NwcHDikSARAISOKCH4I7ubIvhKgQEA9Fsw+GreIvhKgQEA9HyVAdcLP3+TcHBw4gI1MzHoXwb4QsjL//hGzwsA+EoB9ADJ7VR/+GcCASAVEwEJuORhh1AUAL74QW6OEu1E0NP/0wD0Bfhqf/hh+Gb4Yt7U0fhFIG6SMHDe+EK68uBl+AD4QsjL//hGzwsA+EoB9ADJ7VT4DyD7BCDQ7R7tU/ACMPhCyMv/+EbPCwD4SgH0AMntVH/4ZwIC2hgWAQFIFwAs+ELIy//4Rs8LAPhKAfQAye1U+A/yAAEBSBkAWHAi0NYCMdIAMNwhxwDcIdcNH/K8UxHdwQQighD////9vLHyfAHwAfhHbvJ8"
+    ),
     Option("ccbfc821853aa641af3813ebd477e26818b51e4ca23e5f6d34509215aa7123d9"),
     Option("te6ccgEBAgEAUAABQZXAaqdD0fkADdZLdUmPEGr0t+dEQjTX3mfqJpiPYYHf4AEAU6AerdhNxO2u2ltmJL179oU5kllUU70mJglXR+B44GeGfeAAAAAL7BzcMA=="),
     Option("8ec587d3f253261f8b1e49c1201e912136c5feba29b184b2b56cf5727e9d79dd"),
