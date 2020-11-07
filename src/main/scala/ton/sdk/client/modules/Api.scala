@@ -94,8 +94,7 @@ object Api {
 
   abstract class SdkCall[P: Encoder, R: Decoder] {
     def functionName: String
-    def fromJson(json: String): Try[R] = if (wrapped(json)) SdkResultOrError.fromJson(json) else fromPlainJson(json)
-    private def fromPlainJson(json: String): Try[R] = decode[R](json) match {
+    private def fromJson(json: String): Try[R] = decode[R](json) match {
       case Left(error) => Failure(SdkClientError.parsingError(error.getMessage.asJson))
       case Right(r: R) => Success(r)
     }
