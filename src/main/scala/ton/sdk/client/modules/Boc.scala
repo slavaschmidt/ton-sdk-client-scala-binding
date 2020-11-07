@@ -1,6 +1,5 @@
 package ton.sdk.client.modules
 
-import io.circe.Json
 import ton.sdk.client.binding.Transaction
 import ton.sdk.client.modules.Api.SdkCall
 
@@ -154,12 +153,14 @@ object Boc {
   }
 
   import io.circe.generic.auto._
+  import ton.sdk.client.binding.Decoders.decodeCompute
+
+  implicit val parseTransaction = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] {
+    override val function: String = s"$prefix.parse_transaction"
+  }
 
   implicit val parseMessage = new SdkCall[Request.ParseMessage, Result.Parsed[Message]] {
     override val function: String = s"$prefix.parse_message"
-  }
-  implicit val parseTransaction = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] {
-    override val function: String = s"$prefix.parse_transaction"
   }
   implicit val parseAccount = new SdkCall[Request.ParseAccount, Result.Parsed[Account]] {
     override val function: String = s"$prefix.parse_account"

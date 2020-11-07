@@ -59,29 +59,45 @@ sealed trait Compute {
   val compute_type: Int
   val compute_type_name: String
 }
+object Compute {
+  def vm(
+    success: Boolean,
+    msg_state_used: Boolean,
+    account_activated: Boolean,
+    gas_fees: String,
+    gas_used: BigDecimal,
+    gas_limit: BigDecimal,
+    mode: Int,
+    exit_code: Int,
+    vm_steps: Int,
+    vm_init_state_hash: String,
+    vm_final_state_hash: String
+  ) = ComputeVm(success, msg_state_used, account_activated, gas_fees, gas_used, gas_limit, mode, exit_code, vm_steps, vm_init_state_hash, vm_final_state_hash)
+
+  def skipped(skipped_reason: Int, skipped_reason_name: String) = ComputeSkipped(skipped_reason, skipped_reason_name)
+}
 final case class ComputeVm(
   success: Boolean,
   msg_state_used: Boolean,
   account_activated: Boolean,
   gas_fees: String,
-  gas_used: Double,
-  gas_limit: Double,
+  gas_used: BigDecimal,
+  gas_limit: BigDecimal,
   mode: Int,
   exit_code: Int,
   vm_steps: Int,
   vm_init_state_hash: String,
   vm_final_state_hash: String
 ) extends Compute {
-  override val compute_type: Int         = 1
-  override val compute_type_name: String = "vm"
+  override val compute_type: Int = 1
+  override val compute_type_name = "vm"
 }
-final case class ComputeSkipped(
-  skipped_reason: Int,
-  skipped_reason_name: String
-) extends Compute {
-  override val compute_type: Int         = 0
-  override val compute_type_name: String = "skipped"
+
+final case class ComputeSkipped(skipped_reason: Int, skipped_reason_name: String) extends Compute {
+  override val compute_type: Int = 0
+  override val compute_type_name = "skipped"
 }
+
 case class Action(
   success: Boolean,
   valid: Boolean,
@@ -143,12 +159,13 @@ object Signer {
 
 final case class FunctionHeader(expire: Option[Long], time: Option[BigInt], pubkey: Option[String])
 
-//object Decoders {
-//  implicit val decodeCompute: Decoder[Compute] = (c: HCursor) => for {
-//    foo <- c.downField("compute_type").as[Int]
-//    result <- foo match {
-//      case 0 => Decoder[ComputeSkipped].apply(c)
-//      case 1 => Decoder[ComputeVm].apply(c)
-//    }
-//  } yield result
-//}
+object Decoders {
+  implicit val decodeCompute: Decoder[Compute] = (c: HCursor) =>
+    for {
+      foo <- c.downField("compute_type").as[Int]
+      result <- foo match {
+        case 0 => Decoder[ComputeSkipped].apply(c)
+        case 1 => Decoder[ComputeVm].apply(c)
+      }
+    } yield result
+}
