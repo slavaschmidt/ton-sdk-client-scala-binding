@@ -1,6 +1,5 @@
 package ton.sdk.client.modules
 
-import io.circe.parser.decode
 import io.circe.syntax._
 import io.circe._
 import scala.util._
@@ -98,8 +97,12 @@ object Api {
 
   abstract class SdkCall[P: Encoder, R: Decoder] {
     def function: String
-    // def fromJson(json: String): Try[R]
     def toJson(parameters: P) = parameters.asJson
     implicit val decoder = implicitly[Decoder[R]]
+  }
+
+  abstract class StreamingSdkCall[P: Encoder, R: Decoder, S: Decoder] extends SdkCall[P, R] {
+
+
   }
 }

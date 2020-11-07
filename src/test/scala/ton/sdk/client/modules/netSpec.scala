@@ -13,9 +13,33 @@ import scala.util.Try
 class AsyncNetSpec extends NetSpec[Future] {
   override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   override implicit val ef: Context.Effect[Future] = futureEffect
+
+  // TODO implementation is missing yet
+  it should "subscribe_collection" in {
+    val filter = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
+    val resultF = devNet { implicit ctx =>
+      call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"))
+    }
+    val result = ef.unsafeGet(resultF)
+    val messages = result.elements.take(10)
+
+    assert(messages.size == 10) // TODO check something else
+
+    val un = devNet { implicit ctx =>
+      call(Request.Unsubscribe(100500))
+    }
+    assertValue(un)(Json.Null)
+  }
 }
 class SyncNetSpec extends NetSpec[Try] {
   implicit override val ef: Context.Effect[Try] = tryEffect
+
+  it should "not know subscribe_collection function" in {
+    val result = devNet { implicit ctx =>
+      call(Request.SubscribeCollection("messages", None, result = "created_at"))
+    }
+    assertSdkError(result)("Unknown function: net.subscribe_collection")
+  }
 }
 abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
@@ -76,24 +100,6 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.WaitForCollection("transactions", timeout = Option(1)))
     }
     assertSdkError(result)("WaitFor failed: Can not send http request: error sending request for url (https://net.ton.dev/graphql): operation timed out")
-  }
-
-  // TODO implementation is missing yet
-  it should "subscribe_collection" in {
-    val filter = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
-    val resultF = devNet { implicit ctx =>
-      call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"))
-    }
-    val result = ef.unsafeGet(resultF)
-    val messages = result.elements.take(10)
-
-    assert(messages.size == 10) // TODO check something else
-
-    val un = devNet { implicit ctx =>
-      call(Request.Unsubscribe(100500))
-    }
-    assertValue(un)(Json.Null)
-
   }
 
   it should "unsubscribe handle that does not exist" in {
