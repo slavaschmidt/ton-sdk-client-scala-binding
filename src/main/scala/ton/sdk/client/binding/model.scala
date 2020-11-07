@@ -42,3 +42,75 @@ final case class OrderBy(path: String, direction: String)
 final case class ClientResult[T](result: T)
 
 final case class KeyPair(public: String, secret: String)
+
+case class Fees(
+  in_msg_fwd_fee: BigDecimal,
+  storage_fee: BigDecimal,
+  gas_fee: BigDecimal,
+  out_msgs_fwd_fee: BigDecimal,
+  total_account_fees: BigDecimal,
+  total_output: BigDecimal
+)
+case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)
+case class Credit(credit: String)
+case class Compute(
+  success: Boolean,
+  msg_state_used: Boolean,
+  account_activated: Boolean,
+  gas_fees: String,
+  gas_used: Double,
+  gas_limit: Double,
+  mode: Int,
+  exit_code: Int,
+  vm_steps: Int,
+  vm_init_state_hash: String,
+  vm_final_state_hash: String,
+  compute_type: Int,
+  compute_type_name: String
+)
+case class Action(
+  success: Boolean,
+  valid: Boolean,
+  no_funds: Boolean,
+  status_change: Int,
+  result_code: Int,
+  tot_actions: Int,
+  spec_actions: Int,
+  skipped_actions: Int,
+  msgs_created: Int,
+  action_list_hash: String,
+  tot_msg_size_cells: Long,
+  tot_msg_size_bits: Long
+)
+case class Transaction(
+  json_version: Int,
+  id: String,
+  boc: String,
+  status: Int,
+  status_name: String,
+  storage: Storage,
+  credit: Credit,
+  compute: Compute,
+  action: Action,
+  credit_first: Boolean,
+  aborted: Boolean,
+  destroyed: Boolean,
+  tr_type: Int,
+  tr_type_name: String,
+  lt: String,
+  prev_trans_hash: String,
+  prev_trans_lt: String,
+  now: Int,
+  outmsg_cnt: Int,
+  orig_status: Int,
+  orig_status_name: String,
+  end_status: Int,
+  end_status_name: String,
+  in_msg: String,
+  out_msgs: List[String], // TODO unsure, need better tests
+  account_id: String,
+  total_fees: String,
+  balance_delta: String,
+  old_hash: String,
+  new_hash: String
+)

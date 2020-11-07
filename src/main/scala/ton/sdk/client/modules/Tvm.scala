@@ -1,6 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
+import ton.sdk.client.binding.{Fees, Transaction}
 import ton.sdk.client.modules.Abi.Abi
 import ton.sdk.client.modules.Api._
 
@@ -9,10 +10,11 @@ object Tvm {
 
   private val prefix = "tvm"
 
-  case class AccountForExecutor(name: String, boc: Option[String], unlimited_balance: Option[Boolean])
+  case class AccountForExecutor(`type`: String, boc: Option[String], unlimited_balance: Option[Boolean])
   case class ExecutionOptions(blockchain_config: Option[String] = None, block_time: Option[Int] = None, block_lt: Option[Int] = None, transaction_lt: Option[Int] = None)
 
   val emptyExecutionOptions = ExecutionOptions()
+
   object AccountForExecutor {
     val none   = AccountForExecutor("None", None, None)
     val uninit = AccountForExecutor("Uninit", None, None)
@@ -37,7 +39,7 @@ object Tvm {
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }
   object Result {
-    final case class RunExecutor(transaction: String, out_messages: Seq[String], decoded: Option[String], account: String, fees: Json)
+    final case class RunExecutor(transaction: Json, out_messages: Seq[String], decoded: Option[String], account: String, fees: Fees)
   }
 
   import io.circe.generic.auto._

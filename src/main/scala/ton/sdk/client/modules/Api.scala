@@ -83,7 +83,7 @@ object Api {
     import io.circe.parser._
 
     def fromJsonWrapped[T](json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = {
-      val resp: Either[io.circe.Error, SdkResultOrError[T]] = decode[SdkResult[T]](json).orElse(decode[SdkError[T]](json))
+      val resp: Either[io.circe.Error, SdkResultOrError[T]] = decode[SdkError[T]](json).orElse(decode[SdkResult[T]](json))
       resp match {
         case Left(error)            => Failure(error)
         case Right(SdkError(error)) => Failure(error)
