@@ -17,16 +17,19 @@ class AsyncNetSpec extends NetSpec[Future] {
   // TODO implementation is missing yet
   it should "subscribe_collection" in {
     val filter = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
-    val resultF = devNet { implicit ctx =>
-      call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"))
+    val callback = (in: Json) => {
+      println(in)
     }
-    val result = ef.unsafeGet(resultF)
-    val messages = result.elements.take(10)
+    val resultF = devNet { implicit ctx =>
+      call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"), callback)
+    }
+    assertExpression(resultF)(_.handle > 0)
+    val handle = ef.unsafeGet(resultF).handle
 
-    assert(messages.size == 10) // TODO check something else
+    for (_ <- 0 to 1000) Thread.sleep(10)
 
     val un = devNet { implicit ctx =>
-      call(Request.Unsubscribe(100500))
+      call(Request.Unsubscribe(handle))
     }
     assertValue(un)(Json.Null)
   }
@@ -35,10 +38,11 @@ class SyncNetSpec extends NetSpec[Try] {
   implicit override val ef: Context.Effect[Try] = tryEffect
 
   it should "not know subscribe_collection function" in {
+    val callback = (s: Json) => println(s)
     val result = devNet { implicit ctx =>
-      call(Request.SubscribeCollection("messages", None, result = "created_at"))
+      call(Request.SubscribeCollection("messages", None, result = "created_at"), callback)
     }
-    assertSdkError(result)("Unknown function: net.subscribe_collection")
+    assertSdkError(result)("Streaming synchronous requests aren't supported (function net.subscribe_collection)")
   }
 }
 abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {

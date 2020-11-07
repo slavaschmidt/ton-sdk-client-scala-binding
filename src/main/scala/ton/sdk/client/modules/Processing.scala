@@ -3,7 +3,6 @@ package ton.sdk.client.modules
 import io.circe.Json
 import ton.sdk.client.binding.{CallSet, DeploySet, KeyPair, Signer}
 import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.Net.Result.Handle
 
 
 // TODO status: WIP
@@ -21,7 +20,7 @@ object Processing {
     final case class ProcessMessage(abi: Abi.Abi, signer: Signer, send_events: Boolean, address: Option[String] = None, deploy_set: Option[DeploySet] = None, call_set: Option[CallSet] = None, processing_try_index: Int = 0)
   }
   object Result {
-    case class SendMessage(shard_block_id: String, handler: Handle) // TODO
+    case class SendMessage(shard_block_id: String) // TODO
     case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
     case class ResultOfProcessMessage(transaction: String, out_messages: Seq[String], decoded: Option[DecodedOutput], fees: Json)
   }

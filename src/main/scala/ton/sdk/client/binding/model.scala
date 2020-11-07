@@ -159,6 +159,8 @@ object Signer {
 
 final case class FunctionHeader(expire: Option[Long], time: Option[BigInt], pubkey: Option[String])
 
+final case class Handle(handle: Long)
+
 object Decoders {
   implicit val decodeCompute: Decoder[Compute] = (c: HCursor) =>
     for {
