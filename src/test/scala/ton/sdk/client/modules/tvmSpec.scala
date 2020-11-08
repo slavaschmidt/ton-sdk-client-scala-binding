@@ -160,7 +160,7 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
                       val callSet = CallSet("getSubscription", None, Option(input))
                       ef.flatMap(call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))) { result3 =>
                         ef.map(call(Tvm.Request.RunTvm(encodedMsg.message, result2.account, Option(abi)))) { result3 =>
-                          val pubkey = result3.hcursor.downField("decoded").downField("output").downField("value0").downField("pubkey").as[String].toOption.get
+                          val pubkey  = result3.hcursor.downField("decoded").downField("output").downField("value0").downField("pubkey").as[String].toOption.get
                           val assert3 = encodedMsg.message_id == result2.transaction.in_msg
                           val assert4 = result2.fees.total_account_fees > 0
                           val assert5 = subscriptionPubkey == pubkey

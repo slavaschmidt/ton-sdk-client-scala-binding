@@ -126,7 +126,7 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         _ = println(result)
       } yield result
     }
-    while (!done) Thread.sleep(100)
+    // while (!done) Thread.sleep(100)
     println(data)
     println(ef.unsafeGet(result))
     assertExpression(result)(r => r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)
