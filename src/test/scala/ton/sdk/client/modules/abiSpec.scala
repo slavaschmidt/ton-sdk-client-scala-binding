@@ -28,17 +28,17 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
-  val keyPair      = KeyPair(public = "4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499", secret = "cc8929d635719612a9478b9cd17675a39cfad52d8959e8a177389b8c0b9122a7")
-  val abi          = Abi.fromFile(getClass.getClassLoader.getResource("Events.abi.json").getFile).toOption.get
-  val tvcSrc       = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Events.tvc").getFile).toPath)
-  val tvc          = base64(tvcSrc)
-  val eventsTime   = 1599458364291L
-  val eventsExpire = 1599458404
+  private val keyPair      = KeyPair(public = "4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499", secret = "cc8929d635719612a9478b9cd17675a39cfad52d8959e8a177389b8c0b9122a7")
+  private val abi          = AbiJson.fromResource("Events.abi.json").toOption.get
+  private val tvcSrc       = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Events.tvc").getFile).toPath)
+  private val tvc          = base64(tvcSrc)
+  private val eventsTime   = 1599458364291L
+  private val eventsExpire = 1599458404
 
-  val encodedMessage =
+  private val encodedMessage =
     "te6ccgEBAwEAvAABRYgAC31qq9KF9Oifst6LU9U6FQSQQRlCSEMo+A3LN5MvphIMAQHhrd/b+MJ5Za+AygBc5qS/dVIPnqxCsM9PvqfVxutK+lnQEKzQoRTLYO6+jfM8TF4841bdNjLQwIDWL4UVFdxIhdMfECP8d3ruNZAXul5xxahT91swIEkEHph08JVlwmUmQAAAXRnJcuDX1XMZBW+LBKACAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
 
-  val expectedSignedMessage =
+  private val expectedSignedMessage =
     "te6ccgECGAEAA6wAA0eIAAt9aqvShfTon7Lei1PVOhUEkEEZQkhDKPgNyzeTL6YSEbAHAgEA4bE5Gr3mWwDtlcEOWHr6slWoyQlpIWeYyw/00eKFGFkbAJMMFLWnu0mq4HSrPmktmzeeAboa4kxkFymCsRVt44dTHxAj/Hd67jWQF7peccWoU/dbMCBJBB6YdPCVZcJlJkAAAF0ZyXLg19VzGRotV8/gAQHAAwIDzyAGBAEB3gUAA9AgAEHaY+IEf47vXcayAvdLzji1Cn7rZgQJIIPTDp4SrLhMpMwCJv8A9KQgIsABkvSg4YrtU1gw9KEKCAEK9KQg9KEJAAACASANCwHI/38h7UTQINdJwgGOENP/0z/TANF/+GH4Zvhj+GKOGPQFcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLTAAGOHYECANcYIPkBAdMAAZTT/wMBkwL4QuIg+GX5EPKoldMAAfJ64tM/AQwAao4e+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+CANPI02NMfAfgjvPK50x8B8AH4R26S8jzeAgEgEw4CASAQDwC9uotV8/+EFujjXtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4t74RvJzcfhm0fgA+ELIy//4Q88LP/hGzwsAye1Uf/hngCASASEQDluIAGtb8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFvfSDK6mjofSBv6PwikDdJGDhvfCFdeXAyfABkZP2CEGRnwoRnRoIEB9AAAAAAAAAAAAAAAAAAIGeLZMCAQH2AGHwhZGX//CHnhZ/8I2eFgGT2qj/8M8ADFuZPCot8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFva4b/yupo6Gn/7+j8AGRF7gAAAAAAAAAAAAAAAAhni2fA58jjyxi9EOeF/+S4/YAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAgFIFxQBCbi3xYJQFQH8+EFujhPtRNDT/9M/0wDRf/hh+Gb4Y/hi3tcN/5XU0dDT/9/R+ADIi9wAAAAAAAAAAAAAAAAQzxbPgc+Rx5YxeiHPC//JcfsAyIvcAAAAAAAAAAAAAAAAEM8Wz4HPklb4sEohzwv/yXH7ADD4QsjL//hDzws/+EbPCwDJ7VR/FgAE+GcActxwItDWAjHSADDcIccAkvI74CHXDR+S8jzhUxGS8jvhwQQighD////9vLGS8jzgAfAB+EdukvI83g=="
 
   it should "decode_message Input" in {
@@ -95,11 +95,11 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     ef.unsafeGet(ef.map(result)(assertResult(expectedMessage)))
   }
 
-  val deploySet          = DeploySet(tvc)
-  val callSetHeader      = Option(Map("pubkey" -> keyPair.public.asJson, "time" -> eventsTime.asJson, "expire" -> eventsExpire.asJson))
-  val constructorCallSet = CallSet("constructor", callSetHeader)
-  val externalSigner     = Signer.fromExternal(keyPair.public)
-  val keyPairSigner      = Signer.fromKeypair(keyPair)
+  private val deploySet          = DeploySet(tvc)
+  private val callSetHeader      = Option(Map("pubkey" -> keyPair.public.asJson, "time" -> eventsTime.asJson, "expire" -> eventsExpire.asJson))
+  private val constructorCallSet = CallSet("constructor", callSetHeader)
+  private val externalSigner     = Signer.fromExternal(keyPair.public)
+  private val keyPairSigner      = Signer.fromKeypair(keyPair)
 
   it should "encode_message, attach_signature" in {
     // Create unsigned deployment message
@@ -177,7 +177,6 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertExpression(encodedF)(_.id == encodeAccountExpectedId)
   }
 
-  // TODO the message source is probably wrong here
   it should "encode_account from encoding params" in {
     val messageSource   = MessageSource.fromEncodingParams(Request.EncodeMessage(abi, None, Option(deploySet), Option(constructorCallSet), keyPairSigner))
     val stateInitSource = StateInitSource.fromMessage(messageSource)

@@ -22,17 +22,18 @@ object Abi {
     outputs: Seq[Parameter]
   )
 
-  final case class Abi(`type`: String, value: Json)
-  object Abi {
+  final case class AbiJson(`type`: String, value: Json)
+  object AbiJson {
     import io.circe.syntax._
     import io.circe.parser._
-    val handle                                                   = Abi("Handle", 0.asJson)
-    def fromJson(abiJson: Json): Abi                             = Abi("Serialized", abiJson)
-    def fromString(abiJson: String): Either[ParsingFailure, Abi] = parse(abiJson).map(fromJson)
-    def fromFile(path: String): Either[ParsingFailure, Abi]      = fromString(Source.fromFile(path).mkString)
+    val handle                                                   = AbiJson("Handle", 0.asJson)
+    def fromJson(abiJson: Json): AbiJson                             = AbiJson("Serialized", abiJson)
+    def fromString(abiJson: String): Either[ParsingFailure, AbiJson] = parse(abiJson).map(fromJson)
+    def fromFile(path: String): Either[ParsingFailure, AbiJson]      = fromString(Source.fromFile(path).mkString)
+    def fromResource(name: String): Either[ParsingFailure, AbiJson]  = fromFile(getClass.getClassLoader.getResource(name).getFile)
   }
 
-  final case class StateInitParams(abi: Abi, value: Json)
+  final case class StateInitParams(abi: AbiJson, value: Json)
 
   case class AbiCallSet(function_name: String, header: Option[FunctionHeader] = None, input: Option[Map[String, Json]] = None)
 
@@ -64,29 +65,29 @@ object Abi {
   }
 
   final case class MessageSource(
-    `type`: String,
-    message: Option[String],
-    abi: Option[Abi],
-    address: Option[String],
-    deploy_set: Option[DeploySet],
-    call_set: Option[CallSet],
-    signer: Option[Signer],
-    processing_try_index: Option[Int]
+                                  `type`: String,
+                                  message: Option[String],
+                                  abi: Option[AbiJson],
+                                  address: Option[String],
+                                  deploy_set: Option[DeploySet],
+                                  call_set: Option[CallSet],
+                                  signer: Option[Signer],
+                                  processing_try_index: Option[Int]
   )
   object MessageSource {
-    def fromEncoded(message: String, abi: Option[Abi]) = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)
+    def fromEncoded(message: String, abi: Option[AbiJson]) = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)
     def fromEncodingParams(p: Request.EncodeMessage) = {
       MessageSource("EncodingParams", None, Option(p.abi), p.address, p.deploy_set, p.call_set, Option(p.signer), Option(p.processing_try_index))
     }
   }
 
   object Request {
-    final case class EncodeMessageBody(abi: Abi, call_set: AbiCallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])
-    final case class AttachSignatureToMessageBody(abi: Abi, public_key: String, message: String, signature: String)
-    final case class EncodeMessage(abi: Abi, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Int = 0)
-    final case class AttachSignature(abi: Abi, public_key: String, message: String, signature: String)
-    final case class DecodeMessage(abi: Abi, message: String)
-    final case class DecodeMessageBody(abi: Abi, body: String, is_internal: Boolean)
+    final case class EncodeMessageBody(abi: AbiJson, call_set: AbiCallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])
+    final case class AttachSignatureToMessageBody(abi: AbiJson, public_key: String, message: String, signature: String)
+    final case class EncodeMessage(abi: AbiJson, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Int = 0)
+    final case class AttachSignature(abi: AbiJson, public_key: String, message: String, signature: String)
+    final case class DecodeMessage(abi: AbiJson, message: String)
+    final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean)
     final case class EncodeAccount(state_init: StateInitSource, balance: Option[BigInt], last_trans_lt: Option[BigInt], last_paid: Option[BigDecimal])
 
   }

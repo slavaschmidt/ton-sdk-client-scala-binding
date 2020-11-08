@@ -2,7 +2,7 @@ package ton.sdk.client.binding
 
 import io.circe.{Decoder, HCursor, Json}
 import io.circe.generic.auto._
-import ton.sdk.client.modules.Abi.Abi
+import ton.sdk.client.modules.Abi.AbiJson
 
 final case class NetworkConfig(
   server_address: String,
@@ -121,7 +121,7 @@ case class Transaction(
   storage: Storage,
   credit: Credit,
   compute: Compute,
-  action: Action,
+  action: Option[Action],
   credit_first: Boolean,
   aborted: Boolean,
   destroyed: Boolean,
@@ -137,7 +137,7 @@ case class Transaction(
   end_status: Int,
   end_status_name: String,
   in_msg: String,
-  out_msgs: List[String], // TODO unsure, need better tests
+  out_msgs: Seq[String], // TODO unsure, need better tests
   account_id: String,
   total_fees: String,
   balance_delta: String,
@@ -145,7 +145,7 @@ case class Transaction(
   new_hash: String
 )
 
-final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, inputs: Option[Map[String, Json]] = None)
+final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, input: Option[Map[String, Json]] = None)
 final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
 
 final case class Signer(`type`: String, keys: Option[KeyPair] = None, public_key: Option[String] = None, handle: Option[Int] = None)

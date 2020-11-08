@@ -4,7 +4,7 @@ import io.circe.Json
 import ton.sdk.client.binding.{ClientResult, Handle, OrderBy}
 import ton.sdk.client.modules.Api.{SdkCall, StreamingSdkCall}
 
-// TODO Status: WIP
+// TODO Status: WIP, needs refactoring of the callback
 object Net {
 
   val prefix = "net"

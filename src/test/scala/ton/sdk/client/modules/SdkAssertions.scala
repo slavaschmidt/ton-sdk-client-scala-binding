@@ -1,9 +1,13 @@
 package ton.sdk.client.modules
 
+import io.circe.syntax.EncoderOps
 import org.scalatest.{Assertion, Assertions}
+import ton.sdk.client.binding.{CallSet, Signer}
 import ton.sdk.client.jni.Binding
+import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.modules.Api.SdkClientError
-import ton.sdk.client.modules.Context.Effect
+import ton.sdk.client.modules.Context.{call, devNet, Effect}
+import ton.sdk.client.modules.Processing.{MessageEncodeParams, Result}
 
 trait SdkAssertions[T[_]] extends Assertions {
   Binding.loadNativeLibrary()
@@ -18,5 +22,15 @@ trait SdkAssertions[T[_]] extends Assertions {
     ef.unsafeGet(error)
   }
   def base64(b: Array[Byte]) = new String(java.util.Base64.getEncoder.encode(b))
-  def base64(s: String) = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
+  def base64(s: String)      = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
+
+  def sendGrams(address: String): T[Result.ResultOfProcessMessage] = {
+    val giver   = "0:653b9a6452c7a982c6dc92b2da9eba832ade1c467699ebb3b43dca6d77b780dd"
+    val abi     = AbiJson.fromResource("Giver.abi.json").toOption.get
+    val callSet = CallSet("grant", input = Option(Map("addr" -> address.asJson)))
+    val params  = MessageEncodeParams(abi, Signer.none, Option(giver), None, Option(callSet))
+    devNet { implicit ctx =>
+      call(Processing.Request.processMessage(params))
+    }
+  }
 }

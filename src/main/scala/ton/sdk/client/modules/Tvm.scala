@@ -2,7 +2,7 @@ package ton.sdk.client.modules
 
 import io.circe.Json
 import ton.sdk.client.binding.{Fees, Transaction}
-import ton.sdk.client.modules.Abi.Abi
+import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.modules.Api._
 
 // TODO status WIP
@@ -28,13 +28,13 @@ object Tvm {
       account: AccountForExecutor,
       skip_transaction_check: Boolean = false,
       executionOptions: ExecutionOptions = emptyExecutionOptions,
-      abi: Option[Abi] = None
+      abi: Option[AbiJson] = None
     )
     final case class RunTvm(
-      message: String,
-      account: String,
-      abi: Option[Abi] = None,
-      executionOptions: ExecutionOptions = emptyExecutionOptions
+                             message: String,
+                             account: String,
+                             abi: Option[AbiJson] = None,
+                             executionOptions: ExecutionOptions = emptyExecutionOptions
     )
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }
@@ -43,6 +43,7 @@ object Tvm {
   }
 
   import io.circe.generic.auto._
+  import ton.sdk.client.binding.Decoders.decodeCompute
 
   implicit val runExecutor = new SdkCall[Request.RunExecutor, Result.RunExecutor] {
     override val function: String = s"$prefix.run_executor"

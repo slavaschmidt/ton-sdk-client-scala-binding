@@ -139,6 +139,7 @@ object Context {
       val p = Promise[R]()
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
+        println(s"$requestId: $responseType ($finished) - $paramsJson")
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
             logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}")
@@ -147,8 +148,11 @@ object Context {
             implicit val decoder = r._1
             if (!finished) {
               logger.debug("Not finished, a handle is expected")
-              assert(decode[Handle](paramsJson).isRight)
-              successIfFinished(finished = true, p, paramsJson)
+              if (decode[Handle](paramsJson).isRight) {
+                successIfFinished(finished = true, p, paramsJson)
+              } else {
+                println("WTF:" + paramsJson)
+              }
             } else {
               successIfFinished(finished, p, paramsJson)
             }
@@ -174,6 +178,7 @@ object Context {
       if (!c.isOpen.get()) {
         p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
+        println(s"$functionName - $functionParams")
         Binding.request(c.id, functionName, functionParams, handler)
       }
       p.future
