@@ -11,40 +11,56 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 class AsyncNetSpec extends NetSpec[Future] {
-  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val ef: Context.Effect[Future] = futureEffect
+  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  implicit override val ef: Context.Effect[Future]         = futureEffect
 
-  // TODO implementation is missing yet
-  it should "subscribe_collection" in {
-    val filter = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
-    val callback = (in: Json) => {
-      println(in)
-    }
+  it should "subscribe_collection and get results" in {
+    val filter   = Map("created_at" -> Map("gt" -> (System.currentTimeMillis() - 1000000))).asJson
+    var counter  = 0
+    val callback = (finished: Boolean, tpe: Long, in: Json) => counter += 1
     val resultF = devNet { implicit ctx =>
-      call(Request.SubscribeCollection("messages", filter=Option(filter), result = "created_at"), callback)
+      for {
+        handle <- call(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"), callback)
+        _ = assert(handle.handle > 0)
+        _ = for (_ <- 0 to 500) Thread.sleep(10)
+        un <- call(Request.Unsubscribe(handle.handle))
+      } yield un
     }
-    assertExpression(resultF)(_.handle > 0)
-    val handle = ef.unsafeGet(resultF).handle
+    assertValue(resultF)(Json.Null)
+    // TODO implement filter that actually receives something
+    assert(counter == 0)
+  }
 
-    for (_ <- 0 to 1000) Thread.sleep(10)
+  it should "subscribe_collection and get errors as JSON" in {
+    val filter   = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
+    var counter  = 0
+    val callback = (finished: Boolean, tpe: Long, in: Json) => counter += 1
 
-    val un = devNet { implicit ctx =>
-      call(Request.Unsubscribe(handle))
+    val resultF = devNet { implicit ctx =>
+      for {
+        handle <- call(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"), callback)
+        _ = assert(handle.handle > 0)
+        _ = for (_ <- 0 to 500) Thread.sleep(10)
+        un <- call(Request.Unsubscribe(handle.handle))
+      } yield un
     }
-    assertValue(un)(Json.Null)
+    assertValue(resultF)(Json.Null)
+    assert(counter > 0)
   }
 }
+
 class SyncNetSpec extends NetSpec[Try] {
   implicit override val ef: Context.Effect[Try] = tryEffect
 
   it should "not know subscribe_collection function" in {
-    val callback = (s: Json) => println(s)
+    val callback = (end: Boolean, tpe: Long, s: Json) => println(s)
     val result = devNet { implicit ctx =>
       call(Request.SubscribeCollection("messages", None, result = "created_at"), callback)
     }
     assertSdkError(result)("Streaming synchronous requests aren't supported (function net.subscribe_collection)")
   }
 }
+
 abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]

@@ -9,12 +9,14 @@ import scala.util._
 
 object Api {
 
-  sealed trait ResponseType
-  case object ResponseTypeResult              extends ResponseType
-  case object ResponseTypeError               extends ResponseType
-  case object ResponseTypeNop                 extends ResponseType
-  case class ResponseTypeReserved(code: Long) extends ResponseType
-  case class ResponseTypeStream(code: Long)   extends ResponseType
+  sealed trait ResponseType {
+    def code: Long
+  }
+  case object ResponseTypeResult              extends ResponseType { override def code = 0L }
+  case object ResponseTypeError               extends ResponseType { override def code = 1L }
+  case object ResponseTypeNop                 extends ResponseType { override def code = 2L }
+  case class ResponseTypeReserved(override val code: Long) extends ResponseType
+  case class ResponseTypeStream(override val code: Long)   extends ResponseType
 
   object ResponseType {
     def apply(code: Long): ResponseType = code match {
@@ -109,4 +111,5 @@ object Api {
     implicit val decoders = (implicitly[Decoder[Handle]], implicitly[Decoder[S]])
 
   }
+
 }
