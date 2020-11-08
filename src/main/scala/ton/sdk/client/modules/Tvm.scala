@@ -48,10 +48,10 @@ object Tvm {
   implicit val runExecutor = new SdkCall[Request.RunExecutor, Result.RunExecutor] {
     override val function: String = s"$prefix.run_executor"
   }
-  implicit val runTvm = new SdkCall[Request.RunTvm, String] {
+  implicit val runTvm = new SdkCall[Request.RunTvm, Json] {
     override val function: String = s"$prefix.run_tvm"
   }
-  implicit val runGet = new SdkCall[Request.RunGet, String] {
+  implicit val runGet = new SdkCall[Request.RunGet, Json] {
     override val function: String = s"$prefix.run_get"
   }
 }
