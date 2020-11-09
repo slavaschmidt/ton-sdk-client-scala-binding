@@ -140,16 +140,20 @@ object Context {
     )(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[StreamingCallResult[R, S]] = {
       val p      = Promise[R]()
       val result = new AsyncCallResult[R, S](p.future)
+      val buf = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"Streaming $requestId: $responseType ($finished) - $paramsJson")
         if (finished) result.messages.close(None)
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
             println(s"STREAMING ($finished): NOP or Reserved $paramsJson")
+            implicit val decoder = r._1
+            successIfFinished(requestId, finished, p, buf.result())
           case ResponseTypeResult =>
             println(s"STREAMING ($finished): result $paramsJson")
+            buf.append(paramsJson)
             implicit val decoder = r._1
-            successIfFinished(requestId, finished, p, paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
           case ResponseTypeError =>
             println(s"STREAMING ($finished): error $paramsJson")
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
