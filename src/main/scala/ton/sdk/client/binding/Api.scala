@@ -60,8 +60,8 @@ object Api {
     * @param message
     * @param data
     */
-  class SdkClientError(val code: Int, val message: String, val data: Json) extends Exception(message)
-  class ContextSdkClientError(override val code: Int, override val message: String, context: Context, requestId: Long, override val data: Json)
+  class SdkClientError(val code: Long, val message: String, val data: Json) extends Exception(message)
+  class ContextSdkClientError(override val code: Long, override val message: String, context: Context, requestId: Long, override val data: Json)
       extends SdkClientError(code, s"[$code] $message. [$context:$requestId]", data)
 
   case class BindingError(cause: Throwable) extends Exception(cause)
@@ -71,8 +71,8 @@ object Api {
     import io.circe.parser._
     def apply(c: Context, requestId: Long, json: String): Try[ContextSdkClientError] =
       decode[SdkClientError](json).toTry.map(e => new ContextSdkClientError(e.code, e.message, c, requestId, e.data))
-    def parsingError(message: String, data: Json) =
-      new SdkClientError(-1, s"Could not parse SDK json: [$message]", data)
+    def parsingError(requestId: Long, message: String, data: Json) =
+      new SdkClientError(-1 * requestId, s"Could not parse SDK json: [$message]", data)
   }
 
   sealed trait SdkResultOrError[T]
@@ -96,8 +96,8 @@ object Api {
         case Right(SdkResult(t))    => Success(t)
       }
     }
-    def fromJsonPlain[T](json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = decode[T](json) match {
-      case Left(error)            => Failure(SdkClientError.parsingError(error.getMessage, json.asJson))
+    def fromJsonPlain[T](requestId: Long, json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = decode[T](json) match {
+      case Left(error)            => Failure(SdkClientError.parsingError(requestId, error.getMessage, json.asJson))
       case Right(r: T @unchecked) => Success(r)
     }
   }

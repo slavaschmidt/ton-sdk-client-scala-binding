@@ -18,7 +18,6 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Only async is supported by the client
   */
-// TODO: status - needs refactoring of the callback
 class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
 
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
@@ -70,14 +69,6 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
   }
 
   it should "process_message with events" in {
-    var data: Processing.Result.ResultOfProcessMessage = null
-    var done = false
-    val callback = (finished: Boolean, tpe: Long, in: Processing.Result.ResultOfProcessMessage) => {
-      println(s"$done: $in")
-      data = in
-      done = finished
-    }
-
     val result = devNet { implicit ctx =>
       for {
         // Prepare data for deployment message
@@ -89,12 +80,12 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         sent <- sendGrams(encoded.address)
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
-        handle <- call(Processing.Request.processMessageS(params))
+        (handle, messages, errors) <- callS(Processing.Request.processMessageS(params))
+        _ = println(messages.collect(5.seconds))
       } yield handle
     }
-    while (!done) Thread.sleep(100)
+    val data = ef.unsafeGet(result)
     println(data)
-    println(ef.unsafeGet(result))
     assert(data.out_messages.isEmpty && data.decoded.get.out_messages.isEmpty && data.decoded.get.output.isEmpty)
   }
 

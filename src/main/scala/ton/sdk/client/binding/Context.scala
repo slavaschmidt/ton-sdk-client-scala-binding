@@ -149,14 +149,14 @@ object Context {
           case ResponseTypeResult =>
             println(s"STREAMING ($finished): result $paramsJson")
             implicit val decoder = r._1
-            successIfFinished(finished, p, paramsJson)
+            successIfFinished(requestId, finished, p, paramsJson)
           case ResponseTypeError =>
             println(s"STREAMING ($finished): error $paramsJson")
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
           case ResponseTypeStream(code) =>
             println(s"STREAMING ($finished): stream ($code) $paramsJson")
             implicit val decoder = r._2
-            val _ = SdkResultOrError.fromJsonWrapped[S](paramsJson) match {
+            val _ = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson) match {
               case Failure(er: SdkClientError) => result.errors.append(er)
               case Success(s)                  => result.messages.append(s)
               case Failure(er)                 => logger.warn("Unexpected streaming error", er)
@@ -173,25 +173,30 @@ object Context {
     }
 
     private def requestFuture[R, S](functionName: String, functionParams: String)(implicit c: Context, r: Decoder[R]): Future[R] = {
-      val p = Promise[R]()
+      val p   = Promise[R]()
+      val buf = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
-        logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
+        println(s"$requestId: $responseType ($finished) - $paramsJson - ${buf.result}")
         if (finished && p.isCompleted) {
           println(s"FUCK, finished & completed already: $requestId: $responseType ($finished) - $paramsJson")
         }
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}")
+            logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}, should be finished: $finished: $paramsJson")
+            successIfFinished(requestId, finished, p, buf.result())
 
           case ResponseTypeResult =>
-            successIfFinished(finished, p, paramsJson)
+            buf.append(paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
 
           case ResponseTypeError =>
             if (!finished) logger.warn(errUndefinedBehaviour)
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
 
           case ResponseTypeStream(code) =>
-            println(s"Streaming in non-streaming request: $requestId: $responseType ($finished) - $paramsJson")
+            logger.warn(s"Streaming in non-streaming request: $requestId: $responseType[$code]($finished) - $paramsJson")
+            buf.append(paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
         }
       }
       if (!c.isOpen.get()) {
@@ -202,10 +207,10 @@ object Context {
       p.future
     }
 
-    private def successIfFinished[R: Decoder](finished: Boolean, p: Promise[R], buf: String): Unit = {
+    private def successIfFinished[R: Decoder](requestId: Long, finished: Boolean, p: Promise[R], buf: String): Unit = {
       val _ =
         if (finished && !p.isCompleted)
-          SdkResultOrError.fromJsonPlain(buf).fold(ex => p.failure(SdkClientError.parsingError(ex.getMessage, buf.asJson)), p.success(_))
+          SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)), p.success(_))
     }
 
     override def fromTry[R](t: Try[R]): Future[R] = Context.fromTry(t)
@@ -220,7 +225,7 @@ object Context {
     override def map[P, R](in: Future[P])(f: P => R): Future[R]                                  = in.map(f)
     override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
-    override def unsafeGet[R](a: Future[R]): R = Await.result(a, 10.seconds)
+    override def unsafeGet[R](a: Future[R]): R = Await.result(a, 60.seconds)
     override def init[R](a: R): Future[R]      = Future(a)
 
   }

@@ -118,7 +118,7 @@ case class Transaction(
   status: Int,
   status_name: String,
   storage: Storage,
-  credit: Credit,
+  credit: Option[Credit],
   compute: Compute,
   action: Option[Action],
   credit_first: Boolean,

@@ -34,10 +34,11 @@ object Processing {
   object Result {
     case class SendMessage(shard_block_id: String)
     case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
-    case class ResultOfProcessMessage(transaction: String, out_messages: Seq[String], decoded: Option[DecodedOutput], fees: Json)
+    case class ResultOfProcessMessage(transaction: Transaction, out_messages: Seq[String], decoded: Option[DecodedOutput], fees: Fees)
   }
 
   import io.circe.generic.auto._
+  import Decoders.decodeCompute
 
   implicit val processMessage = new SdkCall[ProcessMessage, Result.ResultOfProcessMessage] {
     override val function: String = s"$prefix.process_message"
