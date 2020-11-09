@@ -1,7 +1,8 @@
 package ton.sdk.client.modules
 
 import org.scalatest.flatspec._
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context
+import ton.sdk.client.binding.Context._
 import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{ExecutionContext, Future}

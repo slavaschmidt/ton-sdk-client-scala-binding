@@ -1,22 +1,19 @@
-package ton.sdk.client.modules
+package ton.sdk.client.binding
 
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
-import io.circe
-import io.circe.Decoder.Result
 import io.circe.generic.auto._
-import io.circe.jawn.decode
 import io.circe.syntax._
-import io.circe.{Decoder, DecodingFailure, HCursor, Json, Printer}
+import io.circe._
 import org.slf4j.LoggerFactory
-import ton.sdk.client.binding.{ClientConfig, Handle}
-import ton.sdk.client.jni.{Binding, Handler, SdkCallback}
-import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.Context.{jsonPrinter, logger, Effect}
+import ton.sdk.client.binding.Api._
+import ton.sdk.client.binding.Context._
+import ton.sdk.client.jni.{Binding, Handler}
 
-import scala.concurrent.duration.DurationInt
 import scala.concurrent._
+import scala.concurrent.duration.DurationInt
+import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -37,23 +34,25 @@ final case class Context private (id: Long) extends Closeable {
   }
 
   def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
-    implicit val context: Context = this
-    val fnName                    = call.function
-    val jsonIn                    = call.toJson(params)
-    import call.decoder
+    implicit val context: Context    = this
+    implicit val decoder: Decoder[R] = call.decoder
+    val fnName                       = call.function
+    val jsonIn                       = call.toJson(params)
     effect.request(fnName, jsonPrinter.print(jsonIn))
   }
 
-  def request[P, S, E[_]](params: P, callback: SdkCallback[S])(implicit call: StreamingSdkCall[P, S], effect: Effect[E]): E[Handle] = {
-    implicit val context: Context = this
-    val fnName                    = call.function
-    val jsonIn                    = call.toJson(params)
-    import call.decoders
-    effect.request(fnName, jsonPrinter.print(jsonIn), callback)
+  def requestS[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], effect: Effect[E]): E[StreamingCallResult[R, S]] = {
+    implicit val context: Context                   = this
+    implicit val decoders: (Decoder[R], Decoder[S]) = call.decoders
+    val fnName: String                              = call.function
+    val jsonIn: Json                                = call.toJson(params)
+    val result                                      = effect.requestStreaming(fnName, jsonPrinter.print(jsonIn))
+    result
   }
 }
 
 object Context {
+  type StreamingCallResult[R, S] = (R, BlockingIterator[S], BlockingIterator[SdkClientError])
 
   private val jsonPrinter = Printer.noSpaces.copy(dropNullValues = true)
 
@@ -66,20 +65,23 @@ object Context {
     SdkResultOrError.fromJsonWrapped[Long](json).map(Context.apply)
   }
 
-  def local[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]   = effect.managed(ClientConfig.local)(block)
-  def mainNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T] = effect.managed(ClientConfig.mainNet)(block)
-  def devNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]  = effect.managed(ClientConfig.devNet)(block)
-  def testNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T] = effect.managed(ClientConfig.testNet)(block)
+  def local[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]   = effect.managed(ClientConfig.LOCAL)(block)
+  def mainNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T] = effect.managed(ClientConfig.MAIN_NET)(block)
+  def devNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T]  = effect.managed(ClientConfig.DEV_NET)(block)
+  def testNet[T, E[_]](block: Context => E[T])(implicit effect: Effect[E]): E[T] = effect.managed(ClientConfig.TEST_NET)(block)
 
   def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
     ctx.request(params)
 
-  def call[P, S, E[_]](params: P, callback: SdkCallback[S])(implicit call: StreamingSdkCall[P, S], ctx: Context, eff: Effect[E]): E[Handle] =
-    ctx.request(params, callback)
+  def callS[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], ctx: Context, eff: Effect[E]): E[StreamingCallResult[R, S]] =
+    ctx.requestS(params)
 
   trait Effect[T[_]] {
     def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
-    def request[R, S](functionName: String, functionParams: String, callback: SdkCallback[S])(implicit c: Context, decoders: (io.circe.Decoder[R], io.circe.Decoder[S])): T[R]
+    def requestStreaming[R, S](functionName: String, functionParams: String)(
+      implicit c: Context,
+      decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
+    ): T[StreamingCallResult[R, S]]
     def fromTry[R](t: Try[R]): T[R]
     def flatMap[P, R](in: T[P])(f: P => T[R]): T[R]
     def map[P, R](in: T[P])(f: P => R): T[R]
@@ -90,10 +92,10 @@ object Context {
   }
 
   val tryEffect: Effect[Try] = new Effect[Try] {
-    override def request[R, S](functionName: String, functionParams: String, callback: SdkCallback[S])(
+    override def requestStreaming[R, S](functionName: String, functionParams: String)(
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
-    ): Try[R] =
+    ): Try[StreamingCallResult[R, S]] =
       Failure(new SdkClientError(-1, s"Streaming synchronous requests aren't supported (function $functionName)", Json.Null))
 
     override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
@@ -123,70 +125,88 @@ object Context {
   }
 
   def futureEffect(implicit ec: ExecutionContext): Effect[Future] = new Effect[Future] {
-    override def request[R, S](functionName: String, functionParams: String, callback: SdkCallback[S])(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[R] =
-      requestFuture(functionName, functionParams, Option(callback))
+    override def requestStreaming[R, S](
+      functionName: String,
+      functionParams: String
+    )(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[StreamingCallResult[R, S]] =
+      requestStreamingFuture(functionName, functionParams)
 
-    override def request[R](functionName: String, functionParams: String)(implicit c: Context, d: Decoder[R]): Future[R] = {
-      val noneDecoder: Decoder[Any] = new Decoder[Any] {
-        override def apply(c: HCursor): Result[Any] = Left(DecodingFailure("Should not be called", Nil))
-      }
-      implicit val decoders = (d, noneDecoder)
-      requestFuture(functionName, functionParams, None)
-    }
+    override def request[R](functionName: String, functionParams: String)(implicit c: Context, d: Decoder[R]): Future[R] =
+      requestFuture(functionName, functionParams)
 
-    // TODO use the callback, boy
-    private def requestFuture[R, S](functionName: String, functionParams: String, callback: Option[SdkCallback[S]])(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[R] = {
-      val p = Promise[R]()
+    private def requestStreamingFuture[R, S](
+      functionName: String,
+      functionParams: String
+    )(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[StreamingCallResult[R, S]] = {
+      val p      = Promise[R]()
+      val result = new AsyncCallResult[R, S](p.future)
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
-        logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
-        println(s"$requestId: $responseType ($finished) - $paramsJson")
+        logger.trace(s"Streaming $requestId: $responseType ($finished) - $paramsJson")
+        if (finished) result.messages.close(None)
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}")
-
+            println(s"STREAMING ($finished): NOP or Reserved $paramsJson")
           case ResponseTypeResult =>
+            println(s"STREAMING ($finished): result $paramsJson")
             implicit val decoder = r._1
-            if (!finished) {
-              logger.debug("Not finished, a handle is expected")
-              if (decode[Handle](paramsJson).isRight) {
-                successIfFinished(finished = true, p, paramsJson)
-              } else {
-                println("WTF:" + paramsJson)
-              }
-            } else {
-              successIfFinished(finished, p, paramsJson)
-            }
+            successIfFinished(finished, p, paramsJson)
           case ResponseTypeError =>
-            if (!finished) logger.warn(errUndefinedBehaviour)
-            // TODO is this always true? Should callback be taken into account?
+            println(s"STREAMING ($finished): error $paramsJson")
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
-
           case ResponseTypeStream(code) =>
+            println(s"STREAMING ($finished): stream ($code) $paramsJson")
             implicit val decoder = r._2
-            callback.foreach { cb =>
-              decode[S](paramsJson) match {
-                case Left(ex) =>
-                  decode[SdkClientError](paramsJson) match {
-                    case Left(_)  => cb.onFailure(finished, SdkClientError.parsingError(ex.getMessage, paramsJson.asJson))
-                    case Right(er) => cb.onFailure(finished, er)
-                  }
-                case Right(s) => cb.onSuccess(finished, code, s)
-              }
+            val _ = SdkResultOrError.fromJsonWrapped[S](paramsJson) match {
+              case Failure(er: SdkClientError) => result.errors.append(er)
+              case Success(s)                  => result.messages.append(s)
+              case Failure(er)                 => logger.warn("Unexpected streaming error", er)
             }
         }
       }
       if (!c.isOpen.get()) {
         p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        println(s"$functionName - $functionParams")
+        println(s"calling async streaming $functionName - $functionParams")
+        Binding.request(c.id, functionName, functionParams, handler)
+      }
+      result.result.map((_, result.messages, result.errors))
+    }
+
+    private def requestFuture[R, S](functionName: String, functionParams: String)(implicit c: Context, r: Decoder[R]): Future[R] = {
+      val p = Promise[R]()
+      val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
+        logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
+        if (finished && p.isCompleted) {
+          println(s"FUCK, finished & completed already: $requestId: $responseType ($finished) - $paramsJson")
+        }
+        ResponseType(responseType) match {
+          case ResponseTypeNop | ResponseTypeReserved(_) =>
+            logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}")
+
+          case ResponseTypeResult =>
+            successIfFinished(finished, p, paramsJson)
+
+          case ResponseTypeError =>
+            if (!finished) logger.warn(errUndefinedBehaviour)
+            p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
+
+          case ResponseTypeStream(code) =>
+            println(s"Streaming in non-streaming request: $requestId: $responseType ($finished) - $paramsJson")
+        }
+      }
+      if (!c.isOpen.get()) {
+        p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
+      } else {
         Binding.request(c.id, functionName, functionParams, handler)
       }
       p.future
     }
 
-    private def successIfFinished[R: Decoder](finished: Boolean, p: Promise[R], buf: String): Unit =
-      if (finished && !p.isCompleted)
-        SdkResultOrError.fromJsonPlain(buf).fold(ex => p.failure(SdkClientError.parsingError(ex.getMessage, buf.asJson)), p.success(_))
+    private def successIfFinished[R: Decoder](finished: Boolean, p: Promise[R], buf: String): Unit = {
+      val _ =
+        if (finished && !p.isCompleted)
+          SdkResultOrError.fromJsonPlain(buf).fold(ex => p.failure(SdkClientError.parsingError(ex.getMessage, buf.asJson)), p.success(_))
+    }
 
     override def fromTry[R](t: Try[R]): Future[R] = Context.fromTry(t)
 
@@ -208,16 +228,6 @@ object Context {
   def fromTry[R](t: Try[R]): Future[R] = t match {
     case Success(r)  => Future.successful(r)
     case Failure(ex) => Future.failed(ex)
-  }
-
-  implicit def fn2callback[S](f: (Boolean, Long, S) => Unit): SdkCallback[S] = new SdkCallback[S] {
-    private val logger                                                            = LoggerFactory.getLogger(getClass)
-    override def onSuccess(finished: Boolean, responseType: Long, input: S): Unit = f(finished, responseType, input)
-
-    override def onFailure(finished: Boolean, failure: SdkClientError): Unit = {
-      val f = if (finished) "finished " else ""
-      logger.warn(s"Error in $f streaming response: $failure")
-    }
   }
 
 }

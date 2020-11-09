@@ -3,14 +3,16 @@ package ton.sdk.client.modules
 import java.io.File
 import java.nio.file.Files
 
+import io.circe.Json
 import io.circe.syntax.EncoderOps
 import org.scalatest.flatspec.AsyncFlatSpec
-import ton.sdk.client.binding.{CallSet, DeploySet, Signer}
+import ton.sdk.client.binding.{Api, CallSet, Context, DeploySet, Signer}
 import ton.sdk.client.modules.Abi._
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context._
 import ton.sdk.client.modules.Crypto._
-import ton.sdk.client.modules.Processing._
+import ton.sdk.client.modules.Processing.{Result, _}
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -87,7 +89,7 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         sent <- sendGrams(encoded.address)
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
-        handle <- call(Processing.Request.processMessage(params, callback))
+        handle <- call(Processing.Request.processMessageS(params))
       } yield handle
     }
     while (!done) Thread.sleep(100)
@@ -97,19 +99,6 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
   }
 
   it should "wait_for_transaction with events" in {
-    var data: Processing.Result.ResultOfProcessMessage = null
-    var done = false
-    val callback = (finished: Boolean, tpe: Long, in: Processing.Result.ResultOfProcessMessage) => {
-      println(s"waitfortransaction $done: $in")
-      data = in
-      done = finished
-    }
-    var msgData: Processing.Result.SendMessage = null
-    val sendMsgCallback = (finished: Boolean, tpe: Long, in: Processing.Result.SendMessage) => {
-      println(s"sendmsg $done: $in")
-      msgData = in
-      done = finished
-    }
 
     val result = devNet { implicit ctx =>
       for {
@@ -121,14 +110,18 @@ class AsyncProcessingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         encoded <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
         sent <- sendGrams(encoded.address)
         // Send message
-        shard_block_id <- call(Processing.Request.sendMessage(encoded.message, Option(abi), sendMsgCallback)) // TODO should come the from callback
-        result <- call(Processing.Request.waitForTransaction(encoded.message, shard_block_id.shard_block_id, Option(abi), callback))
-        _ = println(result)
-      } yield result
+        (handle, messages, errors) <- callS(Processing.Request.sendMessage(encoded.message, Option(abi))) // TODO should come the from callback
+        _ = println(handle)
+        msgs = messages.collect(20.seconds)
+        // TODO implement properly
+        // result <- callS(Processing.Request.waitForTransaction(encoded.message, shard_block_id.shard_block_id, Option(abi)))
+        // _ = println(result)
+      } yield msgs
     }
     // while (!done) Thread.sleep(100)
-    println(data)
     println(ef.unsafeGet(result))
-    assertExpression(result)(r => r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)
+    fail()
+    // TODO add assertion
+    // assertExpression(result)(r => r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)
   }
 }

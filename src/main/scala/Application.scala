@@ -1,8 +1,8 @@
 import io.circe.parser.decode
 import ton.sdk.client.jni.{Binding, Handler}
-import ton.sdk.client.modules.Api.SdkResultOrError._
-import ton.sdk.client.modules.Api._
-import ton.sdk.client.modules.{Client, Context, Processing}
+import ton.sdk.client.binding.Api.SdkResultOrError._
+import ton.sdk.client.binding.Api._
+import ton.sdk.client.modules.{Client, Processing}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
@@ -38,7 +38,7 @@ object Application extends App {
     Binding.tcDestroyContext(id)
   }
   import scala.concurrent.ExecutionContext.Implicits.global
-  import Context._
+  import ton.sdk.client.binding.Context._
 
 //  def testBasicContext = {
 //    Context.synchronous(ClientConfig.local) { implicit ctx =>

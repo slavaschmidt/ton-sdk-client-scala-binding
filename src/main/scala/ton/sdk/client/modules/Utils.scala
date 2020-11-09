@@ -1,6 +1,6 @@
 package ton.sdk.client.modules
 
-import ton.sdk.client.modules.Api.SdkCall
+import ton.sdk.client.binding.Api.SdkCall
 
 object Utils {
 

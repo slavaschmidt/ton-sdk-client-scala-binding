@@ -2,14 +2,15 @@ package ton.sdk.client.modules
 
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.{ClientConfig, KeyPair}
-import ton.sdk.client.modules.Context.tryEffect
+import ton.sdk.client.binding.Context._
+
 import scala.util.Try
 import ton.sdk.client.modules.Crypto._
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context
 import ton.sdk.client.modules.Crypto.Result.{Signature, Validity}
 
-import ton.sdk.client.modules.Context.futureEffect
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 
 class AsyncCryptoSpec extends CryptoSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
@@ -232,7 +233,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   // explicit context with closing
   it should "mnemonic_derive_sign_keys 1" in {
-    implicit val ctx = Context.create(ClientConfig.local).get
+    implicit val ctx = Context.create(ClientConfig.LOCAL).get
     val keyPair      = ef.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
     val publicSafe   = Context.call(Request.PublicKey(keyPair.public))
     val result       = assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))

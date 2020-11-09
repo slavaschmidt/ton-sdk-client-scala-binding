@@ -8,9 +8,10 @@ import io.circe.syntax._
 import org.scalatest.flatspec._
 import ton.sdk.client.binding._
 import ton.sdk.client.modules.Abi._
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.Try
 
 class SyncAbiSpec extends AbiSpec[Try] {

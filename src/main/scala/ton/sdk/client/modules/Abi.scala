@@ -2,7 +2,7 @@ package ton.sdk.client.modules
 
 import io.circe.{Json, ParsingFailure}
 import ton.sdk.client.binding.{CallSet, DeploySet, FunctionHeader, Signer}
-import ton.sdk.client.modules.Api._
+import ton.sdk.client.binding.Api._
 
 import scala.io.Source
 
@@ -26,7 +26,7 @@ object Abi {
   object AbiJson {
     import io.circe.syntax._
     import io.circe.parser._
-    val handle                                                   = AbiJson("Handle", 0.asJson)
+    val handle                                                       = AbiJson("Handle", 0.asJson)
     def fromJson(abiJson: Json): AbiJson                             = AbiJson("Serialized", abiJson)
     def fromString(abiJson: String): Either[ParsingFailure, AbiJson] = parse(abiJson).map(fromJson)
     def fromFile(path: String): Either[ParsingFailure, AbiJson]      = fromString(Source.fromFile(path).mkString)
@@ -65,14 +65,14 @@ object Abi {
   }
 
   final case class MessageSource(
-                                  `type`: String,
-                                  message: Option[String],
-                                  abi: Option[AbiJson],
-                                  address: Option[String],
-                                  deploy_set: Option[DeploySet],
-                                  call_set: Option[CallSet],
-                                  signer: Option[Signer],
-                                  processing_try_index: Option[Int]
+    `type`: String,
+    message: Option[String],
+    abi: Option[AbiJson],
+    address: Option[String],
+    deploy_set: Option[DeploySet],
+    call_set: Option[CallSet],
+    signer: Option[Signer],
+    processing_try_index: Option[Int]
   )
   object MessageSource {
     def fromEncoded(message: String, abi: Option[AbiJson]) = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)

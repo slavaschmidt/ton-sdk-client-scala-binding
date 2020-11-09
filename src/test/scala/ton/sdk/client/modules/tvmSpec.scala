@@ -6,13 +6,14 @@ import java.nio.file.Files
 import io.circe.literal.JsonStringContext
 import io.circe.syntax.EncoderOps
 import org.scalatest.flatspec.AsyncFlatSpec
-import ton.sdk.client.binding.{CallSet, DeploySet, Signer}
+import ton.sdk.client.binding.{CallSet, Context, DeploySet, Signer}
 import ton.sdk.client.modules.Abi.{AbiJson, StateInitSource}
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context._
 import ton.sdk.client.modules.Processing.MessageEncodeParams
 import ton.sdk.client.modules.Tvm._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.Try
 
 class AsyncTvmSpec extends TvmSpec[Future] {
@@ -73,7 +74,10 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   val elector = ef.unsafeGet {
     devNet { implicit ctx =>
-      call(Abi.Request.EncodeAccount(stateInit, None, None, None))
+      val request = Abi.Request.EncodeAccount(stateInit, None, None, None)
+      println(ctx)
+      println(request)
+      call(request)
     }
   }
 

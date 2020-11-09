@@ -1,10 +1,9 @@
-package ton.sdk.client.modules
+package ton.sdk.client.binding
 
 import io.circe._
-import io.circe.generic.auto._
 import io.circe.syntax._
-import ton.sdk.client.binding.Handle
 
+import scala.concurrent.{Future, Promise}
 import scala.util._
 
 object Api {
@@ -12,9 +11,9 @@ object Api {
   sealed trait ResponseType {
     def code: Long
   }
-  case object ResponseTypeResult              extends ResponseType { override def code = 0L }
-  case object ResponseTypeError               extends ResponseType { override def code = 1L }
-  case object ResponseTypeNop                 extends ResponseType { override def code = 2L }
+  case object ResponseTypeResult                           extends ResponseType { override def code = 0L }
+  case object ResponseTypeError                            extends ResponseType { override def code = 1L }
+  case object ResponseTypeNop                              extends ResponseType { override def code = 2L }
   case class ResponseTypeReserved(override val code: Long) extends ResponseType
   case class ResponseTypeStream(override val code: Long)   extends ResponseType
 
@@ -86,8 +85,11 @@ object Api {
     import io.circe.generic.auto._
     import io.circe.parser._
 
-    def fromJsonWrapped[T](json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = {
-      val resp: Either[io.circe.Error, SdkResultOrError[T]] = decode[SdkError[T]](json).orElse(decode[SdkResult[T]](json))
+    def fromJsonWrapped[T: Decoder](json: String): Try[T] = {
+      val resp: Either[io.circe.Error, SdkResultOrError[T]] = decode[SdkError[T]](json) match {
+        case Left(_)          => decode[SdkResult[T]](json)
+        case r @ Right(value) => r
+      }
       resp match {
         case Left(error)            => Failure(error)
         case Right(SdkError(error)) => Failure(error)
@@ -95,8 +97,8 @@ object Api {
       }
     }
     def fromJsonPlain[T](json: String)(implicit decoder: io.circe.Decoder[T]): Try[T] = decode[T](json) match {
-      case Left(error) => Failure(SdkClientError.parsingError(error.getMessage, json.asJson))
-      case Right(r: T) => Success(r)
+      case Left(error)            => Failure(SdkClientError.parsingError(error.getMessage, json.asJson))
+      case Right(r: T @unchecked) => Success(r)
     }
   }
 
@@ -107,9 +109,14 @@ object Api {
   }
 
   abstract class SdkCall[P: Encoder, R: Decoder] extends AbstractSdkCall[P, R]
-  abstract class StreamingSdkCall[P: Encoder, S: Decoder] extends AbstractSdkCall[P, Handle] {
-    implicit val decoders = (implicitly[Decoder[Handle]], implicitly[Decoder[S]])
+  abstract class StreamingSdkCall[P: Encoder, R: Decoder, S: Decoder] extends AbstractSdkCall[P, R] {
+    implicit val decoders = (implicitly[Decoder[R]], implicitly[Decoder[S]])
+  }
 
+  class AsyncCallResult[R, S](val result: Future[R]) {
+    val done     = Promise[Unit]()
+    val messages = new QueueBackedIterator[S](done)
+    val errors   = new QueueBackedIterator[SdkClientError](done)
   }
 
 }

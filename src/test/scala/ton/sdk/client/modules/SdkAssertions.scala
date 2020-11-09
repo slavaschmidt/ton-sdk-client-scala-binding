@@ -5,8 +5,8 @@ import org.scalatest.{Assertion, Assertions}
 import ton.sdk.client.binding.{CallSet, Signer}
 import ton.sdk.client.jni.Binding
 import ton.sdk.client.modules.Abi.AbiJson
-import ton.sdk.client.modules.Api.SdkClientError
-import ton.sdk.client.modules.Context.{call, devNet, Effect}
+import ton.sdk.client.binding.Api.SdkClientError
+import ton.sdk.client.binding.Context._
 import ton.sdk.client.modules.Processing.{MessageEncodeParams, Result}
 
 trait SdkAssertions[T[_]] extends Assertions {

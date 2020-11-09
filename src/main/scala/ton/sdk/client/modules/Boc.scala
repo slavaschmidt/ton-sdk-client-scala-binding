@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import ton.sdk.client.binding.Transaction
-import ton.sdk.client.modules.Api.SdkCall
+import ton.sdk.client.binding.Api.SdkCall
 
 object Boc {
 
@@ -31,7 +31,6 @@ object Boc {
     body_hash: Option[String],
     import_fee: Option[String]
   )
-
 
   case class Account(
     json_version: Int,

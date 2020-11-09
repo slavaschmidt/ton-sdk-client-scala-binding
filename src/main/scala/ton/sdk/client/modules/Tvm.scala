@@ -3,7 +3,7 @@ package ton.sdk.client.modules
 import io.circe.Json
 import ton.sdk.client.binding.{Fees, Transaction}
 import ton.sdk.client.modules.Abi.AbiJson
-import ton.sdk.client.modules.Api._
+import ton.sdk.client.binding.Api._
 
 // TODO status WIP
 object Tvm {
@@ -31,10 +31,10 @@ object Tvm {
       abi: Option[AbiJson] = None
     )
     final case class RunTvm(
-                             message: String,
-                             account: String,
-                             abi: Option[AbiJson] = None,
-                             executionOptions: ExecutionOptions = emptyExecutionOptions
+      message: String,
+      account: String,
+      abi: Option[AbiJson] = None,
+      executionOptions: ExecutionOptions = emptyExecutionOptions
     )
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }

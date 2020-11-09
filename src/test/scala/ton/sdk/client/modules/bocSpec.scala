@@ -4,10 +4,10 @@ import io.circe.jawn.decode
 import org.scalatest.flatspec._
 import ton.sdk.client.binding._
 import ton.sdk.client.modules.Boc._
-import ton.sdk.client.modules.Context._
-import ton.sdk.client.modules.Context.{call, futureEffect, local}
+import ton.sdk.client.binding.Context._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.Try
 
 class AsyncBocSpec extends BocSpec[Future] {

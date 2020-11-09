@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.modules.Api.SdkCall
+import ton.sdk.client.binding.Api.SdkCall
 
 object Client {
 

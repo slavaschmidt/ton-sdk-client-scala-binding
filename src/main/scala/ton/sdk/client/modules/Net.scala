@@ -1,8 +1,8 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.binding.{ClientResult, Handle, OrderBy}
-import ton.sdk.client.modules.Api.{SdkCall, StreamingSdkCall}
+import ton.sdk.client.binding.{Handle, OrderBy}
+import ton.sdk.client.binding.Api.{SdkCall, StreamingSdkCall}
 
 // TODO Status: WIP, needs refactoring of the callback
 object Net {
@@ -30,7 +30,7 @@ object Net {
     override val function: String = s"$prefix.wait_for_collection"
   }
 
-  implicit val subscribeCollection = new StreamingSdkCall[Request.SubscribeCollection, Json] {
+  implicit val subscribeCollection = new StreamingSdkCall[Request.SubscribeCollection, Handle, Json] {
     override val function: String = s"$prefix.subscribe_collection"
   }
 

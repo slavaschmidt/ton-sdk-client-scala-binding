@@ -2,11 +2,13 @@ package ton.sdk.client.modules
 
 import org.scalatest._
 import flatspec._
-import ton.sdk.client.modules.Context._
+import ton.sdk.client.binding.Context
+import ton.sdk.client.binding.Context._
 import ton.sdk.client.modules.Utils.Result.ConvertedAddress
 import ton.sdk.client.modules.Utils._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 import scala.util.Try
 
 class SyncUtilsSpec extends UtilsSpec[Try] {

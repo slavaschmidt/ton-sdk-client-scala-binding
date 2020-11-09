@@ -2,7 +2,6 @@ package ton.sdk.client.binding
 
 import io.circe.{Decoder, HCursor, Json}
 import io.circe.generic.auto._
-import ton.sdk.client.modules.Abi.AbiJson
 
 final case class NetworkConfig(
   server_address: String,
@@ -27,10 +26,10 @@ final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Opt
 
 object ClientConfig {
   def fromServer(server: String): ClientConfig = ClientConfig(Option(NetworkConfig(server)))
-  val mainNet                                  = fromServer("main.ton.dev")
-  val devNet                                   = fromServer("net.ton.dev")
-  val testNet                                  = fromServer("testnet.ton.dev")
-  val local                                    = fromServer("127.0.0.1")
+  val MAIN_NET                                 = fromServer("main.ton.dev")
+  val DEV_NET                                  = fromServer("net.ton.dev")
+  val TEST_NET                                 = fromServer("testnet.ton.dev")
+  val LOCAL                                    = fromServer("127.0.0.1")
 }
 
 // TODO make type-safe
