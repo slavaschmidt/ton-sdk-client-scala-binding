@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.binding.{Fees, Transaction}
+import ton.sdk.client.binding.{DecodedOutput, Fees, Transaction}
 import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.binding.Api._
 
@@ -38,7 +38,7 @@ object Tvm {
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }
   object Result {
-    final case class RunExecutor(transaction: Transaction, out_messages: Seq[String], decoded: Option[String], account: String, fees: Fees)
+    final case class RunExecutor(transaction: Transaction, out_messages: Seq[String], decoded: Option[DecodedOutput], account: String, fees: Fees)
   }
 
   import io.circe.generic.auto._

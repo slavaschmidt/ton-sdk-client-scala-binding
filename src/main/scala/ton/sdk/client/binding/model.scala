@@ -162,6 +162,8 @@ final case class Handle(handle: Long)
 
 final case class FetchNextBlockMessage(`type`: String, shard_block_id: String, message_id: String, message: String)
 
+final case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
+
 object Decoders {
   implicit val decodeCompute: Decoder[Compute] = (c: HCursor) =>
     for {

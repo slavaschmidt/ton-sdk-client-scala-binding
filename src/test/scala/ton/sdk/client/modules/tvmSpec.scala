@@ -19,7 +19,7 @@ import scala.util.Try
 class AsyncTvmSpec extends TvmSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
-  
+
   it should "execute_message" in {
     val abi                = AbiJson.fromResource("Subscription.abi.json").toOption.get
     val tvcSrc             = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Subscription.tvc").getFile).toPath)
@@ -40,59 +40,45 @@ class AsyncTvmSpec extends TvmSpec[Future] {
     ).map { case (k, v) => k -> v.asJson }
 
     val resultF = devNet { implicit ctx =>
-      // Get account deploy message
-      ef.flatMap(call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))) { deployMsg =>
-        ef.flatMap(sendGrams(deployMsg.address)) { _ =>
-          val params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
-          // Deploy account
-          ef.flatMap(call(Processing.Request.processMessage(params))) { _ =>
-            val filter = Map("id" -> Map("eq" -> deployMsg.address)).asJson
-            // Get account data
-            ef.flatMap(call(Net.Request.WaitForCollection("accounts", Option(filter), "id boc"))) { account =>
-              // Get account balance
-              val boc = account.result.\\("boc").head.as[String].toOption.get
-              ef.flatMap(call(Boc.Request.ParseAccount(boc))) { parsed =>
-                val origBalance = parsed.parsed.balance
-                // Run executor (unlimited balance should not affect account balance)
-                val callSet = CallSet("subscribe", None, Option(subscribeParams))
-                ef.map(call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))) { encodedMsg =>
-                  val unlimitedAccount = AccountForExecutor.from_account(boc, Option(true))
-                  val assert1 = ef.flatMap(call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))) { result2 =>
-                    // Get account balance again
-                    ef.map(call(Boc.Request.ParseAccount(result2.account))) { parsed2 =>
-                      origBalance == parsed2.parsed.balance
-                    }
-                  }
-                  // Run executor in standard mode (limited balance)
-                  val limitedAccount = AccountForExecutor.from_account(boc, Option(false))
-                  val assert2 = ef.flatMap(call(Request.RunExecutor(encodedMsg.message, limitedAccount, abi = Option(abi)))) { result2 =>
-                    // Get account balance again
-                    ef.flatMap(call(Boc.Request.ParseAccount(result2.account))) { parsed2 =>
-                      // Check subscription
-                      val input   = Map("subscriptionId" -> subscriptionId.asJson)
-                      val callSet = CallSet("getSubscription", None, Option(input))
-                      ef.flatMap(call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))) { result3 =>
-                        ef.map(call(Tvm.Request.RunTvm(encodedMsg.message, result2.account, Option(abi)))) { result3 =>
-                          val pubkey  = result3.hcursor.downField("decoded").downField("output").downField("value0").downField("pubkey").as[String].toOption.get
-                          val assert3 = encodedMsg.message_id == result2.transaction.in_msg
-                          val assert4 = result2.fees.total_account_fees > 0
-                          val assert5 = subscriptionPubkey == pubkey
-                          assert3 && assert4 && assert5
-                        }
-                      }
-                    }
-                  }
-                  (assert1, assert2)
-                }
-              }
-            }
-          }
-        }
+      for {
+        // Get account deploy message
+        deployMsg <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
+        _ <- sendGrams(deployMsg.address)
+        params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
+        // Deploy account
+        _ <- call(Processing.Request.processMessage(params))
+        // Get account data
+        filter = json"""{"id":{"eq":${deployMsg.address}}}"""
+        account <- call(Net.Request.WaitForCollection("accounts", Option(filter), "id boc"))
+        boc = account.result.\\("boc").head.as[String].toOption.get
+        // Get account balance
+        parsed <- call(Boc.Request.ParseAccount(boc))
+        callSet = CallSet("subscribe", None, Option(subscribeParams))
+        encodedMsg <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
+        // Create limited and unlimited accounts
+        unlimitedAccount = AccountForExecutor.from_account(boc, Option(true))
+        limitedAccount = AccountForExecutor.from_account(boc, Option(false))
+        // Run executor (unlimited balance should not affect account balance)
+        result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))
+        // Get account balance again
+        parsed2 <- call(Boc.Request.ParseAccount(result2.account))
+        assert1 = parsed.parsed.balance == parsed2.parsed.balance
+        // Run executor in standard mode (limited balance)
+        result3 <- call(Request.RunExecutor(encodedMsg.message, limitedAccount, abi = Option(abi)))
+        // Check subscription
+        input   = Map("subscriptionId" -> subscriptionId.asJson)
+        callSet = CallSet("getSubscription", None, Option(input))
+        encodedMsg2 <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
+        result5 <- call(Tvm.Request.RunTvm(encodedMsg2.message, result2.account, Option(abi)))
+        pubkey  = result5.hcursor.downField("decoded").downField("output").downField("value0").downField("pubkey").as[String].toOption.get
+        assert2 = encodedMsg.message_id == result3.transaction.in_msg
+        assert3 = result3.fees.total_account_fees > 0
+        assert4 = subscriptionPubkey == pubkey
+      } yield {
+        assert1 && assert2 && assert3 && assert4
       }
     }
-    val result = ef.unsafeGet(resultF)
-    assert(ef.unsafeGet(result._1))
-    assert(ef.unsafeGet(result._2))
+    assertValue(resultF)(true)
   }
 }
 class SyncTvmSpec extends TvmSpec[Try] {
