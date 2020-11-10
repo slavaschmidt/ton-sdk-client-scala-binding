@@ -14,7 +14,7 @@ import scala.language.higherKinds
 
 trait SdkAssertions[T[_]] extends Assertions {
   Binding.loadNativeLibrary()
-  
+
   implicit val ef: Effect[T]
   def assertValue[R, V](result: T[R])(v: V): Assertion                 = ef.unsafeGet(ef.map(result)(assertResult(v)))
   def assertExpression[R, V](result: T[R])(v: R => Boolean): Assertion = ef.unsafeGet(ef.map(result)(r => assert(v(r))))

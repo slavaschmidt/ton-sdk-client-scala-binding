@@ -45,10 +45,6 @@ public class Binding {
     private static final AtomicLong counter = new AtomicLong(0);
 
     public static void loadNativeLibrary() {
-//        String path = new File("lib/").getAbsolutePath();
-//        System.out.println("loading from " + path);
-//        System.setProperty("java.library.path", path);
-//        System.loadLibrary("TonSdkClientJniBinding");
         String path = new File("lib/libTonSdkClientJniBinding.dylib").getAbsolutePath();
         System.load(path);
     }
