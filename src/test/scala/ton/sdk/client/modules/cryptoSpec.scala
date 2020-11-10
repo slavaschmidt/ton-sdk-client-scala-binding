@@ -167,6 +167,12 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid mnemonic dictionary: 100")
   }
 
+  /**
+    *  This test implemented in a way that it closes over context in nested effects
+    *  at the time the main effect will be considered complete nested effects will still need it
+    *  this will lead to "'Cannot drop a runtime in a context where blocking is not allowed." messages
+    *  If nested effects are necessary, fallback to manual context management
+    */
   it should "mnemonic_from_random" in {
     val resultF = local { implicit ctx =>
       ef.init(for {

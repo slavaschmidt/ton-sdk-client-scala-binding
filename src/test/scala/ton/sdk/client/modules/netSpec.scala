@@ -20,13 +20,13 @@ class AsyncNetSpec extends NetSpec[Future] {
   it should "subscribe_collection and get results" in {
     val now = 1562342740L
 
-    val filter   = json"""{"now":{"gt":$now}}"""
+    val filter = json"""{"now":{"gt":$now}}"""
 
     val messages = devNet { implicit ctx =>
       for {
         (handle, messages, _) <- callS(Request.SubscribeCollection("transactions", filter = Option(filter), result = "id now"))
         _ = assert(handle.handle > 0)
-        m = messages.collect(15.seconds)
+        m = messages.collect(5.seconds)
         _ = assert(handle.handle > 0)
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield m
@@ -35,12 +35,12 @@ class AsyncNetSpec extends NetSpec[Future] {
   }
 
   it should "subscribe_collection and get errors as JSON" in {
-    val filter   = json"""{"now":{"gt":100000000}}"""
+    val filter = json"""{"now":{"gt":100000000}}"""
     val errors = devNet { implicit ctx =>
       for {
         (handle, _, errors) <- callS(Request.SubscribeCollection("transactions", filter = Option(filter), result = "created_at"))
         _ = assert(handle.handle > 0)
-        e = errors.collect(15.seconds)
+        e = errors.collect(5.seconds)
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield e
     }
@@ -94,7 +94,11 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "not query_collection without network" in {
     implicit val ctx = Context.create(ClientConfig()).get
     val result       = call(Request.QueryCollection(collection = "messages"))
-    assertSdkError(result)("SDK is initialized without network config")
+    val assertion    = assertSdkError(result)("SDK is initialized without network config")
+    // do not forget to close the context or see a warning at runtime
+    // "Context(4) was not closed as expected, this is a programming error"
+    ctx.close()
+    assertion
   }
 
   it should "not query_collection" in {

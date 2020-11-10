@@ -159,9 +159,9 @@ object Context {
           case ResponseTypeError =>
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
           case ResponseTypeStream(code) =>
-            implicit val decoder = r._2
+            implicit val decoder             = r._2
             def tryParseResult(t: Throwable) = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson).map(result.messages.append).getOrElse(false)
-            val _ = SdkResultOrError.fromJsonPlain[SdkClientError](requestId, paramsJson).fold(tryParseResult, result.errors.append)
+            val _                            = SdkResultOrError.fromJsonPlain[SdkClientError](requestId, paramsJson).fold(tryParseResult, result.errors.append)
         }
       }
       if (!c.isOpen.get()) {
