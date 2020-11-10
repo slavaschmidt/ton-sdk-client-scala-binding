@@ -82,22 +82,19 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid base64 string: Invalid byte 32, offset 2.\r\nbase64: [Oh Weh]")
   }
 
-  // TODO failing test : [304] Message can't be decoded: cell underflow. [Context(5):6]
   it should "decode_message_body" in {
-    if (IDDQD) succeed
-    else {
-      val result = local { implicit ctx =>
-        ef.flatMap(call(Boc.Request.ParseMessage(encodedMessage))) { parsed: Boc.Result.Parsed[Boc.Message] =>
-          // TODO here it is already failing
-          call(Request.DecodeMessage(abi, parsed.parsed.body.get))
-        }
+    val result = local { implicit ctx =>
+      ef.flatMap(call(Boc.Request.ParseMessage(encodedMessage))) { parsed =>
+        // TODO here it is already failing
+        call(Request.DecodeMessageBody(abi, parsed.parsed.body.get, false))
       }
-
-      val expectedValue   = json"""{"id": "0x0000000000000000000000000000000000000000000000000000000000000000"}"""
-      val header          = FunctionHeader(Option(1599458404), Option(1599458364291L), Option("4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499"))
-      val expectedMessage = Result.DecodedMessageBody(MessageBodyType.input, "returnValue", Option(expectedValue), Option(header))
-      ef.unsafeGet(ef.map(result)(assertResult(expectedMessage)))
     }
+
+    val expectedValue   = json"""{"id": "0x0000000000000000000000000000000000000000000000000000000000000000"}"""
+    val header          = FunctionHeader(Option(1599458404), Option(1599458364291L), Option("4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499"))
+    val expectedMessage = Result.DecodedMessageBody(MessageBodyType.input, "returnValue", Option(expectedValue), Option(header))
+    ef.unsafeGet(ef.map(result)(assertResult(expectedMessage)))
+
   }
 
   private val deploySet          = DeploySet(tvc)
