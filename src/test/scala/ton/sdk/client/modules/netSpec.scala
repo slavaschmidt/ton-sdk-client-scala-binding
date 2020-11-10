@@ -1,6 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
+import io.circe.literal.JsonStringContext
 import io.circe.syntax._
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, Context, OrderBy}
@@ -17,36 +18,33 @@ class AsyncNetSpec extends NetSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "subscribe_collection and get results" in {
-    val filter   = Map("created_at" -> Map("gt" -> (System.currentTimeMillis() - 1000000))).asJson
+    val now = System.currentTimeMillis() - 1000000
+
+    val filter   = json"""{"created_at":{"gt":$now}}"""
+
     val resultF = devNet { implicit ctx =>
       for {
-        (handle, messages, errors) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
+        (handle, messages, _) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
         _ = assert(handle.handle > 0)
-        m = messages.collect(5.seconds)
-        _ = println(m)
+        m = messages.collect(45.seconds)
         un <- call(Request.Unsubscribe(handle.handle))
-      } yield un
+      } yield (un, m)
     }
-    assertValue(resultF)(Json.Null)
-    // TODO implement filter that actually receives something
-    // assert(counter == 0)
+    assertExpression(resultF){ case (un, msgs) => println(un); msgs.nonEmpty }
   }
 
   it should "subscribe_collection and get errors as JSON" in {
-    val filter   = Map("now" -> Map("gt" -> System.currentTimeMillis())).asJson
+    val filter   = json"""{"now":{"gt":100000000}}"""
 
     val resultF = devNet { implicit ctx =>
       for {
-        (handle, messages, errors) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
+        (handle, _, errors) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
         _ = assert(handle.handle > 0)
-        m = messages.collect(5.seconds)
-        _ = println(m)
-        un <- call(Request.Unsubscribe(handle.handle))
-      } yield un
+        e = errors.collect(5.seconds)
+        _ <- call(Request.Unsubscribe(handle.handle))
+      } yield e
     }
-    assertValue(resultF)(Json.Null)
-    // TODO implement filter that actually receives something
-    // assert(counter == 0)
+    assertExpression(resultF) { errors => println(errors); errors.nonEmpty }
   }
 }
 

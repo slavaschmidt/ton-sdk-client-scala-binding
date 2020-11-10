@@ -59,7 +59,7 @@ object Abi {
     def fromMessage(source: MessageSource) =
       StateInitSource("Message", None, None, None, None, None, None, Option(source))
     def fromStateInit(code: String, data: String, library: Option[String]) =
-      StateInitSource("StateInitSource", Option(code), Option(data), library, None, None, None, None)
+      StateInitSource("StateInit", Option(code), Option(data), library, None, None, None, None)
     def fromTvc(tvc: String, public_key: Option[String], init_params: Option[StateInitParams]) =
       StateInitSource("Tvc", None, None, None, Option(tvc), public_key, init_params, None)
   }

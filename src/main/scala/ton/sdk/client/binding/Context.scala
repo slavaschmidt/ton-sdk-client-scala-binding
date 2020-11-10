@@ -152,8 +152,9 @@ object Context {
           case ResponseTypeResult =>
             println(s"STREAMING ($finished): result $paramsJson")
             buf.append(paramsJson)
-            implicit val decoder = r._1
-            successIfFinished(requestId, finished, p, buf.result())
+            implicit val decoder       = r._1
+            val finishAfterFirstResult = true
+            successIfFinished(requestId, finished || finishAfterFirstResult, p, buf.result())
           case ResponseTypeError =>
             println(s"STREAMING ($finished): error $paramsJson")
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))

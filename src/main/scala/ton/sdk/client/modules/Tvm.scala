@@ -5,7 +5,6 @@ import ton.sdk.client.binding.{Fees, Transaction}
 import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.binding.Api._
 
-// TODO status WIP
 object Tvm {
 
   private val prefix = "tvm"
