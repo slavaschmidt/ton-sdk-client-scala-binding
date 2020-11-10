@@ -11,7 +11,10 @@ Scala binding for freeton SDK client
 
 [<img src="https://img.shields.io/maven-central/v/org.scoverage/sbt-scoverage.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22sbt-scoverage%22)
 
+ON LINUX:
 
+export LD_LIBRARY_PATH=/home/someuser/Documents/
+./somenameApp
 
 ## License
 ```
