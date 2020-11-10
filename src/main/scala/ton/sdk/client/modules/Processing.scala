@@ -22,7 +22,7 @@ object Processing {
   final case class WaitForTransaction(message: String, shard_block_id: String, abi: Option[Abi.AbiJson] = None, send_events: Boolean)
   final case class ProcessMessage private (message_encode_params: MessageEncodeParams, send_events: Boolean)
 
-  // TODO all of them support streaming
+  // TODO this can be done better
   object Request {
     def processMessage(params: MessageEncodeParams)                                            = ProcessMessage(params, false)
     def processMessageS(params: MessageEncodeParams)                                           = ProcessMessage(params, true)

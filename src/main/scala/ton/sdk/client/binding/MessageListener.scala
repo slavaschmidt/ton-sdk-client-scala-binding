@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import scala.collection.JavaConverters.asScalaIteratorConverter
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 trait BlockingIterator[+A] {
   def hasNext: Boolean
@@ -27,7 +27,7 @@ class QueueBackedIterator[A](p: Promise[Unit]) extends BlockingIterator[A] {
 
   // Returns a copy and preserves elements in the iterator
   override def collect(timeout: Duration): Seq[A] = {
-    Await.ready(flag, timeout)
+    Try(Await.ready(flag, timeout))
     buf.iterator().asScala.toSeq
   }
 

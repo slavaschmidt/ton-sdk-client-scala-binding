@@ -140,7 +140,7 @@ object Context {
     )(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[StreamingCallResult[R, S]] = {
       val p      = Promise[R]()
       val result = new AsyncCallResult[R, S](p.future)
-      val buf = StringBuilder.newBuilder
+      val buf    = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"Streaming $requestId: $responseType ($finished) - $paramsJson")
         if (finished) result.messages.close(None)

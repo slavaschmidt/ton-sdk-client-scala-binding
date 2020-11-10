@@ -160,6 +160,8 @@ final case class FunctionHeader(expire: Option[Long], time: Option[BigInt], pubk
 
 final case class Handle(handle: Long)
 
+final case class FetchNextBlockMessage(`type`: String, shard_block_id: String, message_id: String, message: String)
+
 object Decoders {
   implicit val decodeCompute: Decoder[Compute] = (c: HCursor) =>
     for {

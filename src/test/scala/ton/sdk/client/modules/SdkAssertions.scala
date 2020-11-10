@@ -1,6 +1,7 @@
 package ton.sdk.client.modules
 
-import io.circe.syntax.EncoderOps
+import io.circe._
+import io.circe.syntax._
 import org.scalatest.{Assertion, Assertions}
 import ton.sdk.client.binding.{CallSet, Signer}
 import ton.sdk.client.jni.Binding
@@ -28,6 +29,11 @@ trait SdkAssertions[T[_]] extends Assertions {
   def base64(b: Array[Byte]) = new String(java.util.Base64.getEncoder.encode(b))
   def base64(s: String)      = new String(java.util.Base64.getEncoder.encode(s.getBytes()))
 
+  def unsafeDecode[J: Decoder](j: Json): J = j.as[J] match {
+    case Left(value)  => fail("Could not decode json to expected type", value)
+    case Right(value) => value
+  }
+
   def sendGrams(address: String): T[Result.ResultOfProcessMessage] = {
     val giver   = "0:653b9a6452c7a982c6dc92b2da9eba832ade1c467699ebb3b43dca6d77b780dd"
     val abi     = AbiJson.fromResource("Giver.abi.json").toOption.get
@@ -37,4 +43,5 @@ trait SdkAssertions[T[_]] extends Assertions {
       call(Processing.Request.processMessage(params))
     }
   }
+
 }
