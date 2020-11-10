@@ -18,33 +18,33 @@ class AsyncNetSpec extends NetSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "subscribe_collection and get results" in {
-    val now = System.currentTimeMillis() - 1000000
+    val now = 1562342740L
 
-    val filter   = json"""{"created_at":{"gt":$now}}"""
+    val filter   = json"""{"now":{"gt":$now}}"""
 
-    val resultF = devNet { implicit ctx =>
+    val messages = devNet { implicit ctx =>
       for {
-        (handle, messages, _) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
+        (handle, messages, _) <- callS(Request.SubscribeCollection("transactions", filter = Option(filter), result = "id now"))
         _ = assert(handle.handle > 0)
-        m = messages.collect(45.seconds)
-        un <- call(Request.Unsubscribe(handle.handle))
-      } yield (un, m)
+        m = messages.collect(15.seconds)
+        _ = assert(handle.handle > 0)
+        _ <- call(Request.Unsubscribe(handle.handle))
+      } yield m
     }
-    assertExpression(resultF){ case (un, msgs) => println(un); msgs.nonEmpty }
+    assertExpression(messages)(_.nonEmpty)
   }
 
   it should "subscribe_collection and get errors as JSON" in {
     val filter   = json"""{"now":{"gt":100000000}}"""
-
-    val resultF = devNet { implicit ctx =>
+    val errors = devNet { implicit ctx =>
       for {
-        (handle, _, errors) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "created_at"))
+        (handle, _, errors) <- callS(Request.SubscribeCollection("transactions", filter = Option(filter), result = "created_at"))
         _ = assert(handle.handle > 0)
-        e = errors.collect(5.seconds)
+        e = errors.collect(15.seconds)
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield e
     }
-    assertExpression(resultF) { errors => println(errors); errors.nonEmpty }
+    assertExpression(errors)(_.nonEmpty)
   }
 }
 
@@ -106,8 +106,8 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "wait_for_collection transactions" in {
     val filter = Map("now" -> Map("gt" -> 1562342740L)).asJson
-    val resultF: T[Result.WaitForCollection] = devNet { implicit ctx =>
-      call(Request.WaitForCollection("transactions", filter = Option(filter), result = "id now"))
+    val resultF = devNet { implicit ctx =>
+      call(Request.WaitForCollection("transactions", Option(filter), "id now"))
     }
     val result = ef.unsafeGet(resultF)
     assert(result.result.\\("now").forall(_.as[Long].toOption.get > 1562342740L))

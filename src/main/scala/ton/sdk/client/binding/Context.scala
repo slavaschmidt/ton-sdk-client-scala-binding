@@ -143,35 +143,30 @@ object Context {
       val buf    = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"Streaming $requestId: $responseType ($finished) - $paramsJson")
-        if (finished) result.messages.close(None)
+        if (finished) {
+          result.messages.close(None)
+          result.errors.close(None)
+        }
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            println(s"STREAMING ($finished): NOP or Reserved $paramsJson")
             implicit val decoder = r._1
             successIfFinished(requestId, finished, p, buf.result())
           case ResponseTypeResult =>
-            println(s"STREAMING ($finished): result $paramsJson")
             buf.append(paramsJson)
             implicit val decoder       = r._1
             val finishAfterFirstResult = true
             successIfFinished(requestId, finished || finishAfterFirstResult, p, buf.result())
           case ResponseTypeError =>
-            println(s"STREAMING ($finished): error $paramsJson")
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
           case ResponseTypeStream(code) =>
-            println(s"STREAMING ($finished): stream ($code) $paramsJson")
             implicit val decoder = r._2
-            val _ = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson) match {
-              case Failure(er: SdkClientError) => result.errors.append(er)
-              case Success(s)                  => result.messages.append(s)
-              case Failure(er)                 => logger.warn("Unexpected streaming error", er)
-            }
+            def tryParseResult(t: Throwable) = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson).map(result.messages.append).getOrElse(false)
+            val _ = SdkResultOrError.fromJsonPlain[SdkClientError](requestId, paramsJson).fold(tryParseResult, result.errors.append)
         }
       }
       if (!c.isOpen.get()) {
         p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        println(s"calling async streaming $functionName - $functionParams")
         Binding.request(c.id, functionName, functionParams, handler)
       }
       result.result.map((_, result.messages, result.errors))
@@ -181,13 +176,9 @@ object Context {
       val p   = Promise[R]()
       val buf = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
-        println(s"$requestId: $responseType ($finished) - $paramsJson - ${buf.result}")
-        if (finished && p.isCompleted) {
-          println(s"FUCK, finished & completed already: $requestId: $responseType ($finished) - $paramsJson")
-        }
+        logger.trace(s"$requestId: $responseType ($finished) - $paramsJson - ${buf.result}")
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            logger.debug(s"Got NOP or RESERVED, promise state: ${p.isCompleted}, should be finished: $finished: $paramsJson")
             successIfFinished(requestId, finished, p, buf.result())
 
           case ResponseTypeResult =>
