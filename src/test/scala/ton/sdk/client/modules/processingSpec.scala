@@ -38,7 +38,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         callSet = CallSet("constructor", Option(Map("pubkey" -> keys.public.asJson)), None)
         // Encode deployment message
         encoded <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
-        sent    <- sendGrams(encoded.address)
+        _    <- sendGrams(encoded.address)
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
         account <- call(Processing.Request.processMessage(params))
@@ -78,7 +78,8 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
         (data, messages, _) <- callS(Processing.Request.processMessageS(params))
-        _ = assert(messages.collect(1.minute).nonEmpty) // Check that messages are indeed received
+        // Check that messages are indeed received
+        _ = assert(messages.collect(1.minute).nonEmpty)
       } yield data
     }
     assertExpression(result)(data => data.out_messages.isEmpty && data.decoded.get.out_messages.isEmpty && data.decoded.get.output.isEmpty)
@@ -96,11 +97,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         _       <- sendGrams(encoded.address)
         // Send message
         (shardBlock, _, _) <- callS(Processing.Request.sendMessageS(encoded.message, Option(abi)))
-//        json       = messages.collect(1.minute).last
-//        shardBlock = unsafeDecode[FetchNextBlockMessage](json)
         (result, _, _) <- callS(Processing.Request.waitForTransactionS(encoded.message, shardBlock.shard_block_id, Option(abi)))
-//        json2  = messages2.collect(1.minute).last
-//        result = unsafeDecode[Result.ResultOfProcessMessage](json2)
       } yield result
     }
     assertExpression(result)(r => r.out_messages.isEmpty && r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)

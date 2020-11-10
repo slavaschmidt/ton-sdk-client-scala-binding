@@ -243,7 +243,10 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val keyPair      = ef.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
     val publicSafe   = Context.call(Request.PublicKey(keyPair.public))
     val result       = assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))
-    // ctx.close() TODO in async execution this will close context too early
+    // caveat:
+    // in async execution this will close context too early
+    // leaving it open will closing it later but printout a warning
+    // ctx.close()
     result
   }
 

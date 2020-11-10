@@ -30,7 +30,8 @@ final case class Context private (id: Long) extends Closeable {
     }
 
   override def finalize(): Unit = if (isOpen.get()) {
-    logger.warn(s"Context($id) was not closed as expected, this is a programming error")
+    logger.warn(s"Auto-closing Context($id) because it was not closed as expected. Probably this is a programming mistake.")
+    Binding.tcDestroyContext(id)
   }
 
   def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
