@@ -1,0 +1,17 @@
+language: scala
+scala:
+  - 2.12.12
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+jobs:
+  include:
+    - os: linux
+      dist: trusty
+    - os: osx
+      osx_image: xcode7.2
+    - os: windows
