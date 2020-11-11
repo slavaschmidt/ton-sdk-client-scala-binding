@@ -173,14 +173,28 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     *  this will lead to "'Cannot drop a runtime in a context where blocking is not allowed." messages
     *  If nested effects are necessary, fallback to manual context management
     */
+//  it should "mnemonic_from_random" in {
+//    val resultF = local { implicit ctx =>
+//      ef.init(for {
+//        dictionary <- dictionaries
+//        count      <- wordCounts
+//      } yield call(Request.MnemonicFromRandom(dictionary, count)))
+//    }
+//    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
+//    assert(result.zipWithIndex.forall { case (m, i) => m.wordCount === wordCounts(i % 5) })
+//  }
+
   it should "mnemonic_from_random" in {
-    val resultF = local { implicit ctx =>
-      ef.init(for {
+    val result =
+      for {
         dictionary <- dictionaries
         count      <- wordCounts
-      } yield call(Request.MnemonicFromRandom(dictionary, count)))
-    }
-    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
+      } yield ef.unsafeGet {
+        local { implicit ctx =>
+          call(Request.MnemonicFromRandom(dictionary, count))
+        }
+      }
+
     assert(result.zipWithIndex.forall { case (m, i) => m.wordCount === wordCounts(i % 5) })
   }
 
@@ -213,18 +227,15 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "mnemonic_verify" in {
-    val resultF = local { implicit ctx =>
-      ef.init {
-        for {
-          dictionary <- dictionaries
-          count      <- wordCounts
-        } yield {
-          val randomMnemonic = ef.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
-          call(Request.MnemonicVerify(randomMnemonic.phrase, count, dictionary))
-        }
-      }
-    }
-    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
+    val result =
+      for {
+        dictionary <- dictionaries
+        count      <- wordCounts
+      } yield ef.unsafeGet(local { implicit ctx =>
+        val randomMnemonic = ef.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
+        call(Request.MnemonicVerify(randomMnemonic.phrase, count, dictionary))
+      })
+
     assert(result.forall(_.valid))
   }
 
