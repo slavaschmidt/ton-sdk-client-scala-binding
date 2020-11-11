@@ -3,9 +3,9 @@ Scala binding for FreeTON SDK client
 
 Scala binding for freeton SDK client
 
-[![Build Status](https://travis-ci.com/pablocanoh/Akka-HTTP.svg?branch=master)](https://travis-ci.com/pablocanoh/Akka-HTTP)
+[![Build Status](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding.svg?branch=main)](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding)
 
-[![codecov](https://codecov.io/gh/pablocanoh/Akka-HTTP/branch/master/graph/badge.svg)](https://codecov.io/gh/pablocanoh/Akka-HTTP)
+[![codecov](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding/branch/main/graph/badge.svg?token=MRUA0KJ2BK)](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding)
 
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
