@@ -26,7 +26,7 @@ class AsyncNetSpec extends NetSpec[Future] {
       for {
         (handle, messages, _) <- callS(Request.SubscribeCollection("transactions", filter = Option(filter), result = "id now"))
         _ = assert(handle.handle > 0)
-        m = messages.collect(5.seconds)
+        m = messages.collect(25.seconds)
         _ = assert(handle.handle > 0)
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield m
