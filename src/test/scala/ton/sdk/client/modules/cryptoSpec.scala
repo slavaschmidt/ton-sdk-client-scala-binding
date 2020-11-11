@@ -189,7 +189,11 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       for {
         dictionary <- dictionaries
         count      <- wordCounts
-      } yield ef.unsafeGet { local { implicit ctx => call(Request.MnemonicFromRandom(dictionary, count)) }}
+      } yield ef.unsafeGet {
+        local { implicit ctx =>
+          call(Request.MnemonicFromRandom(dictionary, count))
+        }
+      }
 
     assert(result.zipWithIndex.forall { case (m, i) => m.wordCount === wordCounts(i % 5) })
   }
@@ -223,18 +227,15 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "mnemonic_verify" in {
-    val resultF = local { implicit ctx =>
-      ef.init {
-        for {
-          dictionary <- dictionaries
-          count      <- wordCounts
-        } yield {
-          val randomMnemonic = ef.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
-          call(Request.MnemonicVerify(randomMnemonic.phrase, count, dictionary))
-        }
-      }
-    }
-    val result = ef.unsafeGet(resultF).map(ef.unsafeGet)
+    val result =
+      for {
+        dictionary <- dictionaries
+        count      <- wordCounts
+      } yield ef.unsafeGet(local { implicit ctx =>
+        val randomMnemonic = ef.unsafeGet(call(Request.MnemonicFromRandom(dictionary, count)))
+        call(Request.MnemonicVerify(randomMnemonic.phrase, count, dictionary))
+      })
+
     assert(result.forall(_.valid))
   }
 

@@ -14,5 +14,4 @@ jobs:
     - os: linux
       dist: focal
     - os: osx
-      osx_image: xcode7.2
     - os: windows
