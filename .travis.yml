@@ -14,4 +14,4 @@ jobs:
     - os: linux
       dist: focal
     - os: osx
-    - os: windows
+#    - os: windows : removed as scala/windows is not supported by travis

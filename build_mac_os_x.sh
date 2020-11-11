@@ -24,16 +24,3 @@ gcc \
   -Wl,-rpath,.
 
 cd -
-
-
-#gcc \
-#  -dynamiclib \
-#  -shared \
-#  -I$JAVA_HOME/include \
-#  -I$JAVA_HOME/include/darwin \
-#  -I$JAVA_HOME/include/linux \
-#  -o $LIBS/libTonSdkClientJniBinding.dylib \
-#  -L$LIBS \
-#  -lton_client
-#  -Wl,-all_load "$LIBS/libton_client.a" \
-#  *.c \
