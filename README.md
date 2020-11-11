@@ -1,20 +1,18 @@
 # ton-sdk-client-scala-binding
 Scala binding for FreeTON SDK client
 
-Scala binding for freeton SDK client
-
 [![Build Status](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding.svg?branch=main)](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding)
-
 [![codecov](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding/branch/main/graph/badge.svg?token=MRUA0KJ2BK)](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding)
-
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
-
 [<img src="https://img.shields.io/maven-central/v/org.scoverage/sbt-scoverage.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22sbt-scoverage%22)
 
 ON LINUX:
 
-export LD_LIBRARY_PATH=/home/someuser/Documents/
-./somenameApp
+export LD_LIBRARY_PATH
+
+ON Windows:
+
+export PATH
 
 ## License
 ```

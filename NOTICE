@@ -1,0 +1,12 @@
+TON SDK Client Scala Binding
+Copyright 2020 Slava Schmidt
+
+This product includes software developed at
+Ton Labs (https://tonlabs.io/) in form of compiled binaries and header file of the ton client.
+No specific Copyright.
+
+The Initial Developer of the test resources, which are copied from, derived from, or
+inspired by TON-Client-Py binding (https://github.com/move-ton/ton-client-py)
+is Move-Ton (https://github.com/move-ton).
+No specific Copyright.
+
