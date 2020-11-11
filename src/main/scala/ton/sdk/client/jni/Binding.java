@@ -45,7 +45,8 @@ public class Binding {
     private static final AtomicLong counter = new AtomicLong(0);
 
     public static void loadNativeLibrary() {
-        String path = new File("lib/libTonSdkClientJniBinding.dylib").getAbsolutePath();
+        String suffix = OperatingSystem.isMac() ? ".dylib" : OperatingSystem.isUnix() ? ".so" : ".dll";
+        String path = new File("lib/libTonSdkClientJniBinding" + suffix).getAbsolutePath();
         System.load(path);
     }
 }
