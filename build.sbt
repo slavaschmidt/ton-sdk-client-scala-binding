@@ -30,4 +30,7 @@ scalacOptions in Compile ++= Seq(
 
 fork in Test := true
 
-envVars in Test := Map("LD_LIBRARY_PATH" -> (baseDirectory.value / "lib").getPath)
+envVars in Test := Map(
+  "LD_LIBRARY_PATH" -> (baseDirectory.value / "lib").getPath,
+  "PATH" -> (baseDirectory.value / "lib").getPath
+)
