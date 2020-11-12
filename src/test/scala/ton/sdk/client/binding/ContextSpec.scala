@@ -12,16 +12,6 @@ import scala.util.Try
 
 class ContextSpec extends AsyncFlatSpec {
 
-  "Context" should "throw an exception if library is not loaded" in {
-    try {
-      implicit val effect: Context.Effect[Try] = Context.tryEffect
-      Context(1).request(Client.Request.BuildInfo)
-      fail("Should throw an exception")
-    } catch {
-      case _: UnsatisfiedLinkError => succeed
-    }
-  }
-
   "Sync Context" should "not allow usage if not open" in {
     implicit val effect: Context.Effect[Try] = Context.tryEffect
     Binding.loadNativeLibrary()
