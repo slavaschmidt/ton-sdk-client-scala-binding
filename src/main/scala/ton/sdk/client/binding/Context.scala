@@ -88,13 +88,11 @@ object Context {
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
     ): T[StreamingCallResult[R, S]]
-    def fromTry[R](t: Try[R]): T[R]
     def flatMap[P, R](in: T[P])(f: P => T[R]): T[R]
     def map[P, R](in: T[P])(f: P => R): T[R]
     def recover[R, U >: R](in: T[R])(pf: PartialFunction[Throwable, U]): T[U]
     def managed[R](config: ClientConfig)(block: Context => T[R]): T[R]
     def unsafeGet[R](a: T[R]): R
-    def init[R](a: R): T[R]
   }
 
   val tryEffect: Effect[Try] = new Effect[Try] {
@@ -113,7 +111,6 @@ object Context {
         }.flatten
       }
     }
-    override def fromTry[R](t: Try[R]): Try[R] = identity(t)
     override def managed[R](config: ClientConfig)(block: Context => Try[R]): Try[R] = {
       create(config).flatMap { c =>
         val result = Try(block(c)).flatten
@@ -124,7 +121,6 @@ object Context {
     override def flatMap[P, R](in: Try[P])(f: P => Try[R]): Try[R]                         = in.flatMap(f)
     override def map[P, R](in: Try[P])(f: P => R): Try[R]                                  = in.map(f)
     override def unsafeGet[R](a: Try[R]): R                                                = a.get
-    override def init[R](a: R): Try[R]                                                     = Try(a)
     override def recover[R, U >: R](in: Try[R])(pf: PartialFunction[Throwable, U]): Try[U] = in.recover(pf)
 
   }
@@ -215,10 +211,8 @@ object Context {
           SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)), p.success(_))
     }
 
-    override def fromTry[R](t: Try[R]): Future[R] = Context.fromTry(t)
-
     override def managed[R](config: ClientConfig)(block: Context => Future[R]): Future[R] =
-      fromTry(create(config)).flatMap { context =>
+      Context.fromTry(create(config)).flatMap { context =>
         val result = block(context)
         result.onComplete(_ => context.close())
         result
@@ -228,8 +222,6 @@ object Context {
     override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
     override def unsafeGet[R](a: Future[R]): R = Await.result(a, 60.seconds)
-    override def init[R](a: R): Future[R]      = Future(a)
-
   }
 
   def fromTry[R](t: Try[R]): Future[R] = t match {
