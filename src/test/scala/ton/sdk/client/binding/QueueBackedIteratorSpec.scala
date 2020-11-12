@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers._
 import scala.concurrent.Promise
 import scala.concurrent.duration.DurationInt
 
-class QueueBackedIteratorTest extends AsyncFlatSpec {
+class QueueBackedIteratorSpec extends AsyncFlatSpec {
 
   private val flag = Promise[Unit]()
   private val bit = new QueueBackedIterator[Int](flag)
