@@ -41,7 +41,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         _    <- sendGrams(encoded.address)
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
-        account <- call(Processing.Request.processMessage(params))
+        account <- call(Processing.Request.ProcessMessageWithoutEvents(params))
       } yield account
     }
     assertExpression(result)(r => r.out_messages.isEmpty && r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)
@@ -58,8 +58,8 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         encoded <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
         sent    <- sendGrams(encoded.address)
         // Send message
-        shard_block_id <- call(Processing.Request.sendMessage(encoded.message, Option(abi)))
-        result         <- call(Processing.Request.waitForTransaction(encoded.message, shard_block_id.shard_block_id, Option(abi)))
+        shard_block_id <- call(Processing.Request.SendMessageWithoutEvents(encoded.message, Option(abi)))
+        result         <- call(Processing.Request.WaitForTransactionWithoutEvents(encoded.message, shard_block_id.shard_block_id, Option(abi)))
       } yield result
     }
     assertExpression(result)(r => r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)
@@ -77,7 +77,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         _       <- sendGrams(encoded.address)
         // Deploy account
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
-        (data, messages, _) <- callS(Processing.Request.processMessageS(params))
+        (data, messages, _) <- callS(Processing.Request.ProcessMessageWithEvents(params))
         // Check that messages are indeed received
         _ = assert(messages.collect(1.minute).nonEmpty)
       } yield data
@@ -96,8 +96,8 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
         encoded <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
         _       <- sendGrams(encoded.address)
         // Send message
-        (shardBlock, _, _) <- callS(Processing.Request.sendMessageS(encoded.message, Option(abi)))
-        (result, _, _) <- callS(Processing.Request.waitForTransactionS(encoded.message, shardBlock.shard_block_id, Option(abi)))
+        (shardBlock, _, _) <- callS(Processing.Request.SendMessageWithEvents(encoded.message, Option(abi)))
+        (result, _, _) <- callS(Processing.Request.WaitForTransactionWithEvents(encoded.message, shardBlock.shard_block_id, Option(abi)))
       } yield result
     }
     assertExpression(result)(r => r.out_messages.isEmpty && r.decoded.get.out_messages.isEmpty && r.decoded.get.output.isEmpty)

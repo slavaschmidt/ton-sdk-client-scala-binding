@@ -1,7 +1,8 @@
 package ton.sdk.client.binding
 
-import io.circe.{Decoder, HCursor, Json}
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.auto._
+import ton.sdk.client.modules.Processing
 
 final case class NetworkConfig(
   server_address: String,
@@ -173,4 +174,17 @@ object Decoders {
         case 1 => Decoder[ComputeVm].apply(c)
       }
     } yield result
+
+  implicit val encodeSendMessageWith: Encoder[Processing.Request.SendMessageWithEvents] =
+    Encoder.forProduct3("message", "abi", "send_events")(u => (u.message, u.abi, u.send_events))
+  implicit val encodeSendMessageWithout: Encoder[Processing.Request.SendMessageWithoutEvents] =
+    Encoder.forProduct3("message", "abi", "send_events")(u => (u.message, u.abi, u.send_events))
+  implicit val encodeWaitForTransWithout: Encoder[Processing.Request.WaitForTransactionWithoutEvents] =
+    Encoder.forProduct4("message", "shard_block_id", "abi", "send_events")(u => (u.message, u.shard_block_id, u.abi, u.send_events))
+  implicit val encodeWaitForTransWith: Encoder[Processing.Request.WaitForTransactionWithEvents] =
+    Encoder.forProduct4("message", "shard_block_id", "abi", "send_events")(u => (u.message, u.shard_block_id, u.abi, u.send_events))
+  implicit val encodeProcessMessageWith: Encoder[Processing.Request.ProcessMessageWithEvents] =
+    Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
+  implicit val encodeProcessMessageWithout: Encoder[Processing.Request.ProcessMessageWithoutEvents] =
+    Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
 }

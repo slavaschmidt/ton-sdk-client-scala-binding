@@ -46,7 +46,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         _ <- sendGrams(deployMsg.address)
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
         // Deploy account
-        _ <- call(Processing.Request.processMessage(params))
+        _ <- call(Processing.Request.ProcessMessageWithoutEvents(params))
         // Get account data
         filter = json"""{"id":{"eq":${deployMsg.address}}}"""
         account <- call(Net.Request.WaitForCollection("accounts", Option(filter), "id boc"))
