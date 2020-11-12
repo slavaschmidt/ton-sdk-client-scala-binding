@@ -80,7 +80,7 @@ object Context {
     ctx.request(params, streamingEvidence)
 
   final case class StreamingEvidence[T[_]]()
-  implicit val futureStreamingEvidence = StreamingEvidence[Future]()
+  implicit val futureStreamingEvidence: StreamingEvidence[Future] = StreamingEvidence[Future]()
 
   trait Effect[T[_]] {
     def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
@@ -101,7 +101,7 @@ object Context {
     override def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[Try])(
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
-    ): Try[StreamingCallResult[R, S]] = ???
+    ): Try[StreamingCallResult[R, S]] = ??? // calling this method should not compile, hence no implementation
 
     override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
       if (!c.isOpen.get()) {
@@ -155,17 +155,17 @@ object Context {
         }
         ResponseType(responseType) match {
           case ResponseTypeNop | ResponseTypeReserved(_) =>
-            implicit val decoder = r._1
+            implicit val decoder: Decoder[R] = r._1
             successIfFinished(requestId, finished, p, buf.result())
           case ResponseTypeResult =>
             buf.append(paramsJson)
-            implicit val decoder       = r._1
-            val finishAfterFirstResult = true
+            implicit val decoder: Decoder[R] = r._1
+            val finishAfterFirstResult       = true
             successIfFinished(requestId, finished || finishAfterFirstResult, p, buf.result())
           case ResponseTypeError =>
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
           case ResponseTypeStream(code) =>
-            implicit val decoder             = r._2
+            implicit val decoder: Decoder[S] = r._2
             def tryParseResult(t: Throwable) = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson).map(result.messages.append).getOrElse(false)
             val _                            = SdkResultOrError.fromJsonPlain[SdkClientError](requestId, paramsJson).fold(tryParseResult, result.errors.append)
         }
