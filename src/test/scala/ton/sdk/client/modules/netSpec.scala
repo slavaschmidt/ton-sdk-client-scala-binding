@@ -51,12 +51,14 @@ class AsyncNetSpec extends NetSpec[Future] {
 class SyncNetSpec extends NetSpec[Try] {
   implicit override val ef: Context.Effect[Try] = tryEffect
 
-  it should "not know subscribe_collection function" in {
-    val result = devNet { implicit ctx =>
-      callS(Request.SubscribeCollection("messages", None, result = "created_at"))
-    }
-    assertSdkError(result)("Streaming synchronous requests aren't supported (function net.subscribe_collection)")
-  }
+  // No need for this test as this won't compile
+  //
+//  it should "not know subscribe_collection function" in {
+//    val result = devNet { implicit ctx =>
+//      callS(Request.SubscribeCollection("messages", None, result = "created_at"))
+//    }
+//    assertSdkError(result)("Streaming synchronous requests aren't supported (function net.subscribe_collection)")
+//  }
 }
 
 abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {

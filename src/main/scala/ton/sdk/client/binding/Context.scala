@@ -42,12 +42,12 @@ final case class Context private (id: Long) extends Closeable {
     effect.request(fnName, jsonPrinter.print(jsonIn))
   }
 
-  def requestS[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], effect: Effect[E]): E[StreamingCallResult[R, S]] = {
+  def request[P, R, S, E[_]](params: P, streamingEvidence: StreamingEvidence[E])(implicit call: StreamingSdkCall[P, R, S], effect: Effect[E]): E[StreamingCallResult[R, S]] = {
     implicit val context: Context                   = this
     implicit val decoders: (Decoder[R], Decoder[S]) = call.decoders
     val fnName: String                              = call.function
     val jsonIn: Json                                = call.toJson(params)
-    val result                                      = effect.requestStreaming(fnName, jsonPrinter.print(jsonIn))
+    val result                                      = effect.request(fnName, jsonPrinter.print(jsonIn), streamingEvidence)
     result
   }
 }
@@ -74,12 +74,17 @@ object Context {
   def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
     ctx.request(params)
 
-  def callS[P, R, S, E[_]](params: P)(implicit call: StreamingSdkCall[P, R, S], ctx: Context, eff: Effect[E]): E[StreamingCallResult[R, S]] =
-    ctx.requestS(params)
+  def callS[P, R, S, E[_]](
+    params: P
+  )(implicit call: StreamingSdkCall[P, R, S], ctx: Context, eff: Effect[E], streamingEvidence: StreamingEvidence[E]): E[StreamingCallResult[R, S]] =
+    ctx.request(params, streamingEvidence)
+
+  final case class StreamingEvidence[T[_]]()
+  implicit val futureStreamingEvidence = StreamingEvidence[Future]()
 
   trait Effect[T[_]] {
     def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
-    def requestStreaming[R, S](functionName: String, functionParams: String)(
+    def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[T])(
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
     ): T[StreamingCallResult[R, S]]
@@ -93,11 +98,10 @@ object Context {
   }
 
   val tryEffect: Effect[Try] = new Effect[Try] {
-    override def requestStreaming[R, S](functionName: String, functionParams: String)(
+    override def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[Try])(
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
-    ): Try[StreamingCallResult[R, S]] =
-      Failure(new SdkClientError(-1, s"Streaming synchronous requests aren't supported (function $functionName)", Json.Null))
+    ): Try[StreamingCallResult[R, S]] = ???
 
     override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
       if (!c.isOpen.get()) {
@@ -126,9 +130,10 @@ object Context {
   }
 
   def futureEffect(implicit ec: ExecutionContext): Effect[Future] = new Effect[Future] {
-    override def requestStreaming[R, S](
+    override def request[R, S](
       functionName: String,
-      functionParams: String
+      functionParams: String,
+      streamingEvidence: StreamingEvidence[Future]
     )(implicit c: Context, r: (Decoder[R], Decoder[S])): Future[StreamingCallResult[R, S]] =
       requestStreamingFuture(functionName, functionParams)
 

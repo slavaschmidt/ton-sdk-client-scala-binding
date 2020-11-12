@@ -38,7 +38,7 @@ trait SdkAssertions[T[_]] extends Assertions {
     val callSet = CallSet("grant", input = Option(Map("addr" -> address.asJson)))
     val params  = MessageEncodeParams(abi, Signer.none, Option(giver), None, Option(callSet))
     devNet { implicit ctx =>
-      call(Processing.Request.processMessage(params))
+      call(Processing.Request.ProcessMessageWithoutEvents(params))
     }
   }
 
