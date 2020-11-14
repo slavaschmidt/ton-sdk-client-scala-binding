@@ -10,6 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
+/**
+ * An attempt to make native library loading more user-friendly.
+ * Probably will not work in any other Java version because of the way the environment variables are modified
+ *
+ */
 public class NativeLoader {
 
     private static final Logger log = LoggerFactory.getLogger(NativeLoader.class);
@@ -18,8 +23,7 @@ public class NativeLoader {
     private static final String javaProp = "java.library.path";
     private static final String linuxEnv = "LD_LIBRARY_PATH";
     private static final String winEnv = "PATH";
-    private static final String libDir = "lib" + File.separator;
-
+    
     public static void apply() throws Exception {
         String path = new File(".").getAbsolutePath();
         if (!libsAreThere(path)) {

@@ -54,12 +54,4 @@ public class Binding {
     private static final ConcurrentHashMap<Long, Handler> mapping = new ConcurrentHashMap<>();
     private static final AtomicLong counter = new AtomicLong(0);
 
-    // current implementation requires manual placement of the libs into the appropriate folder
-    // this will be improved in the next release
-    // TODO use environment variables to detect where to put the libraries
-    public static void loadNativeLibrary() {
-        String suffix = OperatingSystem.isMac() ? ".dylib" : OperatingSystem.isUnix() ? ".so" : ".dll";
-        String path = new File("lib/libTonSdkClientJniBinding" + suffix).getAbsolutePath();
-        System.load(path);
-    }
 }
