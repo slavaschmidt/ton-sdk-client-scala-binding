@@ -3,9 +3,8 @@ package ton.sdk.client.binding
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers._
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.jni.Binding
+import ton.sdk.client.jni.NativeLoader
 import ton.sdk.client.modules.Client
-import ton.sdk.client.modules.Client.Result
 import ton.sdk.client.modules.Net.Request.SubscribeCollection
 
 import scala.concurrent.duration.DurationInt
@@ -16,7 +15,7 @@ class ContextSpec extends AsyncFlatSpec {
 
   "Sync Context" should "not allow usage if not open" in {
     implicit val effect: Context.Effect[Try] = Context.tryEffect
-    Binding.loadNativeLibrary()
+    NativeLoader.apply()
     val c       = Context.create(ClientConfig.MAIN_NET).get
     val result1 = c.request(Client.Request.BuildInfo)
     c.close()

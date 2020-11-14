@@ -4,7 +4,7 @@ import io.circe._
 import io.circe.syntax._
 import org.scalatest.{Assertion, Assertions}
 import ton.sdk.client.binding.{CallSet, Signer}
-import ton.sdk.client.jni.Binding
+import ton.sdk.client.jni.{Binding, NativeLoader}
 import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.binding.Api.SdkClientError
 import ton.sdk.client.binding.Context._
@@ -13,7 +13,7 @@ import ton.sdk.client.modules.Processing.{MessageEncodeParams, Result}
 import scala.language.higherKinds
 
 trait SdkAssertions[T[_]] extends Assertions {
-  Binding.loadNativeLibrary()
+  NativeLoader.apply()
 
   implicit val ef: Effect[T]
   def assertValue[R, V](result: T[R])(v: V): Assertion                 = ef.unsafeGet(ef.map(result)(assertResult(v)))
