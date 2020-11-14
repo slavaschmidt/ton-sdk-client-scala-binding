@@ -12,8 +12,7 @@ import java.util.Map;
 
 /**
  * An attempt to make native library loading more user-friendly.
- * Probably will not work in any other Java version because of the way the environment variables are modified
- *
+ * Probably will not work in any other Java version because of the way the environment variables are modified.
  */
 public class NativeLoader {
 
@@ -23,7 +22,8 @@ public class NativeLoader {
     private static final String javaProp = "java.library.path";
     private static final String linuxEnv = "LD_LIBRARY_PATH";
     private static final String winEnv = "PATH";
-    
+    private static final String libDir = "lib" + File.separator;
+
     public static void apply() throws Exception {
         String path = new File(".").getAbsolutePath();
         if (!libsAreThere(path)) {
@@ -81,9 +81,7 @@ public class NativeLoader {
     private static void createTempLib(File dir, String name) throws IOException {
         name = System.mapLibraryName(name);
         File lib = new File(dir, name);
-        InputStream is = NativeLoader.class.getClassLoader().getResourceAsStream(name);
-        if (is == null) is = new FileInputStream(new File("lib" + File.separator + name).getAbsolutePath());
-        try {
+        try (InputStream is = NativeLoader.class.getClassLoader().getResourceAsStream(name)) {
             if (is != null) {
                 Files.copy(is, lib.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } else {
@@ -93,10 +91,6 @@ public class NativeLoader {
         } catch (IOException e) {
             dir.delete();
             throw e;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
         }
     }
 
