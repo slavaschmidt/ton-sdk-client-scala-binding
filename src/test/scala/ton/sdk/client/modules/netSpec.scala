@@ -95,7 +95,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "not query_collection without network" in {
     implicit val ctx = Context.create(ClientConfig()).get
-    val result       = call(Request.QueryCollection(collection = "messages"))
+    val result       = call(Request.QueryCollection(collection = "messages", result = ""))
     val assertion    = assertSdkError(result)("SDK is initialized without network config")
     // do not forget to close the context or see a warning at runtime
     // "Context(4) was not closed as expected, this is a programming error"
@@ -105,7 +105,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "not query_collection" in {
     val result = devNet { implicit ctx =>
-      call(Request.QueryCollection(collection = "messages"))
+      call(Request.QueryCollection(collection = "messages", result = ""))
     }
     assertSdkError(result)("Query failed: Graphql server returned error: Syntax Error: Expected Name, found \"}\".")
   }
@@ -113,7 +113,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "wait_for_collection transactions" in {
     val filter = Map("now" -> Map("gt" -> 1562342740L)).asJson
     val resultF = devNet { implicit ctx =>
-      call(Request.WaitForCollection("transactions", Option(filter), "id now"))
+      call(Request.WaitForCollection("transactions", "id now", Option(filter)))
     }
     val result = ef.unsafeGet(resultF)
     assert(result.result.\\("now").forall(_.as[Long].toOption.get > 1562342740L))
@@ -121,7 +121,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "not wait_for_collection because of timeout" in {
     val result = devNet { implicit ctx =>
-      call(Request.WaitForCollection("transactions", timeout = Option(1)))
+      call(Request.WaitForCollection("transactions", "", timeout = Option(1)))
     }
     assertSdkError(result)("WaitFor failed: Can not send http request: error sending request for url (https://net.ton.dev/graphql): operation timed out")
   }

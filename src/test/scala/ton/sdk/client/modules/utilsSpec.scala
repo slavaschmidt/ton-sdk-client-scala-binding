@@ -4,7 +4,7 @@ import org.scalatest._
 import flatspec._
 import ton.sdk.client.binding.Context
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.modules.Utils.Result.ConvertedAddress
+import ton.sdk.client.modules.Utils.Result.Address
 import ton.sdk.client.modules.Utils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,47 +34,47 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "not convert invalid address" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress("this is my address", AddressOutputFormat.accountId))
+      call(Request.ConvertAddress("this is my address", AddressStringFormat.accountId))
     }
     assertSdkError(result)("Invalid address [fatal error]: this is my address")
   }
 
   it should "convert accountId to HEX" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
+      call(Request.ConvertAddress(accountId, AddressStringFormat.hex))
     }
-    assertValue(result)(ConvertedAddress(hexWorkchain))
+    assertValue(result)(Address(hexWorkchain))
   }
 
   it should "convert hexMasterchain to base64" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(hexMainchain, AddressOutputFormat.base64()))
+      call(Request.ConvertAddress(hexMainchain, AddressStringFormat.base64()))
     }
-    assertValue(result)(ConvertedAddress(base64))
+    assertValue(result)(Address(base64))
   }
 
   it should "convert base64 address to base64url" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(base64, AddressOutputFormat.base64(url = true, test = true, bounce = true)))
+      call(Request.ConvertAddress(base64, AddressStringFormat.base64(url = true, test = true, bounce = true)))
     }
-    assertValue(result)(ConvertedAddress(base64url))
+    assertValue(result)(Address(base64url))
   }
 
   it should "convert base64url address to hex" in {
     val result = local { implicit ctx =>
-      call(Request.ConvertAddress(base64url, AddressOutputFormat.hex))
+      call(Request.ConvertAddress(base64url, AddressStringFormat.hex))
     }
-    assertValue(result)(ConvertedAddress(hexMainchain))
+    assertValue(result)(Address(hexMainchain))
   }
 
   it should "convert it back" in {
     val result = local { implicit ctx =>
       ef.flatMap {
-        call(Request.ConvertAddress(accountId, AddressOutputFormat.hex))
+        call(Request.ConvertAddress(accountId, AddressStringFormat.hex))
       } { converted =>
-        call(Request.ConvertAddress(converted.address, AddressOutputFormat.accountId))
+        call(Request.ConvertAddress(converted.address, AddressStringFormat.accountId))
       }
     }
-    assertValue(result)(ConvertedAddress(accountId))
+    assertValue(result)(Address(accountId))
   }
 }

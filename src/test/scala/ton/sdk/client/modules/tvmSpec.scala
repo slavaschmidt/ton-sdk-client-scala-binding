@@ -49,15 +49,15 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         _ <- call(Processing.Request.ProcessMessageWithoutEvents(params))
         // Get account data
         filter = json"""{"id":{"eq":${deployMsg.address}}}"""
-        account <- call(Net.Request.WaitForCollection("accounts", Option(filter), "id boc"))
+        account <- call(Net.Request.WaitForCollection("accounts", "id boc", Option(filter)))
         boc = account.result.\\("boc").head.as[String].toOption.get
         // Get account balance
         parsed <- call(Boc.Request.ParseAccount(boc))
         callSet = CallSet("subscribe", None, Option(subscribeParams))
         encodedMsg <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
         // Create limited and unlimited accounts
-        unlimitedAccount = AccountForExecutor.from_account(boc, Option(true))
-        limitedAccount = AccountForExecutor.from_account(boc, Option(false))
+        unlimitedAccount = AccountForExecutor.fromAccount(boc, Option(true))
+        limitedAccount = AccountForExecutor.fromAccount(boc, Option(false))
         // Run executor (unlimited balance should not affect account balance)
         result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))
         // Get account balance again

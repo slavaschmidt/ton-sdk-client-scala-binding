@@ -45,14 +45,15 @@ final case class ClientResult[T](result: T)
 
 final case class KeyPair(public: String, secret: String)
 
-case class Fees(
-  in_msg_fwd_fee: BigDecimal,
-  storage_fee: BigDecimal,
-  gas_fee: BigDecimal,
-  out_msgs_fwd_fee: BigDecimal,
-  total_account_fees: BigDecimal,
-  total_output: BigDecimal
+case class TransactionFees(
+  in_msg_fwd_fee: BigInt,
+  storage_fee: BigInt,
+  gas_fee: BigInt,
+  out_msgs_fwd_fee: BigInt,
+  total_account_fees: BigInt,
+  total_output: BigInt
 )
+
 case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)
 case class Credit(credit: String)
 sealed trait Compute {

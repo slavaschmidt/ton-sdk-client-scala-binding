@@ -2,30 +2,37 @@ package ton.sdk.client.modules
 
 import ton.sdk.client.binding.Api.SdkCall
 
+/**
+  * Module utils
+  *
+  * Misc utility Functions.
+  *
+  * Please refer to the [[https://github.com/tonlabs/TON-SDK/blob/master/docs/mod_utils.md SDK documentation]]
+  * for the detailed description of individual functions and parameters
+  *
+  */
+// scalafmt: { maxColumn = 300 }
 object Utils {
 
-  private val prefix = "utils"
+  private val module = "utils"
 
-  final case class AddressOutputFormat(`type`: String, url: Option[Boolean] = None, test: Option[Boolean] = None, bounce: Option[Boolean] = None)
+  final case class AddressStringFormat(`type`: String, url: Option[Boolean] = None, test: Option[Boolean] = None, bounce: Option[Boolean] = None)
 
-  object AddressOutputFormat {
-    val accountId: AddressOutputFormat = AddressOutputFormat("AccountId")
-    val hex: AddressOutputFormat       = AddressOutputFormat("Hex")
-    def base64(url: Boolean = false, test: Boolean = false, bounce: Boolean = false): AddressOutputFormat =
-      AddressOutputFormat("Base64", Option(url), Option(test), Option(bounce))
+  object AddressStringFormat {
+    val accountId: AddressStringFormat                                                                    = AddressStringFormat("AccountId")
+    val hex: AddressStringFormat                                                                          = AddressStringFormat("Hex")
+    def base64(url: Boolean = false, test: Boolean = false, bounce: Boolean = false): AddressStringFormat = AddressStringFormat("Base64", Option(url), Option(test), Option(bounce))
   }
 
   object Request {
-    case class ConvertAddress(address: String, output_format: AddressOutputFormat)
+    final case class ConvertAddress(address: String, output_format: AddressStringFormat)
   }
   object Result {
-    case class ConvertedAddress(address: String)
+    final case class Address(address: String)
   }
 
   import io.circe.generic.auto._
 
-  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.ConvertedAddress] {
-    override val function: String = s"$prefix.convert_address"
-  }
+  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.Address] { override val function: String = s"$module.convert_address" }
 
 }

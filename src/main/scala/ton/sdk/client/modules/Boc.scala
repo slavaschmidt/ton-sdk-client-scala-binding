@@ -3,9 +3,19 @@ package ton.sdk.client.modules
 import ton.sdk.client.binding.Transaction
 import ton.sdk.client.binding.Api.SdkCall
 
+/**
+  * Module boc
+  *
+  * BOC manipulation module.
+  *
+  * Please refer to the [[https://github.com/tonlabs/TON-SDK/blob/master/docs/mod_boc.md SDK documentation]]
+  * for the detailed description of individual functions and parameters
+  *
+  */
+// scalafmt: { maxColumn = 300 }
 object Boc {
 
-  private val prefix = "boc"
+  private val module = "boc"
 
   final case class Message(
     json_version: Int,
@@ -32,7 +42,7 @@ object Boc {
     import_fee: Option[String]
   )
 
-  case class Account(
+  final case class Account(
     json_version: Int,
     id: String,
     workchain_id: Int,
@@ -48,13 +58,13 @@ object Boc {
     acc_type_name: String
   )
 
-  case class MasterRef(
+  final case class MasterRef(
     end_lt: String,
     seq_no: Long,
     root_hash: String,
     file_hash: String
   )
-  case class ValueFlow(
+  final case class ValueFlow(
     from_prev_blk: String,
     to_next_blk: String,
     imported: String,
@@ -65,37 +75,37 @@ object Boc {
     created: String,
     minted: String
   )
-  case class InMsgDescr(
+  final case class InMsgDescr(
     msg_id: String,
     transaction_id: String,
     msg_type: Int,
     msg_type_name: String
   )
-  case class OutMsg(
+  final case class OutMsg(
     msg_id: String,
     cur_addr: String,
     next_addr: String,
     fwd_fee_remaining: String
   )
-  case class OutMsgDescr(
+  final case class OutMsgDescr(
     out_msg: OutMsg,
     transaction_id: String,
     msg_type: Int,
     msg_type_name: String
   )
-  case class Transactions(
+  final case class Transactions(
     lt: String,
     transaction_id: String,
     total_fees: String
   )
-  case class AccountBlocks(
+  final case class AccountBlocks(
     account_addr: String,
     transactions: List[Transactions],
     old_hash: String,
     new_hash: String,
     tr_count: Long
   )
-  case class Block(
+  final case class Block(
     json_version: Int,
     id: String,
     status: Int,
@@ -154,21 +164,10 @@ object Boc {
   import io.circe.generic.auto._
   import ton.sdk.client.binding.Decoders.decodeCompute
 
-  implicit val parseTransaction = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] {
-    override val function: String = s"$prefix.parse_transaction"
-  }
-
-  implicit val parseMessage = new SdkCall[Request.ParseMessage, Result.Parsed[Message]] {
-    override val function: String = s"$prefix.parse_message"
-  }
-  implicit val parseAccount = new SdkCall[Request.ParseAccount, Result.Parsed[Account]] {
-    override val function: String = s"$prefix.parse_account"
-  }
-  implicit val parseBlock = new SdkCall[Request.ParseBlock, Result.Parsed[Block]] {
-    override val function: String = s"$prefix.parse_block"
-  }
-  implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc] {
-    override val function: String = s"$prefix.get_blockchain_config"
-  }
+  implicit val parseMessage        = new SdkCall[Request.ParseMessage, Result.Parsed[Message]]         { override val function: String = s"$module.parse_message"         }
+  implicit val parseTransaction    = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] { override val function: String = s"$module.parse_transaction"     }
+  implicit val parseAccount        = new SdkCall[Request.ParseAccount, Result.Parsed[Account]]         { override val function: String = s"$module.parse_account"         }
+  implicit val parseBlock          = new SdkCall[Request.ParseBlock, Result.Parsed[Block]]             { override val function: String = s"$module.parse_block"           }
+  implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc]        { override val function: String = s"$module.get_blockchain_config" }
 
 }
