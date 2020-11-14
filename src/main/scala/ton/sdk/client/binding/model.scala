@@ -84,8 +84,6 @@ object Compute {
     vm_init_state_hash: String,
     vm_final_state_hash: String
   ) = ComputeVm(success, msg_state_used, account_activated, gas_fees, gas_used, gas_limit, mode, exit_code, vm_steps, vm_init_state_hash, vm_final_state_hash)
-
-  def skipped(skipped_reason: Int, skipped_reason_name: String) = ComputeSkipped(skipped_reason, skipped_reason_name)
 }
 final case class ComputeVm(
   success: Boolean,

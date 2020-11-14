@@ -32,12 +32,7 @@ final case class Context private (id: Long) extends Closeable {
   /**
     * Closes underlying client context
     */
-  override def close(): Unit =
-    try {
-      if (isOpen.getAndSet(false)) Binding.tcDestroyContext(id)
-    } catch {
-      case ex: Throwable => logger.warn(s"Failed to close Context($id): ${ex.getMessage}")
-    }
+  override def close(): Unit = { val _ = Try(if (isOpen.getAndSet(false)) Binding.tcDestroyContext(id)) }
 
   /**
     * Double-check that the context is closed if it is garbage-collected
