@@ -3,13 +3,11 @@ package ton.sdk.client.binding
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers._
 
-import scala.concurrent.Promise
 import scala.concurrent.duration.DurationInt
 
 class QueueBackedIteratorSpec extends AsyncFlatSpec {
 
-  private val flag = Promise[Unit]()
-  private val bit = new QueueBackedIterator[Int](flag)
+  private val bit = new QueueBackedIterator[Int]()
 
   it should "be empty after creation" in {
     bit.hasNext shouldBe false
@@ -81,16 +79,9 @@ class QueueBackedIteratorSpec extends AsyncFlatSpec {
   }
 
   it should "propagate error" in {
-    val p = Promise[Unit]()
-    val bit = new QueueBackedIterator[Int](p)
+    val bit = new QueueBackedIterator[Int]()
     bit.close(Option(new Exception("Uh Oh")))
     bit.isSuccess shouldBe false
   }
 
-  it should "recognize external promise closure" in {
-    val p = Promise[Unit]()
-    val bit = new QueueBackedIterator[Int](p)
-    p.success(())
-    bit.isSuccess shouldBe true
-  }
 }

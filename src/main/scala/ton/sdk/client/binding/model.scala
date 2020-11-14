@@ -4,6 +4,13 @@ import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.auto._
 import ton.sdk.client.modules.Processing
 
+/**
+  *  Collection of common types and codecs shared by multiple modules or used by the client itself.
+  *  Also defines some case class based refinements over types represented in SDK client to loosely.
+  */
+/**
+  * Network config.
+  */
 final case class NetworkConfig(
   server_address: String,
   network_retries_count: Option[Int] = None,
@@ -25,6 +32,9 @@ final case class AbiConfig(workchain: Option[Int], message_expiration_timeout: O
 
 final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Option[CryptoConfig] = None, abi: Option[AbiConfig] = None)
 
+/**
+  * Collection of known networks.
+  */
 object ClientConfig {
   def fromServer(server: String): ClientConfig = ClientConfig(Option(NetworkConfig(server)))
   val MAIN_NET                                 = fromServer("main.ton.dev")
@@ -33,7 +43,7 @@ object ClientConfig {
   val LOCAL                                    = fromServer("127.0.0.1")
 }
 
-// TODO make type-safe
+// TODO make type-safe like this:
 //case class SortDirection(direction: String)
 //object SortDirection {
 //  val ASC  = SortDirection("ASC")
@@ -138,7 +148,7 @@ case class Transaction(
   end_status: Int,
   end_status_name: String,
   in_msg: String,
-  out_msgs: Seq[String], // TODO unsure, need better tests
+  out_msgs: Seq[String], // TODO double-check as the Transaction is just Any in SDK definition
   account_id: String,
   total_fees: String,
   balance_delta: String,
@@ -148,7 +158,6 @@ case class Transaction(
 
 final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, input: Option[Map[String, Json]] = None)
 final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
-
 final case class Signer(`type`: String, keys: Option[KeyPair] = None, public_key: Option[String] = None, handle: Option[Int] = None)
 
 object Signer {
@@ -166,6 +175,9 @@ final case class FetchNextBlockMessage(`type`: String, shard_block_id: String, m
 
 final case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
 
+/**
+  * Overrides for circe decoders where defaults are not match SDK representation
+  */
 object Decoders {
   implicit val decodeCompute: Decoder[Compute] = (c: HCursor) =>
     for {
