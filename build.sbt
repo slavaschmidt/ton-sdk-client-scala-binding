@@ -1,5 +1,5 @@
 name := "freeton-sdk-client-scala-binding"
-version := "1.0.0-SNAPSHOT"
+version := "1.0.0-SNAPSHOT-1"
 organization := "org.freeton"
 scalaVersion := "2.12.12"
 

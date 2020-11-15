@@ -24,6 +24,7 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
+
   behavior of "Utils"
 
   val accountId    = "fcb91a3a3816d0f7b8c2c76108b8a9bc5a6b7a55bd79f8ab101c52db29232260"
@@ -77,4 +78,5 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertValue(result)(Address(accountId))
   }
-}
+
+  }
