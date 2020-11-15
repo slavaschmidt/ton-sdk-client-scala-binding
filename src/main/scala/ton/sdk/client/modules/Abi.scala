@@ -33,7 +33,7 @@ object Abi {
       source.close()
       str
     }
-    def fromResource(name: String): Either[ParsingFailure, AbiJson] = fromFile(getClass.getClassLoader.getResource(name).getFile)
+    def fromResource(name: String): Either[ParsingFailure, AbiJson] = fromString(Source.fromResource(name).mkString)
   }
 
   final case class StateInitParams(abi: AbiJson, value: Json)
