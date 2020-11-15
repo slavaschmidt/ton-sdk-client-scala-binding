@@ -4,12 +4,12 @@ organization := "org.freeton"
 scalaVersion := "2.12.12"
 
 libraryDependencies ++= Seq(
-  "org.slf4j"      % "slf4j-api"       % "1.7.30" % Provided,
-  "ch.qos.logback" % "logback-classic" % "1.2.3"  % Provided,
-  "org.scalatest"  %% "scalatest"      % "3.2.2"  % Test
+  "org.slf4j"      % "slf4j-api"       % "1.7.30",
+  "ch.qos.logback" % "logback-classic" % "1.2.3" % Provided,
+  "org.scalatest"  %% "scalatest"      % "3.2.2" % Test
 )
 
-libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal").map("io.circe" %% _ % "0.13.0" % Provided)
+libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal").map("io.circe" %% _ % "0.13.0")
 
 scalacOptions in Compile ++= Seq(
   "-Xlog-reflective-calls",

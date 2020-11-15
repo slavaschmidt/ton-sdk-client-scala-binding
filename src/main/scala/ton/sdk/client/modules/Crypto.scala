@@ -52,7 +52,7 @@ object Crypto {
     final case class HdkeySecretFromXprv(xprv: String)
     final case class HdkeyPublicFromXprv(xprv: String)
     final case class MnemonicWords(dictionary: Int = MnemonicDictionary.default)
-    final case class MnemonicFromRandom(dictionary: Int, word_count: Int)
+    final case class MnemonicFromRandom(dictionary: Int = MnemonicDictionary.default, word_count: Int = MnemonicDictionary.defaultWordCount)
     final case class MnemonicFromEntropy(entropy: String)
     final case class MnemonicVerify(phrase: String, word_count: Int = MnemonicDictionary.defaultWordCount, dictionary: Int = MnemonicDictionary.default)
     final case class MnemonicDeriveSignKeys(phrase: String, path: String = DEFAULT_HDKEY_DERIVATION_PATH, word_count: Int = MnemonicDictionary.defaultWordCount, dictionary: Int = MnemonicDictionary.default)
@@ -111,7 +111,7 @@ object Crypto {
   implicit val mnemonicFromRandom              = new SdkCall[Request.MnemonicFromRandom, Result.MnemonicPhrase]      { override val function: String = s"$module.mnemonic_from_random"                  }
   implicit val mnemonicFromEntropy             = new SdkCall[Request.MnemonicFromEntropy, Result.MnemonicPhrase]     { override val function: String = s"$module.mnemonic_from_entropy"                 }
   implicit val mnemonicVerify                  = new SdkCall[Request.MnemonicVerify, Result.Validity]                { override val function: String = s"$module.mnemonic_verify"                       }
-  implicit val mnemonicDeriveSignKeys          = new SdkCall[Request.MnemonicDeriveSignKeys, Result.PublicKey]       { override val function: String = s"$module.mnemonic_derive_sign_keys"             }
+  implicit val mnemonicDeriveSignKeys          = new SdkCall[Request.MnemonicDeriveSignKeys, KeyPair]                { override val function: String = s"$module.mnemonic_derive_sign_keys"             }
   implicit val naclBoxKeypair                  = new SdkCall[Request.NaclBoxKeyPair.type, KeyPair]                   { override val function: String = s"$module.nacl_box_keypair"                      }
   implicit val naclBoxKeypairFromSecretKey     = new SdkCall[Request.NaclBoxKeyPairFromSecretKey, KeyPair]           { override val function: String = s"$module.nacl_box_keypair_from_secret_key"      }
   implicit val naclBox                         = new SdkCall[Request.NaclBox, Result.Encrypted]                      { override val function: String = s"$module.nacl_box"                              }

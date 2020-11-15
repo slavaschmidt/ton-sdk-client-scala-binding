@@ -83,14 +83,14 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "hdkey_derive_from_xprv" in {
     val result = local { implicit ctx =>
-      call(Request.HdkeyDeriveFromXprv(masterXprv, 0, false))
+      call(Request.HdkeyDeriveFromXprv(masterXprv, 0, hardened = false))
     }
     assertValue(result)(Result.Xprv("xprv9uZwtSeoKf1swgAkVVCEUmC2at6t7MCJoHnBbn1MWJZyxQ4cySkVXPyNh7zjf9VjsP4vEHDDD2a6R35cHubg4WpzXRzniYiy8aJh1gNnBKv"))
   }
 
   it should "not hdkey_derive_from_xprv" in {
     val result = local { implicit ctx =>
-      call(Request.HdkeyDeriveFromXprv(masterXprv, -10, false))
+      call(Request.HdkeyDeriveFromXprv(masterXprv, -10, hardened = false))
     }
     assertSdkError(result)(
       "Invalid parameters: invalid value: integer `-10`, expected u32 at line 1 column 139\nparams: {\"xprv\":\"xprv9s21ZrQH143K25JhKqEwvJW7QAiVvkmi4WRenBZanA6kxHKtKAQQKwZG65kCyW5jWJ8NY9e3GkRoistUjjcpHNsGBUv94istDPXvqGNuWpC\",\"child_index\":-10,\"hardened\":false}"
