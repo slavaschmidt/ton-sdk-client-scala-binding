@@ -3,12 +3,12 @@ package ton.sdk.client.jni;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Map;
 
 /**
  * An attempt to make native library loading more user-friendly.
@@ -20,9 +20,6 @@ public class NativeLoader {
     private static final String jniLibName = "TonSdkClientJniBinding";
     private static final String tonClientLibName = "ton_client";
     private static final String javaProp = "java.library.path";
-    private static final String linuxEnv = "LD_LIBRARY_PATH";
-    private static final String winEnv = "PATH";
-    private static final String libDir = "lib" + File.separator;
 
     public static void apply() throws Exception {
         String path = new File(".").getAbsolutePath();
@@ -39,7 +36,7 @@ public class NativeLoader {
         System.load(libFile(path, jniLibName).getAbsolutePath());
     }
 
-    private static void addPath(String path) throws Exception {
+    private static void addPath(String path) {
         try {
             String javaPath = System.getProperty(javaProp);
             if (javaPath != null) {
@@ -47,16 +44,9 @@ public class NativeLoader {
             } else {
                 System.setProperty(javaProp, path);
             }
-            Map<String, String> env = getModifiableEnvironment();
-            extendSinglePath(path, linuxEnv, env);
-            extendSinglePath(path, winEnv, env);
         } catch (Exception ex) {
             log.warn("Failed to set environment, the ton client library might fail to load");
         }
-    }
-
-    private static void extendSinglePath(String path, String name, Map<String, String> env) {
-        env.merge(name, path, (a, b) -> a + File.pathSeparator + b);
     }
 
     private static boolean libsAreThere(String path) {
@@ -71,7 +61,10 @@ public class NativeLoader {
     }
 
     private static File createTempFolder() throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
+        String tempDir = System.getProperty("java.io.freetontmpdir");
+        if (tempDir == null) {
+            tempDir = new File("lib").getAbsolutePath();
+        }
         File dir = new File(tempDir);
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create temp directory " + dir.getName());
         dir.deleteOnExit();
@@ -94,13 +87,4 @@ public class NativeLoader {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, String> getModifiableEnvironment() throws Exception {
-        Class<?> pe = Class.forName("java.lang.ProcessEnvironment");
-        Method getenv = pe.getDeclaredMethod("getenv", String.class);
-        getenv.setAccessible(true);
-        Field props = pe.getDeclaredField("theEnvironment");
-        props.setAccessible(true);
-        return (Map<String, String>) props.get(null);
-    }
 }
