@@ -47,7 +47,7 @@ final case class Context private (id: Long) extends Closeable {
     *
     * @param params - the params to be passed over
     * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
-    * @param effect - the effect to be used to perform a call. Currently [[Try]] and [[Future]] are available
+    * @param effect - the effect to be used to perform a call. Currently [[scala.util.Try]] and [[scala.concurrent.Future]] are available
     * @tparam P - the type of the parameter
     * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
@@ -67,7 +67,7 @@ final case class Context private (id: Long) extends Closeable {
     * @param params - the params to be passed over
     * @param streamingEvidence - this marker specifies that only this type of request can be used for message calls
     * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
-    * @param effect - the effect to be used to perform a call. Currently [[Try]] and [[Future]] are available
+    * @param effect - the effect to be used to perform a call. Currently [[scala.util.Try]] and [[scala.concurrent.Future]] are available
     * @tparam P - the type of the parameter
     * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
@@ -117,13 +117,12 @@ object Context {
     *
     * @param params - the params to be passed over
     * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
-    * @param eff - the effect to be used to perform a call. Currently [[Try]] and [[Future]] are available
+    * @param eff - the effect to be used to perform a call. Currently [[scala.util.Try]] and [[scala.concurrent.Future]] are available
     * @param ctx - the context to call the function inside
     * @tparam P - the type of the parameter
     * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
     * @return the result of the call wrapped in appropriate effect type
-    * @return
     */
   def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
     ctx.request(params)
@@ -133,12 +132,11 @@ object Context {
     *
     * @param params - the params to be passed over
     * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
-    * @param eff - the effect to be used to perform a call. Currently [[Try]] and [[Future]] are available
+    * @param eff - the effect to be used to perform a call. Currently [[scala.util.Try]] and [[scala.concurrent.Future]] are available
     * @param ctx - the context to call the function inside
     * @tparam P - the type of the parameter
     * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
-    * @return the result of the call wrapped in appropriate effect type
     * @tparam S - the type of messages
     * @param streamingEvidence - this marker specifies that only this type of request can be used for message calls
     * @return the result of the call wrapped in appropriate effect type, including messages and errors
@@ -155,13 +153,13 @@ object Context {
   final case class StreamingEvidence[T[_]]()
 
   /**
-    * Defining only futureSteramingEvidence makes it impossible to compile messaging calls with other [[Effect]]s (currently [[Try]])
+    * Defining only futureSteramingEvidence makes it impossible to compile messaging calls with other [[Effect]]s (currently [[scala.util.Try]])
     */
   implicit val futureStreamingEvidence: StreamingEvidence[Future] = StreamingEvidence[Future]()
 
   /**
     * The definition of what an effect should be capable of
-    * @tparam T the real type of the Effect, currenlty [[Try]] and [[Future]] are available
+    * @tparam T the real type of the Effect, currenlty [[scala.util.Try]] and [[scala.concurrent.Future]] are available
     */
   trait Effect[T[_]] {
     /* Request without messages */
@@ -191,7 +189,7 @@ object Context {
   }
 
   /**
-    * Provides a possibility to call client functions wrapped as [[Try]]. Does not support message calls.
+    * Provides a possibility to call client functions wrapped as [[scala.util.Try]]. Does not support message calls.
     */
   val tryEffect: Effect[Try] = new Effect[Try] {
     override def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[Try])(
@@ -224,7 +222,7 @@ object Context {
   }
 
   /**
-    * Provides a possibility to call client functions wrapped as [[Future]]s.
+    * Provides a possibility to call client functions wrapped as [[scala.concurrent.Future]]s.
     * @param ec execution context to make asyncronous execution configurable
     * @return
     */
