@@ -21,19 +21,18 @@ public class NativeLoader {
     private static final String tonClientLibName = "ton_client";
     private static final String javaProp = "java.library.path";
 
+
     public static void apply() throws Exception {
-        String path = new File(".").getAbsolutePath();
-        if (!libsAreThere(path)) {
+        if (!libsAreThere(libsDir())) {
             log.debug("Could not find libs, creating temporary folder");
             File folder = createTempFolder();
             createTempLib(folder, jniLibName);
             createTempLib(folder, tonClientLibName);
-            path = folder.getAbsolutePath();
-            addPath(path);
+            addPath(libsDir());
         } else {
-            log.debug("Found native libraries in path " + path);
+            log.debug("Found native libraries in path " + libsDir());
         }
-        System.load(libFile(path, jniLibName).getAbsolutePath());
+        System.load(libFile(libsDir(), jniLibName).getAbsolutePath());
     }
 
     private static void addPath(String path) {
@@ -49,6 +48,15 @@ public class NativeLoader {
         }
     }
 
+    private static  String libsDir() {
+      String outer = System.getProperty("java.io.freetontmpdir");
+      if (outer == null) {
+          return new File("lib").getAbsolutePath();
+      } else {
+          return outer;
+      }
+    }
+
     private static boolean libsAreThere(String path) {
         File dir = new File(path);
         boolean dirExists = dir.exists() && dir.isDirectory() && dir.canRead();
@@ -61,12 +69,8 @@ public class NativeLoader {
     }
 
     private static File createTempFolder() throws IOException {
-        String tempDir = System.getProperty("java.io.freetontmpdir");
-        if (tempDir == null) {
-            tempDir = new File("lib").getAbsolutePath();
-        }
-        File dir = new File(tempDir);
-        if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create temp directory " + dir.getName());
+        File dir = new File(libsDir());
+        if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create libs directory " + dir.getName());
         dir.deleteOnExit();
         return dir;
     }
