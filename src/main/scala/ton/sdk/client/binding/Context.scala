@@ -317,6 +317,14 @@ object Context {
           SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)), p.success(_))
     }
 
+    /**
+     * Creates context, executes the provided block and then closes the context
+     *
+     * @param config - the config to be used for context creation
+     * @param block - the block to execute
+     * @tparam R - the type of expected result
+     *  @return the result of the execution
+     */
     override def managed[R](config: ClientConfig)(block: Context => Future[R]): Future[R] =
       Context.fromTry(create(config)).flatMap { context =>
         val result = block(context)
@@ -331,7 +339,7 @@ object Context {
     override def unsafeGet[R](a: Future[R]): R = Await.result(a, 60.seconds)
   }
 
-  // the context creation is within Try so we need to Futurize the result
+  // the context creation is within Try so we need to "Futurize" the result
   def fromTry[R](t: Try[R]): Future[R] = t match {
     case Success(r)  => Future.successful(r)
     case Failure(ex) => Future.failed(ex)
