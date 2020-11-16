@@ -27,12 +27,6 @@ object Abi {
     val handle: AbiJson                                              = AbiJson("Handle", 0.asJson)
     def fromJson(abiJson: Json): AbiJson                             = AbiJson("Serialized", abiJson)
     def fromString(abiJson: String): Either[ParsingFailure, AbiJson] = parse(abiJson).map(fromJson)
-    def fromFile(path: String): Either[ParsingFailure, AbiJson] = fromString {
-      val source = Source.fromFile(path)
-      val str    = source.mkString
-      source.close()
-      str
-    }
     def fromResource(name: String, classLoader: ClassLoader = Thread.currentThread().getContextClassLoader): Either[ParsingFailure, AbiJson] =
       fromString(Source.fromResource(name, classLoader).mkString)
   }
