@@ -31,7 +31,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   private val keyPair =
     KeyPair(public = "4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499", secret = "cc8929d635719612a9478b9cd17675a39cfad52d8959e8a177389b8c0b9122a7")
-  private val abi          = AbiJson.fromResource("Events.abi.json").toOption.get
+  private val abi          = AbiJson.fromResource("Events.abi.json", getClass.getClassLoader).toOption.get
   private val tvcSrc       = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Events.tvc").getFile).toPath)
   private val tvc          = base64(tvcSrc)
   private val eventsTime   = 1599458364291L

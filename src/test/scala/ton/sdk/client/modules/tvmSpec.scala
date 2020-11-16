@@ -21,7 +21,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "execute_message" in {
-    val abi                = AbiJson.fromResource("Subscription.abi.json").toOption.get
+    val abi                = AbiJson.fromResource("Subscription.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc             = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Subscription.tvc").getFile).toPath)
     val tvc                = base64(tvcSrc)
     val walletAddress      = "0:2222222222222222222222222222222222222222222222222222222222222222"
@@ -101,7 +101,7 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "run_executor acc_uninit" in {
-    val abi    = AbiJson.fromResource("Hello.abi.json").toOption.get
+    val abi    = AbiJson.fromResource("Hello.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Hello.tvc").getFile).toPath)
     val tvc    = base64(tvcSrc)
 

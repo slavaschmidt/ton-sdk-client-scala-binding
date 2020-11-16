@@ -24,7 +24,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
 
   behavior of "Processing"
 
-  private val abi       = AbiJson.fromResource("Events.abi.json").toOption.get
+  private val abi       = AbiJson.fromResource("Events.abi.json", getClass.getClassLoader).toOption.get
   private val tvcSrc    = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Events.tvc").getFile).toPath)
   private val tvc       = base64(tvcSrc)
   private val deploySet = DeploySet(tvc)

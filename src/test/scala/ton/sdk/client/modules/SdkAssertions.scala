@@ -34,7 +34,7 @@ trait SdkAssertions[T[_]] extends Assertions {
 
   def sendGrams(address: String): T[Result.ResultOfProcessMessage] = {
     val giver   = "0:653b9a6452c7a982c6dc92b2da9eba832ade1c467699ebb3b43dca6d77b780dd"
-    val abi     = AbiJson.fromResource("Giver.abi.json").toOption.get
+    val abi     = AbiJson.fromResource("Giver.abi.json", getClass.getClassLoader).toOption.get
     val callSet = CallSet("grant", input = Option(Map("addr" -> address.asJson)))
     val params  = MessageEncodeParams(abi, Signer.none, Option(giver), None, Option(callSet))
     devNet { implicit ctx =>
