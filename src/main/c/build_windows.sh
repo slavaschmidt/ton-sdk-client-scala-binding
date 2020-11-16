@@ -11,5 +11,5 @@
 # typedef _int64 jlong;
 # #endif
 
-cl *.c -I"!JAVA_HOME!\include\win32" -I"!JAVA_HOME!\include" -MD -LD -link "..\..\..\dll_lib\ton_client.dll.lib"
+cl *.c -I"!JAVA_HOME!\include\win32" -I"!JAVA_HOME!\include" -MD -LD -link "ton_client.dll.lib"
 
