@@ -318,13 +318,13 @@ object Context {
     }
 
     /**
-     * Creates context, executes the provided block and then closes the context
-     *
-     * @param config - the config to be used for context creation
-     * @param block - the block to execute
-     * @tparam R - the type of expected result
-     *  @return the result of the execution
-     */
+      * Creates context, executes the provided block and then closes the context
+      *
+      * @param config - the config to be used for context creation
+      * @param block - the block to execute
+      * @tparam R - the type of expected result
+      *  @return the result of the execution
+      */
     override def managed[R](config: ClientConfig)(block: Context => Future[R]): Future[R] =
       Context.fromTry(create(config)).flatMap { context =>
         val result = block(context)

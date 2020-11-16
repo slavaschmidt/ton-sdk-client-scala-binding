@@ -1,6 +1,9 @@
 name := "freeton-sdk-client-scala-binding"
-version := "1.0.0-SNAPSHOT-5"
-organization := "org.freeton"
+
+version := "1.0.0-M2"
+
+organization := "com.dancingcode"
+
 scalaVersion := "2.12.12"
 
 libraryDependencies ++= Seq(
@@ -34,12 +37,7 @@ licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 publishMavenStyle := true
 
 // Add sonatype repository settings
-publishTo := Some(
-  if (isSnapshot.value)
-    Opts.resolver.sonatypeSnapshots
-  else
-    Opts.resolver.sonatypeStaging
-)
+publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging)
 
 credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
 
