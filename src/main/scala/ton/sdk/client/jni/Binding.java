@@ -7,6 +7,15 @@ import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * This class is a proxy binding for the sdk client.
+ * The JNI calls are done in a specific manner using Java types so it is not possible to call SDK client directly.
+ * Instead, there is a thin C implementation that performs call forwarding and type conversion.
+ * All the heavy lifting for context and callback management is done by the scala counterpart.
+ *
+ * This class represents the TON SDK client definition one-to-one with the exception of the
+ * signed long JDK type being used to represent uint in SDK client definition.
+ */
 public class Binding {
     private static final Logger logger = LoggerFactory.getLogger(Binding.class);
 
@@ -41,12 +50,8 @@ public class Binding {
         }
     }
 
+    // request to callback mapping and request id generator
     private static final ConcurrentHashMap<Long, Handler> mapping = new ConcurrentHashMap<>();
     private static final AtomicLong counter = new AtomicLong(0);
 
-    public static void loadNativeLibrary() {
-        String suffix = OperatingSystem.isMac() ? ".dylib" : OperatingSystem.isUnix() ? ".so" : ".dll";
-        String path = new File("lib/libTonSdkClientJniBinding" + suffix).getAbsolutePath();
-        System.load(path);
-    }
 }

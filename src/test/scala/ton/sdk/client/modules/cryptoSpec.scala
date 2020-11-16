@@ -83,14 +83,14 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "hdkey_derive_from_xprv" in {
     val result = local { implicit ctx =>
-      call(Request.HdkeyDeriveFromXprv(masterXprv, 0, false))
+      call(Request.HdkeyDeriveFromXprv(masterXprv, 0, hardened = false))
     }
     assertValue(result)(Result.Xprv("xprv9uZwtSeoKf1swgAkVVCEUmC2at6t7MCJoHnBbn1MWJZyxQ4cySkVXPyNh7zjf9VjsP4vEHDDD2a6R35cHubg4WpzXRzniYiy8aJh1gNnBKv"))
   }
 
   it should "not hdkey_derive_from_xprv" in {
     val result = local { implicit ctx =>
-      call(Request.HdkeyDeriveFromXprv(masterXprv, -10, false))
+      call(Request.HdkeyDeriveFromXprv(masterXprv, -10, hardened = false))
     }
     assertSdkError(result)(
       "Invalid parameters: invalid value: integer `-10`, expected u32 at line 1 column 139\nparams: {\"xprv\":\"xprv9s21ZrQH143K25JhKqEwvJW7QAiVvkmi4WRenBZanA6kxHKtKAQQKwZG65kCyW5jWJ8NY9e3GkRoistUjjcpHNsGBUv94istDPXvqGNuWpC\",\"child_index\":-10,\"hardened\":false}"
@@ -251,7 +251,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   // explicit context with closing
   it should "mnemonic_derive_sign_keys 1" in {
     implicit val ctx = Context.create(ClientConfig.LOCAL).get
-    val keyPair      = ef.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24)))
+    val keyPair      = ef.unsafeGet(Context.call(Request.MnemonicDeriveSignKeys(phrase, dictionary = MnemonicDictionary.TON, word_count = 24)))
     val publicSafe   = Context.call(Request.PublicKey(keyPair.public))
     val result       = assertValue(publicSafe)(Result.TonPublicKey("PuYTvCuf__YXhp-4jv3TXTHL0iK65ImwxG0RGrYc1sP3H4KS"))
     // caveat:
@@ -265,7 +265,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "mnemonic_derive_sign_keys 2" in {
     val result = local { implicit ctx =>
       ef.flatMap {
-        call(Request.MnemonicDeriveSignKeys(phrase, path = "m", dictionary = MNEMONIC_DICTIONARY_TON, word_count = 24))
+        call(Request.MnemonicDeriveSignKeys(phrase, path = "m", dictionary = MnemonicDictionary.TON, word_count = 24))
       } { keypair =>
         call(Request.PublicKey(keypair.public))
       }
@@ -487,7 +487,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.TonCrc16(base64("Medio tutissimus ibis")))
     }
-    assertValue(result)(Result.Crc(13957))
+    assertValue(result)(Result.Crc16(13957))
   }
 
   it should "not ton_crc16" in {

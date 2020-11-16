@@ -21,7 +21,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "execute_message" in {
-    val abi                = AbiJson.fromResource("Subscription.abi.json").toOption.get
+    val abi                = AbiJson.fromResource("Subscription.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc             = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Subscription.tvc").getFile).toPath)
     val tvc                = base64(tvcSrc)
     val walletAddress      = "0:2222222222222222222222222222222222222222222222222222222222222222"
@@ -49,15 +49,15 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         _ <- call(Processing.Request.ProcessMessageWithoutEvents(params))
         // Get account data
         filter = json"""{"id":{"eq":${deployMsg.address}}}"""
-        account <- call(Net.Request.WaitForCollection("accounts", Option(filter), "id boc"))
+        account <- call(Net.Request.WaitForCollection("accounts", "id boc", Option(filter)))
         boc = account.result.\\("boc").head.as[String].toOption.get
         // Get account balance
         parsed <- call(Boc.Request.ParseAccount(boc))
         callSet = CallSet("subscribe", None, Option(subscribeParams))
         encodedMsg <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
         // Create limited and unlimited accounts
-        unlimitedAccount = AccountForExecutor.from_account(boc, Option(true))
-        limitedAccount = AccountForExecutor.from_account(boc, Option(false))
+        unlimitedAccount = AccountForExecutor.fromAccount(boc, Option(true))
+        limitedAccount = AccountForExecutor.fromAccount(boc, Option(false))
         // Run executor (unlimited balance should not affect account balance)
         result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))
         // Get account balance again
@@ -101,7 +101,7 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "run_executor acc_uninit" in {
-    val abi    = AbiJson.fromResource("Hello.abi.json").toOption.get
+    val abi    = AbiJson.fromResource("Hello.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Hello.tvc").getFile).toPath)
     val tvc    = base64(tvcSrc)
 

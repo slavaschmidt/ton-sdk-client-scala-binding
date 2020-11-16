@@ -2,8 +2,11 @@ package ton.sdk.client.jni;
 
 import java.util.Locale;
 
+/**
+ * Simple utility class to detect an operating system the client is running on.
+ */
 public class OperatingSystem {
-    private static String OS = System.getProperty("os.name", "unknown").toLowerCase(Locale.ROOT);
+    private static final String OS = System.getProperty("os.name", "unknown").toLowerCase(Locale.ROOT);
 
     public static boolean isWindows() {
         return OS.contains("win");
