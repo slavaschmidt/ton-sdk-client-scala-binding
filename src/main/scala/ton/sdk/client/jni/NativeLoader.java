@@ -20,6 +20,7 @@ public class NativeLoader {
     private static final String jniLibName = "TonSdkClientJniBinding";
     private static final String tonClientLibName = "ton_client";
     private static final String javaProp = "java.library.path";
+    private static final String JAVA_IO_FREETONTMPDIR = "java.io.freetontmpdir";
 
 
     public static void apply() throws Exception {
@@ -48,13 +49,13 @@ public class NativeLoader {
         }
     }
 
-    private static  String libsDir() {
-      String outer = System.getProperty("java.io.freetontmpdir");
-      if (outer == null) {
-          return new File("lib").getAbsolutePath();
-      } else {
-          return outer;
-      }
+    private static String libsDir() {
+        String outer = System.getProperty(JAVA_IO_FREETONTMPDIR);
+        if (outer == null) {
+            return new File("lib").getAbsolutePath();
+        } else {
+            return outer;
+        }
     }
 
     private static boolean libsAreThere(String path) {
