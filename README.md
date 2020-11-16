@@ -26,8 +26,7 @@ We use CI on Linux Focal Fossa and MacOs X hosts to run our tests.
 Following systems confirmed to be compatible:
 - Arch Linux (manjaro 5.6.16)
 - Ubuntu Linux (bionic 18-04)
-- Windows 10 x64 (US-EN)
-- Windows 7 x64 (DE)
+- Windows 10 x64
 - MacOs X (Catalina 10.15)
 - OpenJDK 8
 - OpenJDK 11
@@ -107,7 +106,7 @@ We provide a helper class `ton.sdk.client.jni.NativeLoader` to make it as easy a
 
 The ton client needs a configuration to be instantiated. Few common configurations that rely on default settings are [provided](https://github.com/slavaschmidt/ton-sdk-client-scala-binding/blob/c2b76dac6ac3e1a28557ea3c1f84df12b7a9074c/src/main/scala/ton/sdk/client/binding/model.scala#L39).
 The users of the library can easy create their own configurations by overriding the default one. Currently, the config of the ton client looks like the following:
-```json
+```
 {
     "network": {
         "server_address": "http://localhost",
