@@ -56,7 +56,8 @@ Check the prerequisites. Clone the repository. Navigate to the project folder an
 ## Running tests and examples
 
 The library provides a comprehensive set of tests that can be used as a reference to library usage. 
-There is also an ongoing effort to provide a [standalone set of examples](https://github.com/slavaschmidt/freeton-sdk-client-scala-examples)
+There is also an ongoing effort to provide a 
+[standalone set of examples](https://github.com/slavaschmidt/freeton-sdk-client-scala-examples).
 
 Because of the way native loader works some care needs to be taken in Linux and Windows environments.
 We're working on improving user experience and making it as seamless as in MacOS X. 
@@ -65,18 +66,23 @@ The library JAR contains all needed native binaries and a custom loader. At the 
 the native loader will reuse existing or create appropriate native libs located in the folder defined by the java property `"java.io.freetontmpdir"`. 
 If this property is undefined, the `lib` folder in the current project will be created (if needed) and used.
 
-The sbt scripts are define appropriate environment overrides for the default case of placing the native libraries in the "lib" subfolder
-bus sometimes an additional user actions might be required.
+The sbt scripts contain appropriate environment overrides for the default case of placing the native libraries in the "lib" subfolder
+but sometimes an additional user actions might be required.
 
-An additional user action is required in Linux and Windows to extend the path the OS uses to locate libraries by adding the path to the lib folder to it. 
+An additional user action is required in Linux and Windows to extend the path the OS uses to locate libraries. This is done by adding the path to the lib folder to it. 
 For this the environment variable `LD_LIBRARY_PATH` (linux) and `PATH` (windows) must be extended with the location of the folder 
 referenced by `"java.io.freetontmpdir"` (or if it is undefined to the `lib` folder in the project). 
-Alternatively, the `"java.io.freetontmpdir"` can be set to point to some folder already included in path, and the libraries can be put in there manually.
+Alternatively, the `"java.io.freetontmpdir"` can be set to point to some folder already included in system path, 
+and the libraries well be copied by the loader as needed (given appropriate access rights).
 
-An example for Linux system: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$(pwd/lib)"`.
-In windows don't forget to restart you command line session after the change.
+An example for Linux system: 
+```shell script
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$(pwd/lib)"
+```
+.
+In windows don't forget to restart you command line session after changing `PATH`.
 
-To run tests: `sbt test`
+To run tests: navigae to the project folder and type `sbt test`
 
 To create a jar-packaged artefact: `sbt package`. The artefact with the library will be located in `target/scala-2.12` folder of the project.
 
@@ -115,8 +121,8 @@ The users of the library can easy create their own configurations by overriding 
     "crypto": {
         "mnemonic_dictionary": 1,
         "mnemonic_word_count": 12,
-        "hdkey_derivation_path": "m/44"/396"/0"/0/0",
-        "hdkey_compliant": True
+        "hdkey_derivation_path": 'm/44"/396"/0"/0/0',
+        "hdkey_compliant": true
     },
     "abi": {
         "workchain": 0,
@@ -134,15 +140,15 @@ The context can be created by calling the `get` method of the client:
 ```scala
 implicit val ctx = Context.create(ClientConfig.LOCAL).get
 ``` 
-and should be closed after it is not needed anymore by calling 
+and should be closed as soon as it is not needed anymore by calling 
 ```scala
 ctx.close()
 ```
 
-The binding library will try its best to auto-close the context if this was not done manually but because of the unpredictable nature
-of the JVMs garbage collection this is not always possible to do in timely manner.
-Because of this the library provides managed context that will be auto-closed at the moment last operation 
-withing the context finishes execution. The use pattern is like following:
+The binding library will try its best to auto-close forgotten contexts but because of the unpredictable nature
+of the JVMs garbage collection this is not always possible to do timely.
+Because of this the library provides managed context that is auto-closed at the moment last operation 
+withing the context finishes execution. It can be used like in the following example:
 ```scala
 import ton.sdk.client.binding.Context
 import Context._
@@ -152,13 +158,13 @@ val result = local { implicit ctx =>
 }
 ```
 The `local` refers to the server configuration. Client calls inside of the curly braces have the corresponding context available to them.
-Contexts can be nested where this makes sense by giving the implicits the same name. 
-In the case of nesting the internal context has higher order of preference.
+Contexts can be nested where this makes sense by giving the implicits same name. 
+In the case of nesting the internal context has higher order of precedence.
 
 
 ### Calling client functions
 
-The approach to calling library functions we use called "Trampolining" and in essence it's representing functions as class instances which is quite common in scala.
+The approach to calling library functions we use called "trampolining" and in essence it means representing functions as class instances (a quite common approach in scala).
 This allows for type-safe calls where types of the both parameter and result are well-defined at compilation time. For example:
 ```scala
 import ton.sdk.client.modules.Utils._
@@ -170,7 +176,7 @@ assertValue(result)(Address(hexWorkchain))
 ```
 
 Here we're calling ton client's `convert_address` function by using `ConvertAddress` case class and providing the `accountId` and required format and getting an instance of `Address` class back.
-The first line, `import ton.sdk.client.modules.Utils._` demonstrates how different request types reside in modules reflecting 
+The first line, `import ton.sdk.client.modules.Utils._` demonstrates how different request types reside in modules to reflect 
 the naming schema of the ton client. 
 
 For detailed description of the modules and available functions please consult [tests](src/test/scala/ton/sdk/client/modules) 
@@ -240,15 +246,15 @@ This problem is general to managed resources used in asynchronous manner and not
 
 Abstracting over the effect type gives us another advantage - it makes possible to represent failure cases in typical scala way, algebraically.
 The result of the `call` function returns either `Success` or `Failure` of the chosen effect type. 
-Thus, the logic is better represented in the form of 
-[for-comprehension])(https://github.com/slavaschmidt/ton-sdk-client-scala-binding/blob/c2b76dac6ac3e1a28557ea3c1f84df12b7a9074c/src/test/scala/ton/sdk/client/modules/processingSpec.scala#L32).   
+Thus, the logic is better represented in the form of the 
+[for-comprehension](https://github.com/slavaschmidt/ton-sdk-client-scala-binding/blob/c2b76dac6ac3e1a28557ea3c1f84df12b7a9074c/src/test/scala/ton/sdk/client/modules/processingSpec.scala#L32).   
 
 
 ### Streaming
 
-Ton client allows calling certain functions "with messages" generating continuous stream of messages to the handler. 
-We represent this in the form of "streaming" `callS` with appropriate parameters. 
-There is a compile-time safety the streaming function can't be called with non-streaming parameters and vice-versa.
+Ton client allows calling certain functions "with messages" generating continuous stream of events. 
+We represent this in the form of "streaming" `callS` that should be called with appropriate parameters. 
+There is a compile-time safety guarantee that the streaming function can't be called with non-streaming parameters and vice-versa.
 The result of streaming call is a tuple that extends "normal" result with two 
 [blocking iterators](src/main/scala/ton/sdk/client/binding/blockingIterator.scala) 
 to communicate arrival of messages and errors to the user. 
@@ -272,9 +278,10 @@ val result = devNet { implicit ctx =>
   } yield data
 }
 ```
+
 Please note how we wait for at most one minute for all messages to arrive. 
-Alternatively, one could wait just for a second and then retry until there are no messages.
-Please consult the ScalaDoc of the BlockingIterator for further details.
+Alternatively, one could wait just for, say, one second and retry until there are no messages left.
+Please consult the ScalaDoc of the [blocking iterators](src/main/scala/ton/sdk/client/binding/blockingIterator.scala) for further details.
   
 
 ## License
