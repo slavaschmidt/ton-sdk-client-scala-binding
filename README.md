@@ -49,7 +49,7 @@ It is also mandatory to have JDK (as opposed to the JRE) installed.
 
 ## Installation
 
-Check the prerequisites. Clone the repository. Navigate to the project folder and start SBT by typing `sbt` in the console.
+Check the prerequisites. Clone the repository. Navigate to the project folder `ton-sdk-client-scala-binding` and start SBT by typing `sbt` in the console.
 
 
 ## Running tests and examples
