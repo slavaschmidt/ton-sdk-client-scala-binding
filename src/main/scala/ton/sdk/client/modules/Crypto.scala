@@ -1,5 +1,6 @@
 package ton.sdk.client.modules
 
+import io.circe.Json
 import ton.sdk.client.binding.KeyPair
 import ton.sdk.client.binding.Api.SdkCall
 
@@ -32,6 +33,10 @@ object Crypto {
   }
   val DEFAULT_HDKEY_DERIVATION_PATH = "m/44'/396'/0'/0/0"
 
+  type SigningBoxHandle = Int
+
+  final case class RegisteredSigningBox(handle: SigningBoxHandle)
+
   object Request {
     final case object NaclBoxKeyPair
     final case object GenerateRandomSignKeys
@@ -44,6 +49,7 @@ object Crypto {
     final case class VerifySignature(signed: String, public: String)
     final case class Sha256(data: String)
     final case class Sha512(data: String)
+    final case class ChaCha20(data: String, key: String, nonce: String)
     final case class Scrypt(password: String, salt: String, log_n: Int, r: Long, p: Long, dk_len: Int)
     final case class NaclSignKeypairFromSecretKey(secret: String)
     final case class HdkeyDeriveFromXprv(xprv: String, child_index: Int, hardened: Boolean)
@@ -64,6 +70,11 @@ object Crypto {
     final case class NaclSign(unsigned: String, secret: String)
     final case class NaclSignOpen(signed: String, public: String)
     final case class NaclSignDetached(unsigned: String, secret: String)
+    final case class RegisterSigningBox(obj: Json)
+    final case class GetSigningBox(public: String, secret: String)
+    final case class SigningBoxGetPublicKey(handle: SigningBoxHandle)
+    final case class SigningBoxSign(signing_box: SigningBoxHandle, unsigned: String)
+    final case class RemoveSigningBox(handle: SigningBoxHandle)
   }
 
   object Result {
@@ -76,6 +87,7 @@ object Crypto {
     final case class Unsigned(unsigned: String)
     final case class Hash(hash: String)
     final case class Key(key: String)
+    final case class ChaCha20(data: String)
     final case class Xprv(xprv: String)
     final case class SecretKey(secret: String)
     final case class PublicKey(public: String)
@@ -84,6 +96,7 @@ object Crypto {
     final case class Encrypted(encrypted: String)
     final case class Decrypted(decrypted: String)
     final case class Signature(signature: String)
+    final case class PubKey(pubkey: String)
     final case class MnemonicWords(words: String)   { def wordCount: Int = words.split(" ").length  }
     final case class MnemonicPhrase(phrase: String) { def wordCount: Int = phrase.split(" ").length }
   }
@@ -100,6 +113,7 @@ object Crypto {
   implicit val verifySignature                 = new SdkCall[Request.VerifySignature, Result.Unsigned]               { override val function: String = s"$module.verify_signature"                      }
   implicit val sha256                          = new SdkCall[Request.Sha256, Result.Hash]                            { override val function: String = s"$module.sha256"                                }
   implicit val sha512                          = new SdkCall[Request.Sha512, Result.Hash]                            { override val function: String = s"$module.sha512"                                }
+  implicit val chacha512                       = new SdkCall[Request.ChaCha20, Result.ChaCha20]                      { override val function: String = s"$module.chacha20"                              }
   implicit val scrypt                          = new SdkCall[Request.Scrypt, Result.Key]                             { override val function: String = s"$module.scrypt"                                }
   implicit val naclSignKeypairFromSecretKey    = new SdkCall[Request.NaclSignKeypairFromSecretKey, Result.PublicKey] { override val function: String = s"$module.nacl_sign_keypair_from_secret_key"     }
   implicit val hdkeyDeriveFromXprv             = new SdkCall[Request.HdkeyDeriveFromXprv, Result.Xprv]               { override val function: String = s"$module.hdkey_derive_from_xprv"                }
@@ -121,4 +135,11 @@ object Crypto {
   implicit val naclSign                        = new SdkCall[Request.NaclSign, Result.Signed]                        { override val function: String = s"$module.nacl_sign"                             }
   implicit val naclSignOpen                    = new SdkCall[Request.NaclSignOpen, Result.Unsigned]                  { override val function: String = s"$module.nacl_sign_open"                        }
   implicit val naclSignDetached                = new SdkCall[Request.NaclSignDetached, Result.Signature]             { override val function: String = s"$module.nacl_sign_detached"                    }
+  // UNSTABLE
+  implicit val registerSigningBox     = new SdkCall[Request.RegisterSigningBox, RegisteredSigningBox] { override val function: String = s"$module.register_signing_box"       }
+  implicit val getSigningBox          = new SdkCall[Request.GetSigningBox, RegisteredSigningBox]      { override val function: String = s"$module.get_signing_box"            }
+  implicit val signingBoxGetPublicKey = new SdkCall[Request.SigningBoxGetPublicKey, Result.PubKey]    { override val function: String = s"$module.signing_box_get_public_key" }
+  implicit val signingBoxSign         = new SdkCall[Request.SigningBoxSign, Result.Signature]         { override val function: String = s"$module.signing_box_sign"           }
+  implicit val removeSigningBox       = new SdkCall[Request.RemoveSigningBox, Json]                   { override val function: String = s"$module.remove_signing_box"         }
+
 }
