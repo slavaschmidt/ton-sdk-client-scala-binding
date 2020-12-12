@@ -1,5 +1,6 @@
 package ton.sdk.client.modules
 
+import org.scalatest.Succeeded
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.{ClientConfig, KeyPair}
 import ton.sdk.client.binding.Context._
@@ -15,6 +16,25 @@ import scala.language.higherKinds
 class AsyncCryptoSpec extends CryptoSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
+
+  it should "work with signing box" in {
+    val result = devNet { implicit ctx =>
+      for {
+        keys <- call(Request.GenerateRandomSignKeys)
+        handle <- call(Request.GetSigningBox(keys.public, keys.secret))
+        public <- call(Request.SigningBoxGetPublicKey(handle.handle))
+        _ = assert(keys.public == public.pubkey)
+        message = base64("Sign with box")
+        box <- call(Request.SigningBoxSign(handle.handle, message))
+        signature <- call(Request.Sign(message, keys))
+        r = assert(signature.signature.get == box.signature)
+        _ <- call(Request.RemoveSigningBox(handle.handle))
+      } yield r
+    }
+    assertValue(result)(Succeeded)
+  }
+
+  // TODO implement and  test RegisterSigningBox
 }
 
 class SyncCryptoSpec extends CryptoSpec[Try] {
@@ -533,6 +553,41 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.VerifySignature("This never happened, and now again...", signingKeypair.public))
     }
     assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [This never happened, and now again...]")
+  }
+
+  it should "encrypt with chacha20" in {
+    val result = local { implicit ctx =>
+      call(Request.ChaCha20(base64("Encrypt me gently"), "01" * 32, "ff" * 12))
+    }
+    assertValue(result)(Result.ChaCha20("y58eG9p/ZDbzTlpPRIV0jvg="))
+  }
+
+  it should "decrypt with chacha20" in {
+    val result = local { implicit ctx =>
+      call(Request.ChaCha20("y58eG9p/ZDbzTlpPRIV0jvg=", "01" * 32, "ff" * 12))
+    }
+    assertValue(result)(Result.ChaCha20("RW5jcnlwdCBtZSBnZW50bHk="))
+  }
+
+  it should "not encrypt with chacha20 if not base64" in {
+    val result = local { implicit ctx =>
+      call(Request.ChaCha20("Encrypt me gently", "01" * 32, "ff" * 12))
+    }
+    assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [Encrypt me gently]")
+  }
+
+  it should "not encrypt with chacha20 if key is wrong" in {
+    val result = local { implicit ctx =>
+      call(Request.ChaCha20("TWVzc2FnZQ==", "boo", "ff" * 12))
+    }
+    assertSdkError(result)("Invalid hex string: Odd number of digits\r\nhex: [boo]")
+  }
+
+  it should "not encrypt with chacha20 if nonce is wrong" in {
+    val result = local { implicit ctx =>
+      call(Request.ChaCha20("TWVzc2FnZQ==", "01" * 32, "bam"))
+    }
+    assertSdkError(result)("Invalid hex string: Odd number of digits\r\nhex: [bam]")
   }
 
 }

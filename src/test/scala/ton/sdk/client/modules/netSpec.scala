@@ -3,6 +3,8 @@ package ton.sdk.client.modules
 import io.circe.Json
 import io.circe.literal.JsonStringContext
 import io.circe.syntax._
+import org.scalatest.Succeeded
+import org.scalatest.compatible.Assertion
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, Context, OrderBy}
 import ton.sdk.client.binding.Context._
@@ -46,14 +48,36 @@ class AsyncNetSpec extends NetSpec[Future] {
     }
     assertExpression(errors)(_.nonEmpty)
   }
+
+  it should "suspend resume" in {
+    val filter = Map("created_at" -> Map("gt" -> (System.currentTimeMillis / 1000))).asJson
+
+    val result = devNet { implicit ctx =>
+      for {
+        (handle, messages, _) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "body created_at"))
+        _ = assert(handle.handle > 0)
+        m = messages.collect(25.seconds)
+        _ = assert(m.nonEmpty)
+        _ <- call(Request.Suspend)
+        n = messages.collect(25.seconds)
+        _ = assert(n.size == m.size)
+        _ <- call(Request.Resume)
+        p = messages.collect(25.seconds)
+        r = assert(p.size > m.size)
+        _ <- call(Request.Unsubscribe(handle.handle))
+      } yield r
+    }
+    assertValue(result)(Succeeded)
+  }
+
 }
 
 class SyncNetSpec extends NetSpec[Try] {
   implicit override val ef: Context.Effect[Try] = tryEffect
 
   // No need for this test as this won't compile
-  //
-//  it should "not know subscribe_collection function" in {
+
+  //  it should "not know subscribe_collection function" in {
 //    val result = devNet { implicit ctx =>
 //      callS(Request.SubscribeCollection("messages", None, result = "created_at"))
 //    }
@@ -132,4 +156,23 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertValue(result)(Json.Null)
   }
+
+  it should "query" in {
+    val variables = Option(Map("time" -> (System.currentTimeMillis/1000)).asJson)
+    val query     = "query($time: Float){messages(filter:{created_at:{ge:$time}}limit:5){id}}"
+    val result = devNet { implicit ctx =>
+      call(Request.Query(query, variables))
+    }
+    assertValue(result)(Result.Query(json"""{"data":{"messages":[]}}"""))
+  }
+
+  it should "not query" in {
+    val variables = Option(Map("time" -> (System.currentTimeMillis/1000 - 60)).asJson)
+    val query     = "query($time: Float){(filter:{created_at:{ge:$time}}limit:5){id}}"
+    val result = devNet { implicit ctx =>
+      call(Request.Query(query, variables))
+    }
+    assertSdkError(result)("Query failed: Graphql server returned error: Syntax Error: Expected Name, found \"(\".")
+  }
+
 }
