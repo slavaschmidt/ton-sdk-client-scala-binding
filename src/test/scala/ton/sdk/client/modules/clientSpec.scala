@@ -3,6 +3,7 @@ package ton.sdk.client.modules
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context
 import ton.sdk.client.binding.Context._
+import ton.sdk.client.modules.Client.Result.BuildInfo
 import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -10,8 +11,8 @@ import scala.language.higherKinds
 import scala.util.{Success, Try}
 
 class AsyncClientSpec extends ClientSpec[Future] {
-  override implicit def executionContext: ExecutionContext = ExecutionContext.Implicits.global
-  override implicit val ef: Context.Effect[Future] = futureEffect
+  implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "be able to do stuff in parallel in single context and in multiple contexts" in {
     val r1 = local { implicit ctx =>
@@ -45,7 +46,7 @@ class SyncClientSpec extends ClientSpec[Try] {
   }
 }
 
-abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {
+abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
@@ -55,14 +56,16 @@ abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.Version)
     }
-    assertValue(result)(Result.Version("1.0.0"))
+    assertValue(result)(Result.Version("1.3.0"))
   }
 
   it should "get response of type BuildInfo" in {
-    val result: T[Result.BuildInfo] = local { implicit ctx =>
+    val result: T[BuildInfo] = local { implicit ctx =>
       call(Request.BuildInfo)
     }
-    assertExpression(result)(_.build_info.isObject)
+    assertExpression(result) { r =>
+      r.build_number > 0 && r.dependencies.nonEmpty
+    }
   }
 
   it should "get expected version from the api description" in {
@@ -70,7 +73,9 @@ abstract class ClientSpec[T[_]]  extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.ApiReference)
     }
     val api = ef.map(result)(_.api)
-    assertExpression(api)(r => r.version == "1.0.0" && r.modules.length == 8 &&
-      r.modules.map(_.name).sorted == List("client", "utils", "crypto", "boc", "abi", "processing", "tvm", "net").sorted)
+    assertExpression(api) { r =>
+      r.version == "1.3.0" && r.modules.length == 9 &&
+      r.modules.map(_.name).sorted == List("abi", "boc", "client", "crypto", "debot", "net", "processing", "tvm", "utils")
+    }
   }
 }

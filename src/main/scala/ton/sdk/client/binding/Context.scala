@@ -314,9 +314,13 @@ object Context {
     private def successIfFinished[R: Decoder](requestId: Long, finished: Boolean, p: Promise[R], buf: String): Unit = {
       val _ =
         if (finished && !p.isCompleted)
-          SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)), p.success(_))
+          SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(exToSdkError(requestId, buf, ex)), p.success(_))
     }
 
+    private def exToSdkError(requestId: Long, buf: String, ex: Throwable) = ex match {
+      case err: SdkClientError => err
+      case _ => SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)
+    }
     /**
       * Creates context, executes the provided block and then closes the context
       *

@@ -71,7 +71,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.GenerateRandomBytes(-1))
     }
-    assertSdkError(result)("Invalid parameters: invalid value: integer `-1`, expected usize at line 1 column 12\nparams: {\"length\":-1}")
+    assertSdkError(result)("Invalid parameters: invalid value: integer `-1`, expected u32 at line 1 column 12\nparams: {\"length\":-1}")
   }
 
   it should "generate_random_sign_keys" in {

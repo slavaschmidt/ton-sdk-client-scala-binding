@@ -7,6 +7,7 @@ import java.util.Locale;
  */
 public class OperatingSystem {
     private static final String OS = System.getProperty("os.name", "unknown").toLowerCase(Locale.ROOT);
+    private static final String ARCH = System.getProperty("os.arch", "unknown").toLowerCase(Locale.ROOT);
 
     public static boolean isWindows() {
         return OS.contains("win");
@@ -19,4 +20,6 @@ public class OperatingSystem {
     public static boolean isUnix() {
         return OS.contains("nux");
     }
+
+    public static boolean is64() { return ARCH.contains("64"); }
 }

@@ -84,7 +84,7 @@ public class NativeLoader {
                 Files.copy(is, lib.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } else {
                 dir.delete();
-                throw new FileNotFoundException("Could not find lib " + name + " in the JAR");
+                throw new FileNotFoundException("Could not find library [" + name + "] in the JAR");
             }
         } catch (IOException e) {
             dir.delete();

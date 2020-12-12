@@ -25,6 +25,7 @@ object Client {
   final case class Types(name: String, `type`: String, struct_fields: Option[Seq[StructField]], enum_types: Option[Seq[StructField]], summary: Option[String], description: Option[String])
   final case class Module(name: String, summary: Option[String], description: Option[String], types: List[Types], functions: List[Json])
   final case class ApiDescription(version: String, modules: List[Module])
+  final case class Dependency(name: String, git_commit: String)
 
   object Request {
     final case object Version
@@ -33,7 +34,7 @@ object Client {
   }
   object Result {
     final case class Version(version: String)
-    final case class BuildInfo(build_info: Json)
+    final case class BuildInfo(build_number: Long, dependencies: Seq[Dependency])
     final case class ApiReference(api: ApiDescription)
   }
 

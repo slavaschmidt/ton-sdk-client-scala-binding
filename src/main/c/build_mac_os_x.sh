@@ -2,9 +2,6 @@
 
 export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 
-
-cd src/main/c
-
 gcc \
   -dynamiclib \
   -shared \
@@ -16,5 +13,9 @@ gcc \
   -L$LIBS \
   -lton_client \
   -Wl,-rpath,.
+
+cd $LIBS
+
+install_name_tool -change "libton_client.dylib" @loader_path/libton_client.dylib "libTonSdkClientJniBinding.dylib"
 
 cd -

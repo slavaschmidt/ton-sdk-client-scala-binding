@@ -147,7 +147,7 @@ case class Transaction(
   end_status_name: String,
   in_msg: String,
   out_msgs: Seq[String], // TODO double-check as the Transaction is just Any in SDK definition
-  account_id: String,
+  account_id: Option[String],
   total_fees: String,
   balance_delta: String,
   old_hash: String,
