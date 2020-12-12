@@ -43,7 +43,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
       for {
         // Get account deploy message
         deployMsg <- call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))
-        _ <- sendGrams(deployMsg.address)
+        _         <- sendGrams(deployMsg.address)
         params = MessageEncodeParams(abi, signer, None, Option(deploySet), Option(callSet))
         // Deploy account
         _ <- call(Processing.Request.ProcessMessageWithoutEvents(params))
@@ -57,7 +57,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         encodedMsg <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
         // Create limited and unlimited accounts
         unlimitedAccount = AccountForExecutor.fromAccount(boc, Option(true))
-        limitedAccount = AccountForExecutor.fromAccount(boc, Option(false))
+        limitedAccount   = AccountForExecutor.fromAccount(boc, Option(false))
         // Run executor (unlimited balance should not affect account balance)
         result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))
         // Get account balance again
@@ -69,7 +69,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         input   = Map("subscriptionId" -> subscriptionId.asJson)
         callSet = CallSet("getSubscription", None, Option(input))
         encodedMsg2 <- call(Abi.Request.EncodeMessage(abi, Option(deployMsg.address), None, Option(callSet), signer))
-        result5 <- call(Tvm.Request.RunTvm(encodedMsg2.message, result2.account, Option(abi)))
+        result5     <- call(Tvm.Request.RunTvm(encodedMsg2.message, result2.account, Option(abi)))
         pubkey  = result5.hcursor.downField("decoded").downField("output").downField("value0").downField("pubkey").as[String].toOption.get
         assert2 = encodedMsg.message_id == result3.transaction.in_msg
         assert3 = result3.fees.total_account_fees > 0
@@ -101,9 +101,8 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "run_executor acc_uninit" in {
-    val abi    = AbiJson.fromResource("Hello.abi.json", getClass.getClassLoader).toOption.get
-    val tvcSrc = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Hello.tvc").getFile).toPath)
-    val tvc    = base64(tvcSrc)
+    val abi = AbiJson.fromResource("Hello.abi.json", getClass.getClassLoader).toOption.get
+    val tvc = tvcFromResource("Hello.tvc")
 
     val result = devNet { implicit ctx =>
       ef.flatMap(call(Crypto.Request.GenerateRandomSignKeys)) { keys =>

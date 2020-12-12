@@ -1,7 +1,6 @@
 package ton.sdk.client.binding
 
 import java.util.concurrent.ConcurrentLinkedQueue
-
 import scala.collection.JavaConverters.asScalaIteratorConverter
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.Duration
@@ -49,6 +48,14 @@ trait BlockingIterator[+A] {
   def next(): Option[A]
 
   /**
+   * Awaits first available element and returns it.
+   *
+   * @return first element put into the queue {@code element}
+   * @throws TimeoutException if there is a timeout
+   */
+  def getNext(timeout: Duration): A
+
+  /**
     * Calculates number of elements known to be available locally
     *
     * @return number of elements available to be fetched from this {@code BlockingIterator}
@@ -71,7 +78,6 @@ trait BlockingIterator[+A] {
 
 /**
   * An implementation of the {@code BlockingIterator} backed by java Queue and scala Future.
-  * It is safe to be used from many threads concurrently.
   *
   * @tparam A - the type of the elements stored in this [[BlockingIterator]]
   */
@@ -89,10 +95,29 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
   }
 
   // adds element to the iterator, to be used by the callback
-  protected[binding] def append(a: A): Boolean = buf.add(a)
+  protected[binding] def append(a: A): Boolean = {
+    listener.fold(buf.add(a))(_.tryComplete(Success(a)))
+  }
+
   // to be used by the callback to signal that this {@code BlockingIterator} should close with success or failure
   protected[binding] def close(ex: Option[Exception]): Boolean = p.tryComplete(ex.map(Failure(_)).getOrElse(Success(())))
 
   private[this] val buf  = new ConcurrentLinkedQueue[A]()
   private[this] val flag = p.future
+
+  private var listener: Option[Promise[A]] = None
+
+  override def getNext(timeout: Duration): A = {
+    if (hasNext) {
+      next().get
+    } else {
+      val pr = Promise[A]()
+      listener = Option(pr)
+      try {
+        Await.result(pr.future, timeout)
+      } finally  {
+        listener = None
+      }
+    }
+  }
 }

@@ -1,6 +1,5 @@
 package ton.sdk.client.modules
 
-import io.circe.Json
 import ton.sdk.client.binding.Transaction
 import ton.sdk.client.binding.Api.SdkCall
 

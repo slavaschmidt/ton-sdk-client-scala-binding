@@ -1,7 +1,7 @@
 package ton.sdk.client.modules
 
 import io.circe.Json
-import ton.sdk.client.binding.KeyPair
+import ton.sdk.client.binding.{BaseAppCallback, KeyPair}
 import ton.sdk.client.binding.Api.SdkCall
 
 /**
@@ -36,6 +36,23 @@ object Crypto {
   type SigningBoxHandle = Int
 
   final case class RegisteredSigningBox(handle: SigningBoxHandle)
+
+  object ParamsOfAppSigningBox {
+
+    case object GetPublicKey extends BaseAppCallback
+
+    final case class Sign(unsigned: String) extends BaseAppCallback
+
+    def apply(data: Map[String, Any]): BaseAppCallback = data.get("type") match {
+      case Some("GetPublicKey") => GetPublicKey
+      case Some("Sign")         => Sign(data("unsigned").toString)
+    }
+  }
+
+  object ResultOfAppSigningBox {
+    final case class GetPublicKey(public_key: String) extends BaseAppCallback
+    final case class Sign(signature: String)          extends BaseAppCallback
+  }
 
   object Request {
     final case object NaclBoxKeyPair

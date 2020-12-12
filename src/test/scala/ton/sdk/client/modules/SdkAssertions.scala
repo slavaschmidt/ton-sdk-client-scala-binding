@@ -3,13 +3,15 @@ package ton.sdk.client.modules
 import io.circe._
 import io.circe.syntax._
 import org.scalatest.{Assertion, Assertions}
-import ton.sdk.client.binding.{CallSet, Signer}
-import ton.sdk.client.jni.{Binding, NativeLoader}
-import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.binding.Api.SdkClientError
 import ton.sdk.client.binding.Context._
+import ton.sdk.client.binding.{CallSet, Signer}
+import ton.sdk.client.jni.NativeLoader
+import ton.sdk.client.modules.Abi.AbiJson
 import ton.sdk.client.modules.Processing.{MessageEncodeParams, Result}
 
+import java.io.File
+import java.nio.file.Files
 import scala.language.higherKinds
 
 trait SdkAssertions[T[_]] extends Assertions {
@@ -42,4 +44,13 @@ trait SdkAssertions[T[_]] extends Assertions {
     }
   }
 
+  def tvcFromResource(name: String) = {
+    val tvcSrc = Files.readAllBytes(new File(getClass.getClassLoader.getResource(name).getFile).toPath)
+    base64(tvcSrc)
+  }
+
+  def asHex(j: Json)   = j.noSpaces.toList.map(_.toInt.toHexString).mkString
+  def asHex(s: String) = s.toList.map(_.toInt.toHexString).mkString
+
+  def fromHex(hex: String): String = hex.sliding(2, 2).toArray.map(Integer.parseInt(_, 16).toChar).mkString
 }

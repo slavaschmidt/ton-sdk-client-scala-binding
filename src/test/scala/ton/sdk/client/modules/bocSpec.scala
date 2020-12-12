@@ -214,6 +214,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     "6883772b192c4f1e0edd5411c68b1ad296817dcbd6b894784b5561b6c54560f8",
     List.empty,
     None,
+    Some("0:be6003a58ae6c1034e21c51a71fd20b3b2da2ae328b59391640cc8ca20b20e34"),
     "0x59821a",
     "0x3f1466",
     "409d812f21063a4a740a73795793ac7567f972a6518545bc00b8db55062f4479",
