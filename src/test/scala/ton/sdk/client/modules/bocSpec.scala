@@ -103,7 +103,8 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "decode compute" in {
     import Decoders.decodeCompute
-    val json = """{"success":true,"msg_state_used":false,"account_activated":false,"gas_fees":"0x598210","gas_used":5866,"gas_limit":10000,"mode":0,"exit_code":0,"vm_steps":119,"vm_init_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","vm_final_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","compute_type":1,"compute_type_name":"vm"}"""
+    val json =
+      """{"success":true,"msg_state_used":false,"account_activated":false,"gas_fees":"0x598210","gas_used":5866,"gas_limit":10000,"mode":0,"exit_code":0,"vm_steps":119,"vm_init_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","vm_final_state_hash":"0000000000000000000000000000000000000000000000000000000000000000","compute_type":1,"compute_type_name":"vm"}"""
     val result = decode[Compute](json)
     assert(result.isRight)
   }
@@ -144,6 +145,21 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid BOC: error decode  BOC base64: Encoded text cannot have a 6-bit remainder.")
   }
 
+  it should "get_code_from_tvc" in {
+    val tvc = tvcFromResource("Hello.tvc")
+    val result = local { implicit ctx =>
+      call(Request.GetCodeFromTvc(tvc))
+    }
+    assertValue(result)(Result.CodeFromTvc("te6ccgECFgEAA/8AAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB6P9/IdMAAY4mgQIA1xgg+QEBcO1E0PQFgED0DvKK1wv/Ae1HIm917VcDAfkQ8qje7UTQINdJwgGOFvQE0z/TAO1HAW9xAW92AW9zAW9y7VeOGPQF7UcBb3Jwb3Nwb3bIgCDPQMnQb3HtV+LTPwHtR28TIbkgBQBgnzAg+COBA+iogggbd0Cgud6Z7Uchb1Mg7VcwlIA08vDiMNMfAfgjvPK50x8B8UABAgEgEgcCASALCAEJuotV8/gJAfrtR29hbo477UTQINdJwgGOFvQE0z/TAO1HAW9xAW92AW9zAW9y7VeOGPQF7UcBb3Jwb3Nwb3bIgCDPQMnQb3HtV+Le7UdvFpLyM5ftR3FvVu1X4gD4ANH4I7Uf7UcgbxEwAcjLH8nQb1HtV+1HbxLI9ADtR28Tzws/7UdvFgoAHM8LAO1HbxHPFsntVHBqAgFqDwwBCbQAGtbADQH87UdvYW6OO+1E0CDXScIBjhb0BNM/0wDtRwFvcQFvdgFvcwFvcu1Xjhj0Be1HAW9ycG9zcG92yIAgz0DJ0G9x7Vfi3u1Hb2UgbpIwcN5w7UdvEoBA9A7yitcL/7ry4GT4APpA0SDIyfsEgQPocIEAgMhxzwsBIs8KAHHPQPgoDgCOzxYkzxYj+gJxz0Bw+gJw+gKAQM9A+CPPCx9yz0AgySL7AF8FMO1HbxLI9ADtR28Tzws/7UdvFs8LAO1HbxHPFsntVHBq2zABCbRl9ovAEAH47UdvYW6OO+1E0CDXScIBjhb0BNM/0wDtRwFvcQFvdgFvcwFvcu1Xjhj0Be1HAW9ycG9zcG92yIAgz0DJ0G9x7Vfi3tHtR28R1wsfyIIQUMvtF4IQgAAAALHPCx8hzwsfyHPPCwH4KM8Wcs9A+CXPCz+AIc9AIM81Is8xvBEAeJZxz0AhzxeVcc9BIc3iIMlx+wBbIcD/jh7tR28SyPQA7UdvE88LP+1HbxbPCwDtR28RzxbJ7VTecWrbMAIBIBUTAQm7cxLkWBQA+O1Hb2FujjvtRNAg10nCAY4W9ATTP9MA7UcBb3EBb3YBb3MBb3LtV44Y9AXtRwFvcnBvc3BvdsiAIM9AydBvce1X4t74ANH4I7Uf7UcgbxEwAcjLH8nQb1HtV+1HbxLI9ADtR28Tzws/7UdvFs8LAO1HbxHPFsntVHBq2zAAyt1wIddJIMEgjisgwACOHCPQc9ch1wsAIMABltswXwfbMJbbMF8H2zDjBNmW2zBfBtsw4wTZ4CLTHzQgdLsgjhUwIIIQ/////7ogmTAgghD////+ut/fltswXwfbMOAjIfFAAV8H"))
+  }
+
+  it should "not get_code_from_tvc for empty TVC" in {
+    val tvc = "Hello.tvc"
+    val result = local { implicit ctx =>
+      call(Request.GetCodeFromTvc(tvc))
+    }
+    assertSdkError(result)("Invalid BOC: error decode TVC BOC base64: Encoded text cannot have a 6-bit remainder.")
+  }
 
   val expectedBlockchainConfig =
     Result.ConfigBoc(

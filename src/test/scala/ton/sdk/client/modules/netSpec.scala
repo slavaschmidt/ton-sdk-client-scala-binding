@@ -175,4 +175,17 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Query failed: Graphql server returned error: Syntax Error: Expected Name, found \"(\".")
   }
 
+  it should "find_last_shard_block" in {
+    val result = devNet { implicit ctx =>
+      call(Request.FindLastShardBlock(giverAddress))
+    }
+    assertExpression(result)(_.block_id.length == 64)
+  }
+
+  it should "not find_last_shard_block" in {
+    val result = devNet { implicit ctx =>
+      call(Request.FindLastShardBlock("baker street, london 221b"))
+    }
+    assertSdkError(result)("Invalid address [fatal error]: baker street, london 221b")
+  }
 }
