@@ -37,6 +37,15 @@ object Api {
     }
   }
 
+  type DebotCallback[T] = (ResponseType, Json) => T
+
+  type DebotHandle = Int
+
+  trait DebotExecute[C]  {
+    def callback: DebotCallback[C]
+    def debot_handle: DebotHandle
+  }
+
   /**
     * @param code
     * -1 -> JsonApiParsingError
@@ -154,6 +163,19 @@ object Api {
   abstract class StreamingSdkCall[P: Encoder, R: Decoder, S: Decoder] extends AbstractSdkCall[P, R] {
     implicit val decoders = (implicitly[Decoder[R]], implicitly[Decoder[S]])
   }
+
+  /**
+   * Representation of the debot SDK client call.
+   * Can be used to call both sync and async methods.
+   *
+   * For the call parameter a json encoder must be available
+   * For the result parameter a json decoder must be available
+   *
+   * @tparam P - the type of the call parameter
+   * @tparam R - the type of the result
+   * @tparam C - the type of the debot callback
+   */
+  abstract class DebotSdkCall[P <: DebotExecute[C] : Encoder, R: Decoder, C] extends SdkCall[P, R]
 
   /**
     * For the async call result we need a way to make messages and errors available to the caller.

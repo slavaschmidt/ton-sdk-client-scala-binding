@@ -296,7 +296,7 @@ object Context {
             if (!finished) logger.warn(errUndefinedBehaviour)
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
 
-          // This should not happen, but just for the case let's handle it somethow meaningfully
+          // This should not happen, but just for the case let's handle it somehow meaningfully
           case ResponseTypeStream(code) =>
             logger.warn(s"Streaming in non-streaming request: $requestId: $responseType[$code]($finished) - $paramsJson")
             buf.append(paramsJson)
