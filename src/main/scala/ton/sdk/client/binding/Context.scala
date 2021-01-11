@@ -340,7 +340,8 @@ object Context {
     override def map[P, R](in: Future[P])(f: P => R): Future[R]                                  = in.map(f)
     override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
-    override def unsafeGet[R](a: Future[R]): R = Await.result(a, 180.seconds)
+    private val unsafeGetTimeout = 300.seconds
+    override def unsafeGet[R](a: Future[R]): R = Await.result(a, unsafeGetTimeout)
   }
 
   // the context creation is within Try so we need to "Futurize" the result
