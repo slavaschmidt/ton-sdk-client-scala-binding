@@ -18,7 +18,7 @@ sealed trait StartFn
 case object Start extends StartFn
 case object Fetch extends StartFn
 
-case class Step(choice: Int, inputs: Seq[String], output: Seq[String], actions: Int, invokes: Seq[Step] = Nil)
+case class Step(choice: Int, inputs: Seq[String], output: Seq[String], invokes: Seq[Step] = Nil)
 
 class State(var handle: Option[DebotHandle], var messages: Seq[String], var actions: Seq[DebotAction], var steps: Seq[Step], var step: Option[Step], var done: Boolean = false, var switchStarted: Boolean = false) {
   def messageLog = messages.map(m => s"[LOG]\t$m").mkString("\n")
@@ -60,49 +60,51 @@ class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
   }
 
   private val gotoSteps = Seq(
-    Step(0, Nil, Seq("Test Goto Action"), 1),
-    Step(0, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(0, Nil, Seq("Test Goto Action")),
+    Step(0, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   private val printSteps = Seq(
-    Step(1, Nil, Seq("Test Print Action", "test2: instant print", "test instant print"), 3),
-    Step(0, Nil, Seq("test simple print"), 3),
-    Step(1, Nil, Seq(s"integer=1,addr=$targetAddr,string=test_string_1"), 3),
-    Step(2, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(1, Nil, Seq("Test Print Action", "test2: instant print", "test instant print")),
+    Step(0, Nil, Seq("test simple print")),
+    Step(1, Nil, Seq(s"integer=1,addr=$targetAddr,string=test_string_1")),
+    Step(2, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   private val runSteps = Seq(
-    Step(2, Seq("-1:1111111111111111111111111111111111111111111111111111111111111111"), Seq("Test Run Action", "test1: instant run 1", "test2: instant run 2"), 3),
-    Step(0, Nil, Nil, 3),
-    Step(1, Nil, Seq("integer=2,addr=-1:1111111111111111111111111111111111111111111111111111111111111111,string=hello"), 3),
-    Step(2, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(2, Nil, Seq("Test Run Action")),
+    Step(0, Seq("-1:1111111111111111111111111111111111111111111111111111111111111111"), Seq("Test Instant Run", "test1: instant run 1", "test2: instant run 2")),
+    Step(0, Nil, Seq("Test Run Action")),
+    Step(1, Seq("hello"), Nil),
+    Step(2, Nil, Seq("integer=2,addr=-1:1111111111111111111111111111111111111111111111111111111111111111,string=hello")),
+    Step(3, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   private val runMethodSteps = Seq(
-    Step(3, Nil, Seq("Test Run Method Action"), 3),
-    Step(0, Nil, Nil, 3),
-    Step(1, Nil, Seq("data=64"), 3),
-    Step(2, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(3, Nil, Seq("Test Run Method Action")),
+    Step(0, Nil, Nil),
+    Step(1, Nil, Seq("data=64")),
+    Step(2, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   private val sendMessageSteps = Seq(
-    Step(4, Nil, Seq("Test Send Msg Action"), 4),
-    Step(0, Nil, Seq("Sending message {}", "Transaction succeeded."), 4),
-    Step(1, Nil, Nil, 4),
-    Step(2, Nil, Seq("data=100"), 4),
-    Step(3, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(4, Nil, Seq("Test Send Msg Action")),
+    Step(0, Nil, Seq("Sending message {}", "Transaction succeeded.")),
+    Step(1, Nil, Nil),
+    Step(2, Nil, Seq("data=100")),
+    Step(3, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   private val invokeSteps = Seq(
-    Step(5, Seq(debotAddr), Seq("Test Invoke Debot Action", "enter debot address:"), 2),
-    Step(0, Nil, Nil, 2, Seq(Step(0, Nil, Seq("Print test string", "Debot is invoked"), 0))),
-    Step(1, Nil, Seq("Debot Tests"), 8),
-    Step(7, Nil, Nil, 0)
+    Step(5, Seq(debotAddr), Seq("Test Invoke Debot Action", "enter debot address:")),
+    Step(0, Nil, Nil, Seq(Step(0, Nil, Seq("Print test string", "Debot is invoked")))),
+    Step(1, Nil, Seq("Debot Tests")),
+    Step(7, Nil, Nil)
   )
 
   it should "run debot with printSteps" in {
