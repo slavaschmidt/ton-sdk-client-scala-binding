@@ -146,7 +146,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.WaitForCollection("transactions", "", timeout = Option(1)))
     }
-    assertSdkError(result)("WaitFor failed: Can not send http request: error sending request for url (https://net.ton.dev/graphql): operation timed out")
+    assertSdkError(result)("WaitFor failed: Graphql server returned error: Syntax Error: Expected Name, found \"}\".")
   }
 
   it should "unsubscribe handle that does not exist" in {
