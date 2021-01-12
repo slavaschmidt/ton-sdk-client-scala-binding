@@ -1,8 +1,9 @@
 package ton.sdk.client.binding
 
+import io.circe
+
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
-
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.circe._
@@ -82,6 +83,24 @@ final case class Context private (id: Long) extends Closeable {
     val result                                      = effect.request(fnName, jsonPrinter.print(jsonIn), streamingEvidence)
     result
   }
+
+  /**
+    * Debot request [[https://github.com/tonlabs/TON-SDK/blob/master/docs/json_interface.md#request]]
+    *
+    * @param params - the params to be passed over
+    * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
+    * @param effect - the effect to be used to perform a call. Currently `Try` and `Future` are available
+    * @tparam P - the type of the parameter
+    * @tparam R - the type of the result
+    * @tparam E - the way the request should be executed
+    * @return the result of the call wrapped in appropriate effect type
+    */
+  def request[P, R, E[_]](params: P, callback: DebotCallback)(implicit call: DebotCall[P, R], effect: Effect[E], d: Decoder[R]): E[R] = {
+    implicit val context: Context = this
+    val fnName                    = call.function
+    val jsonIn                    = call.toJson(params)
+    effect.requestDebot(fnName, jsonPrinter.print(jsonIn), callback)
+  }
 }
 
 /**
@@ -147,6 +166,21 @@ object Context {
     ctx.request(params, streamingEvidence)
 
   /**
+    * Debot client call
+    *
+    * @param params - the params to be passed over
+    * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
+    * @param eff - the effect to be used to perform a call. Currently `Try` and `Future` are available
+    * @param ctx - the context to call the function inside
+    * @tparam P - the type of the parameter
+    * @tparam R - the type of the result
+    * @tparam E - the way the request should be executed
+    * @return the result of the call wrapped in appropriate effect type
+    */
+  def callD[P, R, E[_]](params: P, callback: DebotCallback)(implicit call: DebotCall[P, R], ctx: Context, eff: Effect[E], d: Decoder[R]): E[R] =
+    ctx.request(params, callback)
+
+  /**
     * Marker class for calls that support messages
     * @tparam T the type of the Effect this evidence is supported within
     */
@@ -164,11 +198,15 @@ object Context {
   trait Effect[T[_]] {
     /* Request without messages */
     def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
+
     /* Request with messages */
     def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[T])(
       implicit c: Context,
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
     ): T[StreamingCallResult[R, S]]
+
+    /* Request for debot */
+    def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
 
     /**
       * Provides a possibility to execute block of code typed as this effect within a context.
@@ -219,6 +257,9 @@ object Context {
     override def map[P, R](in: Try[P])(f: P => R): Try[R]                                  = in.map(f)
     override def unsafeGet[R](a: Try[R]): R                                                = a.get
     override def recover[R, U >: R](in: Try[R])(pf: PartialFunction[Throwable, U]): Try[U] = in.recover(pf)
+
+    override def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] =
+      throw new NotImplementedError("Debot support is not implemented for the sync client calls")
   }
 
   /**
@@ -264,6 +305,8 @@ object Context {
             successIfFinished(requestId, finished || finishAfterFirstResult, p, buf.result())
           case ResponseTypeError =>
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
+          case ResponseTypeAppNotify | ResponseTypeAppRequest =>
+            logger.warn(s"GOT ${ResponseType(responseType)} in streaming request with messages: $paramsJson")
           case ResponseTypeStream(code) =>
             implicit val decoder: Decoder[S] = r._2
             def tryParseResult(t: Throwable) = SdkResultOrError.fromJsonPlain[S](requestId, paramsJson).map(result.messages.append).getOrElse(false)
@@ -296,9 +339,14 @@ object Context {
             if (!finished) logger.warn(errUndefinedBehaviour)
             p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
 
-          // This should not happen, but just for the case let's handle it somethow meaningfully
+          // This should not happen, but just for the case let's handle it somehow meaningfully
           case ResponseTypeStream(code) =>
             logger.warn(s"Streaming in non-streaming request: $requestId: $responseType[$code]($finished) - $paramsJson")
+            buf.append(paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
+
+          case ResponseTypeAppNotify | ResponseTypeAppRequest =>
+            logger.warn(s"Debot response in non-debot request: $requestId: $responseType($finished) - $paramsJson")
             buf.append(paramsJson)
             successIfFinished(requestId, finished, p, buf.result())
         }
@@ -314,7 +362,12 @@ object Context {
     private def successIfFinished[R: Decoder](requestId: Long, finished: Boolean, p: Promise[R], buf: String): Unit = {
       val _ =
         if (finished && !p.isCompleted)
-          SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)), p.success(_))
+          SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(exToSdkError(requestId, buf, ex)), p.success(_))
+    }
+
+    private def exToSdkError(requestId: Long, buf: String, ex: Throwable) = ex match {
+      case err: SdkClientError => err
+      case _                   => SdkClientError.parsingError(requestId, ex.getMessage, buf.asJson)
     }
 
     /**
@@ -336,7 +389,50 @@ object Context {
     override def map[P, R](in: Future[P])(f: P => R): Future[R]                                  = in.map(f)
     override def recover[R, U >: R](in: Future[R])(pf: PartialFunction[Throwable, U]): Future[U] = in.recover(pf)
 
-    override def unsafeGet[R](a: Future[R]): R = Await.result(a, 180.seconds)
+    private val unsafeGetTimeout               = 300.seconds
+    override def unsafeGet[R](a: Future[R]): R = Await.result(a, unsafeGetTimeout)
+
+    override def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, d: Decoder[R]): Future[R] = {
+      val p   = Promise[R]()
+      val buf = StringBuilder.newBuilder
+      val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
+        logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
+        ResponseType(responseType) match {
+
+          case tpe @ (ResponseTypeAppNotify | ResponseTypeAppRequest) =>
+            circe.parser.parse(paramsJson) match {
+              case Right(json) =>
+                debotCallback(tpe, json)
+              case Left(ex) =>
+                logger.warn(s"Failed to parse debot response: $requestId: $responseType($finished) - $paramsJson")
+                p.failure(ex)
+            }
+
+          case ResponseTypeNop | ResponseTypeReserved(_) =>
+            successIfFinished(requestId, finished, p, buf.result())
+
+          case ResponseTypeResult =>
+            buf.append(paramsJson)
+            successIfFinished(requestId, finished = true, p, buf.result())
+
+          case ResponseTypeError =>
+            if (!finished) logger.warn(errUndefinedBehaviour)
+            p.failure(SdkClientError(c, requestId, paramsJson).fold(BindingError, identity))
+
+          // This should not happen, but just for the case let's handle it somehow meaningfully
+          case ResponseTypeStream(code) =>
+            logger.warn(s"Streaming in non-streaming request: $requestId: $responseType[$code]($finished) - $paramsJson")
+            buf.append(paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
+        }
+      }
+      if (!c.isOpen.get()) {
+        p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
+      } else {
+        Binding.request(c.id, functionName, functionParams, handler)
+      }
+      p.future
+    }
   }
 
   // the context creation is within Try so we need to "Futurize" the result

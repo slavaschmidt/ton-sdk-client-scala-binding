@@ -149,16 +149,23 @@ object Boc {
     created_by: String
   )
 
+  final case class ShardState(id: String, workchain_id: Int, seq_no: Long)
+
   object Request {
-    case class ParseMessage(boc: String)
-    case class ParseTransaction(boc: String)
-    case class ParseAccount(boc: String)
-    case class ParseBlock(boc: String)
-    case class GetBlockchainConfig(block_boc: String)
+    final case class ParseMessage(boc: String)
+    final case class ParseTransaction(boc: String)
+    final case class ParseAccount(boc: String)
+    final case class ParseBlock(boc: String)
+    final case class GetBlockchainConfig(block_boc: String)
+    final case class ParseShardstate(boc: String, id: String, workchain_id: Int)
+    final case class GetBocHash(boc: String)
+    final case class GetCodeFromTvc(tvc: String)
   }
   object Result {
-    case class Parsed[T](parsed: T)
-    case class ConfigBoc(config_boc: String)
+    final case class Parsed[T](parsed: T)
+    final case class ConfigBoc(config_boc: String)
+    final case class BocHash(hash: String)
+    final case class CodeFromTvc(code: String)
   }
 
   import io.circe.generic.auto._
@@ -169,5 +176,7 @@ object Boc {
   implicit val parseAccount        = new SdkCall[Request.ParseAccount, Result.Parsed[Account]]         { override val function: String = s"$module.parse_account"         }
   implicit val parseBlock          = new SdkCall[Request.ParseBlock, Result.Parsed[Block]]             { override val function: String = s"$module.parse_block"           }
   implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc]        { override val function: String = s"$module.get_blockchain_config" }
-
+  implicit val parseShardstate     = new SdkCall[Request.ParseShardstate, Result.Parsed[ShardState]]   { override val function: String = s"$module.parse_shardstate"      }
+  implicit val getBocHash          = new SdkCall[Request.GetBocHash, Result.BocHash]                   { override val function: String = s"$module.get_boc_hash"          }
+  implicit val GetCodeFromTvc      = new SdkCall[Request.GetCodeFromTvc, Result.CodeFromTvc]           { override val function: String = s"$module.get_code_from_tvc"     }
 }

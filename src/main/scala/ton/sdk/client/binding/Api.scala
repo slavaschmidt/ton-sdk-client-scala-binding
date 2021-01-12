@@ -16,21 +16,30 @@ object Api {
   sealed trait ResponseType {
     def code: Long
   }
-  case object ResponseTypeResult                           extends ResponseType { override def code = 0L }
-  case object ResponseTypeError                            extends ResponseType { override def code = 1L }
-  case object ResponseTypeNop                              extends ResponseType { override def code = 2L }
-  case class ResponseTypeReserved(override val code: Long) extends ResponseType
-  case class ResponseTypeStream(override val code: Long)   extends ResponseType
+  case object ResponseTypeResult     extends ResponseType { override def code = 0L }
+  case object ResponseTypeError      extends ResponseType { override def code = 1L }
+  case object ResponseTypeNop        extends ResponseType { override def code = 2L }
+  case object ResponseTypeAppRequest extends ResponseType { override def code = 3L }
+  case object ResponseTypeAppNotify  extends ResponseType { override def code = 4L }
+
+  final case class ResponseTypeReserved(override val code: Long) extends ResponseType
+  final case class ResponseTypeStream(override val code: Long)   extends ResponseType
 
   object ResponseType {
     def apply(code: Long): ResponseType = code match {
-      case 0                     => ResponseTypeResult
-      case 1                     => ResponseTypeError
-      case 2                     => ResponseTypeNop
-      case x if x > 2 && x < 100 => ResponseTypeReserved(x)
-      case x                     => ResponseTypeStream(x)
+      case 0            => ResponseTypeResult
+      case 1            => ResponseTypeError
+      case 2            => ResponseTypeNop
+      case 3            => ResponseTypeAppRequest
+      case 4            => ResponseTypeAppNotify
+      case x if x < 100 => ResponseTypeReserved(x)
+      case x            => ResponseTypeStream(x)
     }
   }
+
+  type DebotCallback = (ResponseType, Json) => Unit
+
+  type DebotHandle = Int
 
   /**
     * @param code
@@ -149,6 +158,18 @@ object Api {
   abstract class StreamingSdkCall[P: Encoder, R: Decoder, S: Decoder] extends AbstractSdkCall[P, R] {
     implicit val decoders = (implicitly[Decoder[R]], implicitly[Decoder[S]])
   }
+
+  /**
+    * Representation of the debot SDK client call.
+    * Can be used to call both sync and async methods.
+    *
+    * For the call parameter a json encoder must be available
+    * For the result parameter a json decoder must be available
+    *
+    * @tparam P - the type of the call parameter
+    * @tparam D - the type of the debot callback
+    */
+  abstract class DebotCall[P: Encoder, R: Decoder] extends SdkCall[P, R]
 
   /**
     * For the async call result we need a way to make messages and errors available to the caller.

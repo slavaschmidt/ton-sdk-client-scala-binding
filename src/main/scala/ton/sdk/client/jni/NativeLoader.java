@@ -24,56 +24,41 @@ public class NativeLoader {
 
 
     public static void apply() throws Exception {
-        if (!libsAreThere(libsDir())) {
-            log.debug("Could not find libs, creating temporary folder");
-            File folder = createTempFolder();
-            createTempLib(folder, jniLibName);
-            createTempLib(folder, tonClientLibName);
-            addPath(libsDir());
-        } else {
-            log.debug("Found native libraries in path " + libsDir());
-        }
-        System.load(libFile(libsDir(), jniLibName).getAbsolutePath());
+        File folder = libsDir();
+        createTempLib(folder, jniLibName);
+        createTempLib(folder, tonClientLibName);
+        addPath(folder);
+        System.load(libFile(folder, jniLibName).getAbsolutePath());
     }
 
-    private static void addPath(String path) {
+    private static void addPath(File path) {
         try {
             String javaPath = System.getProperty(javaProp);
             if (javaPath != null) {
                 System.setProperty(javaProp, javaPath + File.pathSeparator + path);
             } else {
-                System.setProperty(javaProp, path);
+                System.setProperty(javaProp, path.getAbsolutePath());
             }
         } catch (Exception ex) {
             log.warn("Failed to set environment, the ton client library might fail to load");
         }
     }
 
-    private static String libsDir() {
+    private static File libsDir() throws IOException {
         String outer = System.getProperty(JAVA_IO_FREETONTMPDIR);
         if (outer == null) {
-            return new File("lib").getAbsolutePath();
+            return Files.createTempDirectory(tonClientLibName).toFile();
         } else {
-            return outer;
+            File dir = new File(outer);
+            if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create libs directory " + dir.getName());
+            dir.deleteOnExit();
+            return dir;
         }
     }
 
-    private static boolean libsAreThere(String path) {
-        File dir = new File(path);
-        boolean dirExists = dir.exists() && dir.isDirectory() && dir.canRead();
-        return dirExists && libFile(path, jniLibName).canRead() && libFile(path, tonClientLibName).canRead();
-    }
-
-    private static File libFile(String path, String name) {
-        String fullPath = path + File.separatorChar + System.mapLibraryName(name);
+    private static File libFile(File path, String name) {
+        String fullPath = path.getAbsolutePath() + File.separatorChar + System.mapLibraryName(name);
         return new File(fullPath);
-    }
-
-    private static File createTempFolder() throws IOException {
-        File dir = new File(libsDir());
-        if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create libs directory " + dir.getName());
-        dir.deleteOnExit();
-        return dir;
     }
 
     private static void createTempLib(File dir, String name) throws IOException {
@@ -83,11 +68,9 @@ public class NativeLoader {
             if (is != null) {
                 Files.copy(is, lib.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } else {
-                dir.delete();
-                throw new FileNotFoundException("Could not find lib " + name + " in the JAR");
+                throw new FileNotFoundException("Could not find library [" + name + "] in the JAR");
             }
         } catch (IOException e) {
-            dir.delete();
             throw e;
         }
     }

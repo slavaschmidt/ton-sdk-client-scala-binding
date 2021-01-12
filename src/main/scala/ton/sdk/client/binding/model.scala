@@ -1,7 +1,7 @@
 package ton.sdk.client.binding
 
-import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.auto._
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import ton.sdk.client.modules.Processing
 
 /**
@@ -147,7 +147,8 @@ case class Transaction(
   end_status_name: String,
   in_msg: String,
   out_msgs: Seq[String], // TODO double-check as the Transaction is just Any in SDK definition
-  account_id: String,
+  account_id: Option[String],
+  account_addr: Option[String],
   total_fees: String,
   balance_delta: String,
   old_hash: String,
@@ -198,4 +199,10 @@ object Decoders {
     Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
   implicit val encodeProcessMessageWithout: Encoder[Processing.Request.ProcessMessageWithoutEvents] =
     Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
+//  implicit def encodeDebotExecute[D]: Encoder[Debot.Request.Execute[D]] =
+//    Encoder.forProduct2("debot_handle", "action")(u => (u.debot_handle, u.action))
+}
+
+trait BaseAppCallback {
+  def tpe: String = getClass.getSimpleName
 }
