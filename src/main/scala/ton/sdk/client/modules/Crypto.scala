@@ -46,6 +46,8 @@ object Crypto {
     def apply(data: Map[String, Any]): BaseAppCallback = data.get("type") match {
       case Some("GetPublicKey") => GetPublicKey
       case Some("Sign")         => Sign(data("unsigned").toString)
+      case Some(other)          => throw new IllegalStateException(s"Got unexpected type key (known: GetPublicKey, Sign) of BaseAppCallback: $other")
+      case None                 => throw new IllegalStateException(s"Got no type key (known: GetPublicKey, Sign) of BaseAppCallback: $data")
     }
   }
 

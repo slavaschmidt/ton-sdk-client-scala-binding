@@ -1,8 +1,8 @@
 package ton.sdk.client.binding
 
-import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.auto._
-import ton.sdk.client.modules.{Debot, Processing}
+import io.circe.{Decoder, Encoder, HCursor, Json}
+import ton.sdk.client.modules.Processing
 
 /**
   *  Collection of common types and codecs shared by multiple modules or used by the client itself.
@@ -199,8 +199,8 @@ object Decoders {
     Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
   implicit val encodeProcessMessageWithout: Encoder[Processing.Request.ProcessMessageWithoutEvents] =
     Encoder.forProduct2("message_encode_params", "send_events")(u => (u.message_encode_params, u.send_events))
-  implicit def encodeDebotExecute[T]: Encoder[Debot.Request.Execute[T]] =
-    Encoder.forProduct2("debot_handle", "action")(u => (u.debot_handle, u.action))
+//  implicit def encodeDebotExecute[D]: Encoder[Debot.Request.Execute[D]] =
+//    Encoder.forProduct2("debot_handle", "action")(u => (u.debot_handle, u.action))
 }
 
 trait BaseAppCallback {

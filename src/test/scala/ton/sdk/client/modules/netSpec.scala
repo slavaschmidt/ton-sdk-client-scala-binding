@@ -4,7 +4,6 @@ import io.circe.Json
 import io.circe.literal.JsonStringContext
 import io.circe.syntax._
 import org.scalatest.Succeeded
-import org.scalatest.compatible.Assertion
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, Context, OrderBy}
 import ton.sdk.client.binding.Context._
