@@ -59,18 +59,6 @@ class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
     assertValue(result)(())
   }
 
-  it should "run debot with print steps" in {
-    runSteps(printSteps)
-  }
-
-  it should "run debot with goto steps" in {
-    runSteps(gotoSteps)
-  }
-
-  it should "run debot with run steps" in {
-    runSteps(runSteps)
-  }
-
   private val gotoSteps = Seq(
     Step(0, Nil, Seq("Test Goto Action"), 1),
     Step(0, Nil, Seq("Debot Tests"), 8),
@@ -117,6 +105,30 @@ class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
     Step(7, Nil, Nil, 0)
   )
 
+  it should "run debot with printSteps" in {
+    runSteps(printSteps)
+  }
+
+  it should "run debot with gotoSteps" in {
+    runSteps(gotoSteps)
+  }
+
+  it should "run debot with runSteps" in {
+    runSteps(runSteps)
+  }
+
+  it should "run debot with runMethodSteps" in {
+    runSteps(runMethodSteps)
+  }
+
+  it should "run debot with sendMessageSteps" in {
+    runSteps(sendMessageSteps)
+  }
+
+  it should "run debot with invokeSteps" in {
+    runSteps(invokeSteps)
+  }
+
   def debotRun(steps: Seq[Step], startFn: StartFn, actions: Seq[DebotAction], address: String)(implicit ctx: Context): Unit = {
     val state    = new State(None, Nil, actions, steps, None)
     val callback = debotBrowser(address, keys)(state)
@@ -127,7 +139,7 @@ class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
     }
     val debot = Await.result(callResult, timeout)
     state.handle = Option(debot.debot_handle)
-    
+
     debotLoop(timeout, state, address)
 
     Await.ready(call(Debot.Request.Remove(state.handle.get)), timeout)
