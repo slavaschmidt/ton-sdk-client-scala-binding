@@ -91,10 +91,11 @@ final case class Context private (id: Long) extends Closeable {
     * @param call  - the call definition of the request, encodes type of the response and name of the function to be called
     * @param effect - the effect to be used to perform a call. Currently `Try` and `Future` are available
     * @tparam P - the type of the parameter
+    * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
     * @return the result of the call wrapped in appropriate effect type
     */
-  def request[P, D, R, E[_]](params: P, callback: DebotCallback[D])(implicit call: DebotCall[P, R], effect: Effect[E], d: Decoder[R]): E[R] = {
+  def request[P, R, E[_]](params: P, callback: DebotCallback)(implicit call: DebotCall[P, R], effect: Effect[E], d: Decoder[R]): E[R] = {
     implicit val context: Context = this
     val fnName                    = call.function
     val jsonIn                    = call.toJson(params)
@@ -172,11 +173,11 @@ object Context {
     * @param eff - the effect to be used to perform a call. Currently `Try` and `Future` are available
     * @param ctx - the context to call the function inside
     * @tparam P - the type of the parameter
-    * @tparam D - the type of the result
+    * @tparam R - the type of the result
     * @tparam E - the way the request should be executed
     * @return the result of the call wrapped in appropriate effect type
     */
-  def callD[P, R, E[_]](params: P, callback: DebotCallback[Unit])(implicit call: DebotCall[P, R], ctx: Context, eff: Effect[E], d: Decoder[R]): E[R] =
+  def callD[P, R, E[_]](params: P, callback: DebotCallback)(implicit call: DebotCall[P, R], ctx: Context, eff: Effect[E], d: Decoder[R]): E[R] =
     ctx.request(params, callback)
 
   /**
@@ -205,7 +206,7 @@ object Context {
     ): T[StreamingCallResult[R, S]]
 
     /* Request for debot */
-    def requestDebot[R, D](functionName: String, functionParams: String, debotCallback: DebotCallback[D])(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
+    def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
 
     /**
       * Provides a possibility to execute block of code typed as this effect within a context.
@@ -257,7 +258,7 @@ object Context {
     override def unsafeGet[R](a: Try[R]): R                                                = a.get
     override def recover[R, U >: R](in: Try[R])(pf: PartialFunction[Throwable, U]): Try[U] = in.recover(pf)
 
-    override def requestDebot[R, D](functionName: String, functionParams: String, debotCallback: DebotCallback[D])(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] =
+    override def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] =
       throw new NotImplementedError("Debot support is not implemented for the sync client calls")
   }
 
@@ -391,7 +392,7 @@ object Context {
     private val unsafeGetTimeout               = 300.seconds
     override def unsafeGet[R](a: Future[R]): R = Await.result(a, unsafeGetTimeout)
 
-    override def requestDebot[R, D](functionName: String, functionParams: String, debotCallback: DebotCallback[D])(implicit c: Context, d: Decoder[R]): Future[R] = {
+    override def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, d: Decoder[R]): Future[R] = {
       val p   = Promise[R]()
       val buf = StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {

@@ -37,14 +37,9 @@ object Api {
     }
   }
 
-  type DebotCallback[D] = (ResponseType, Json) => D
+  type DebotCallback = (ResponseType, Json) => Unit
 
   type DebotHandle = Int
-
-  trait DebotExecute {
-    def callback: DebotCallback[Unit]
-    def debot_handle: DebotHandle
-  }
 
   /**
     * @param code

@@ -144,7 +144,7 @@ class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
 
     debotLoop(timeout, state, address)
 
-    Await.ready(call(Debot.Request.Remove(state.handle.get)), timeout)
+    val _ = Await.ready(call(Debot.Request.Remove(state.handle.get)), timeout)
   }
 
   private def debotLoop(timeout: Duration, state: State, address: String)(implicit ctx: Context): Unit =
