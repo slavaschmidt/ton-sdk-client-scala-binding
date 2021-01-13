@@ -13,11 +13,13 @@ import ton.sdk.client.modules.Processing
   */
 final case class NetworkConfig(
   server_address: String,
+  endpoints: Seq[String] = Nil,
   network_retries_count: Option[Int] = None,
   message_retries_count: Option[Int] = None,
   message_processing_timeout: Option[Int] = None,
   wait_for_timeout: Option[Int] = None,
   out_of_sync_threshold: Option[BigInt] = None,
+  reconnect_timeout: Option[Int] = None,
   access_key: Option[String] = None
 )
 
