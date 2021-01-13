@@ -4,6 +4,7 @@ import io.circe.Json
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import ton.sdk.client.binding.Api._
+import ton.sdk.client.binding.ClientErrors.HttpRequestCreateError
 
 class ApiSpec extends AsyncFlatSpec {
 
@@ -17,7 +18,7 @@ class ApiSpec extends AsyncFlatSpec {
 
   "testing string representation" should "further improve coverage" in {
     val data  = Json.fromString("This can only happen if client returns malformed json")
-    val error = new SdkClientError(10, "Uh-Oh", data)
+    val error = new SdkClientError(HttpRequestCreateError.code, "Uh-Oh", data)
     val str   = new SdkError[Unit](error).toString
     str shouldEqual "ton.sdk.client.binding.Api$SdkClientError: Uh-Oh"
   }

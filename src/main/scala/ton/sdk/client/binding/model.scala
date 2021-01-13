@@ -13,11 +13,13 @@ import ton.sdk.client.modules.Processing
   */
 final case class NetworkConfig(
   server_address: String,
+  endpoints: Seq[String],
   network_retries_count: Option[Int] = None,
   message_retries_count: Option[Int] = None,
   message_processing_timeout: Option[Int] = None,
   wait_for_timeout: Option[Int] = None,
   out_of_sync_threshold: Option[BigInt] = None,
+  reconnect_timeout: Option[Int] = None,
   access_key: Option[String] = None
 )
 
@@ -36,7 +38,7 @@ final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Opt
   * Collection of known networks.
   */
 object ClientConfig {
-  def fromServer(server: String): ClientConfig = ClientConfig(Option(NetworkConfig(server)))
+  def fromServer(server: String): ClientConfig = ClientConfig(Option(NetworkConfig(server, Seq(server))))
   val MAIN_NET                                 = fromServer("main.ton.dev")
   val DEV_NET                                  = fromServer("net.ton.dev")
   val TEST_NET                                 = fromServer("testnet.ton.dev")

@@ -18,6 +18,8 @@ object Net {
 
   private val module = "net"
 
+  final case class EndpointsSet(endpoints: Seq[String])
+
   object Request {
     final case class Unsubscribe(handle: Long)
     final case class Query(query: String, variables: Option[Json])
@@ -25,6 +27,9 @@ object Net {
     final case class WaitForCollection(collection: String, result: String, filter: Option[Json] = None, timeout: Option[Long] = None)
     final case class SubscribeCollection(collection: String, result: String, filter: Option[Json] = None)
     final case class FindLastShardBlock(address: String)
+    case object FetchEndpoints
+    final case class SetEndpoints(endpoints: Seq[String])
+
     case object Suspend
     case object Resume
   }
@@ -45,4 +50,7 @@ object Net {
   implicit val suspend               = new SdkCall[Request.Suspend.type, Json]                          { override val function: String = s"$module.suspend"               }
   implicit val resume                = new SdkCall[Request.Resume.type, Json]                           { override val function: String = s"$module.resume"                }
   implicit val find_last_shard_block = new SdkCall[Request.FindLastShardBlock, Result.LastShardBlock]   { override val function: String = s"$module.find_last_shard_block" }
+  implicit val fetch_endpoints       = new SdkCall[Request.FetchEndpoints.type, EndpointsSet]           { override val function: String = s"$module.fetch_endpoints"       }
+  implicit val set_endpoints         = new SdkCall[Request.SetEndpoints, Unit]                          { override val function: String = s"$module.set_endpoints"         }
+
 }

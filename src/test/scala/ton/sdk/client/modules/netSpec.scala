@@ -157,7 +157,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "query" in {
-    val variables = Option(Map("time" -> (System.currentTimeMillis/1000)).asJson)
+    val variables = Option(Map("time" -> (System.currentTimeMillis / 1000)).asJson)
     val query     = "query($time: Float){messages(filter:{created_at:{ge:$time}}limit:5){id}}"
     val result = devNet { implicit ctx =>
       call(Request.Query(query, variables))
@@ -166,7 +166,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "not query" in {
-    val variables = Option(Map("time" -> (System.currentTimeMillis/1000 - 60)).asJson)
+    val variables = Option(Map("time" -> (System.currentTimeMillis / 1000 - 60)).asJson)
     val query     = "query($time: Float){(filter:{created_at:{ge:$time}}limit:5){id}}"
     val result = devNet { implicit ctx =>
       call(Request.Query(query, variables))
@@ -187,4 +187,23 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertSdkError(result)("Invalid address [fatal error]: baker street, london 221b")
   }
+
+  it should "fetch_endpoints" in {
+    val network = ClientConfig.DEV_NET.network.map(cfg => cfg.copy(endpoints = Seq("cinet.tonlabs.io", "cinet2.tonlabs.io")))
+    val config  = ClientConfig.DEV_NET.copy(network = network)
+    val result = ef.managed(config) { implicit ctx =>
+      call(Request.FetchEndpoints)
+    }
+    assertExpression(result) { r =>
+      println(r); r.endpoints.nonEmpty
+    }
+  }
+
+  it should "set_endpoints" in {
+    val result = devNet { implicit ctx =>
+      call(Request.SetEndpoints(Seq("localhost")))
+    }
+    assertExpression(result)(_ == (()))
+  }
+
 }

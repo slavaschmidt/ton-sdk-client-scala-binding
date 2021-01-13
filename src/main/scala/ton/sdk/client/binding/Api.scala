@@ -41,36 +41,9 @@ object Api {
 
   type DebotHandle = Int
 
+
   /**
-    * @param code
-    * -1 -> JsonApiParsingError
-    *
-    * 1 ->  NotImplemented
-    * 2 ->  InvalidHex
-    * 3 ->  InvalidBase64
-    * 4 ->  InvalidAddress
-    * 5 ->  CallbackParamsCantBeConvertedToJson
-    * 6 ->  WebsocketConnectError
-    * 7 ->  WebsocketReceiveError
-    * 8 ->  WebsocketSendError
-    * 9 ->  HttpClientCreateError
-    * 10 ->  HttpRequestCreateError
-    * 11 ->  HttpRequestSendError
-    * 12 ->  HttpRequestParseError
-    * 13 ->  CallbackNotRegistered
-    * 14 ->  NetModuleNotInit
-    * 15 ->  InvalidConfig
-    * 16 ->  CannotCreateRuntime
-    * 17 ->  InvalidContextHandle
-    * 18 ->  CannotSerializeResult
-    * 19 ->  CannotSerializeError
-    * 20 ->  CannotConvertJsValueToJson
-    * 21 ->  CannotReceiveSpawnedResult
-    * 22 ->  SetTimerError
-    * 23 ->  InvalidParams
-    * 24 ->  ContractsAddressConversionFailed
-    * 25 ->  UnknownFunction
-    *
+    * @param code the client error code
     * @param message the error message
     * @param data the underlying data
     */
