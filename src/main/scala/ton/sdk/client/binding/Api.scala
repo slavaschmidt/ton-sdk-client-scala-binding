@@ -41,41 +41,49 @@ object Api {
 
   type DebotHandle = Int
 
+  final case class ClientErrorCode(code: Long)
+  val JSON_API_PARSING_ERROR                    = ClientErrorCode(-1L)
+  val NOT_IMPLEMENTED                           = ClientErrorCode(1L)
+  val INVALID_HEX                               = ClientErrorCode(2L)
+  val INVALID_BASE64                            = ClientErrorCode(3L)
+  val INVALID_ADDRESS                           = ClientErrorCode(4L)
+  val CALLBACK_PARAMS_CANT_BE_CONVERTED_TO_JSON = ClientErrorCode(5L)
+  val WEBSOCKET_CONNECT_ERROR                   = ClientErrorCode(6L)
+  val WEBSOCKET_RECEIVE_ERROR                   = ClientErrorCode(7L)
+  val WEBSOCKET_SEND_ERROR                      = ClientErrorCode(8L)
+  val HTTP_CLIENT_CREATE_ERROR                  = ClientErrorCode(9L)
+  val HTTP_REQUEST_CREATE_ERROR                 = ClientErrorCode(10L)
+  val HTTP_REQUEST_SEND_ERROR                   = ClientErrorCode(11L)
+  val HTTP_REQUEST_PARSE_ERROR                  = ClientErrorCode(12L)
+  val CALLBACK_NOT_REGISTERED                   = ClientErrorCode(13L)
+  val NET_MODULE_NOT_INIT                       = ClientErrorCode(14L)
+  val INVALID_CONFIG                            = ClientErrorCode(15L)
+  val CANNOT_CREATE_RUNTIME                     = ClientErrorCode(16L)
+  val INVALID_CONTEXT_HANDLE                    = ClientErrorCode(17L)
+  val CANNOT_SERIALIZE_RESULT                   = ClientErrorCode(18L)
+  val CANNOT_SERIALIZE_ERROR                    = ClientErrorCode(19L)
+  val CANNOT_CONVERT_JS_VALUE_TO_JSON           = ClientErrorCode(20L)
+  val CANNOT_RECEIVE_SPAWNED_RESULT             = ClientErrorCode(21L)
+  val SET_TIMER_ERROR                           = ClientErrorCode(22L)
+  val INVALID_PARAMS                            = ClientErrorCode(23L)
+  val CONTRACTS_ADDRESS_CONVERSION_FAILED       = ClientErrorCode(24L)
+  val UNKNOWN_FUNCTION                          = ClientErrorCode(25L)
+  val APP_REQUEST_ERROR                         = ClientErrorCode(26L)
+  val NO_SUCH_REQUEST                           = ClientErrorCode(27L)
+  val CANNOT_SEND_REQUEST_RESULT                = ClientErrorCode(28L)
+  val CANNOT_RECEIVE_REQUEST_RESULT             = ClientErrorCode(29L)
+  val CANNOT_PARSE_REQUEST_RESULT               = ClientErrorCode(30L)
+  val UNEXPECTED_CALLBACK_RESPONSE              = ClientErrorCode(31L)
+  val CANNOT_PARSE_NUMBER                       = ClientErrorCode(32L)
+  val INTERNAL_ERROR                            = ClientErrorCode(33L)
+
   /**
-    * @param code
-    * -1 -> JsonApiParsingError
-    *
-    * 1 ->  NotImplemented
-    * 2 ->  InvalidHex
-    * 3 ->  InvalidBase64
-    * 4 ->  InvalidAddress
-    * 5 ->  CallbackParamsCantBeConvertedToJson
-    * 6 ->  WebsocketConnectError
-    * 7 ->  WebsocketReceiveError
-    * 8 ->  WebsocketSendError
-    * 9 ->  HttpClientCreateError
-    * 10 ->  HttpRequestCreateError
-    * 11 ->  HttpRequestSendError
-    * 12 ->  HttpRequestParseError
-    * 13 ->  CallbackNotRegistered
-    * 14 ->  NetModuleNotInit
-    * 15 ->  InvalidConfig
-    * 16 ->  CannotCreateRuntime
-    * 17 ->  InvalidContextHandle
-    * 18 ->  CannotSerializeResult
-    * 19 ->  CannotSerializeError
-    * 20 ->  CannotConvertJsValueToJson
-    * 21 ->  CannotReceiveSpawnedResult
-    * 22 ->  SetTimerError
-    * 23 ->  InvalidParams
-    * 24 ->  ContractsAddressConversionFailed
-    * 25 ->  UnknownFunction
-    *
+    * @param code the client error code
     * @param message the error message
     * @param data the underlying data
     */
-  class SdkClientError(val code: Long, val message: String, val data: Json)                                                                      extends Exception(message)
-  class ContextSdkClientError(override val code: Long, override val message: String, context: Context, requestId: Long, override val data: Json) extends SdkClientError(code, s"[$code] $message. [$context:$requestId]", data)
+  class SdkClientError(val code: ClientErrorCode, val message: String, val data: Json)                                                                      extends Exception(message)
+  class ContextSdkClientError(override val code: ClientErrorCode, override val message: String, context: Context, requestId: Long, override val data: Json) extends SdkClientError(code, s"[$code] $message. [$context:$requestId]", data)
 
   case class BindingError(cause: Throwable) extends Exception(cause)
 
@@ -85,7 +93,7 @@ object Api {
     def apply(c: Context, requestId: Long, json: String): Try[ContextSdkClientError] =
       decode[SdkClientError](json).toTry.map(e => new ContextSdkClientError(e.code, e.message, c, requestId, e.data))
     def parsingError(requestId: Long, message: String, data: Json) =
-      new SdkClientError(-1 * requestId, s"Could not parse SDK json: [$message]", data)
+      new SdkClientError(ClientErrorCode(-1 * requestId), s"Could not parse SDK json: [$message]", data)
   }
 
   sealed trait SdkResultOrError[T]

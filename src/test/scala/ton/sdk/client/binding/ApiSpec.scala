@@ -17,7 +17,7 @@ class ApiSpec extends AsyncFlatSpec {
 
   "testing string representation" should "further improve coverage" in {
     val data  = Json.fromString("This can only happen if client returns malformed json")
-    val error = new SdkClientError(10, "Uh-Oh", data)
+    val error = new SdkClientError(HTTP_REQUEST_CREATE_ERROR, "Uh-Oh", data)
     val str   = new SdkError[Unit](error).toString
     str shouldEqual "ton.sdk.client.binding.Api$SdkClientError: Uh-Oh"
   }
