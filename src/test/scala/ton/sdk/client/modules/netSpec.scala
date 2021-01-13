@@ -187,4 +187,25 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertSdkError(result)("Invalid address [fatal error]: baker street, london 221b")
   }
+
+  it should "fetch_endpoints" in {
+    val result = devNet { implicit ctx =>
+      call(Request.FetchEndpoints)
+    }
+    assertExpression(result){r => println(r); r.endpoints.nonEmpty}
+  }
+
+  it should "set_endpoints" in {
+    val result = devNet { implicit ctx =>
+      call(Request.SetEndpoints(Seq("localhost")))
+    }
+    assertExpression(result)(_ == (()))
+  }
+
+  it should "not set_endpoints" in {
+    val result = devNet { implicit ctx =>
+      call(Request.SetEndpoints(Seq("baker street, london 221b")))
+    }
+    assertSdkError(result)("Invalid address [fatal error]: baker street, london 221b")
+  }
 }
