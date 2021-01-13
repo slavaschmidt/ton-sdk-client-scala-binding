@@ -3,7 +3,7 @@ package ton.sdk.client.binding
 final case class ClientErrorCode(code: Long)
 
 object ClientErrors {
-  val JSON_API_PARSING_ERROR              = ClientErrorCode(-1L)
+  val JsonApiParsingError                 = ClientErrorCode(-1L)
   val NotImplemented                      = ClientErrorCode(1)
   val InvalidHex                          = ClientErrorCode(2)
   val InvalidBase64                       = ClientErrorCode(3)
