@@ -111,6 +111,7 @@ The users of the library can easy create their own configurations by overriding 
     "network": {
         "server_address": "http://localhost",
         "network_retries_count": 5,
+        "max_reconnect_timeout": 120,
         "message_retries_count": 5,
         "message_processing_timeout": 40000,
         "wait_for_timeout": 40000,

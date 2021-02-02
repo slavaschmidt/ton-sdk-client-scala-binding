@@ -1,6 +1,6 @@
 name := "freeton-sdk-client-scala-binding"
 
-version := "1.5.2-M1"
+version := "1.6.0-M1"
 
 organization := "com.dancingcode"
 

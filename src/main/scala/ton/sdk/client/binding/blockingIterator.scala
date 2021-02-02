@@ -48,11 +48,11 @@ trait BlockingIterator[+A] {
   def next(): Option[A]
 
   /**
-   * Awaits first available element and returns it.
-   *
-   * @return first element put into the queue {@code element}
-   * @throws TimeoutException if there is a timeout
-   */
+    * Awaits first available element and returns it.
+    *
+    * @return first element put into the queue {@code element}
+    * @throws TimeoutException if there is a timeout
+    */
   def getNext(timeout: Duration): A
 
   /**
@@ -115,7 +115,7 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
       listener = Option(pr)
       try {
         Await.result(pr.future, timeout)
-      } finally  {
+      } finally {
         listener = None
       }
     }

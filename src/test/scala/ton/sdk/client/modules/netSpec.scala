@@ -7,7 +7,7 @@ import org.scalatest.Succeeded
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, Context, OrderBy}
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.modules.Net.{Request, Result}
+import ton.sdk.client.modules.Net.{FieldAggregation, Request, Result}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
@@ -130,7 +130,19 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.QueryCollection(collection = "messages", result = ""))
     }
-    assertSdkError(result)("Query failed: Graphql server returned error: Syntax Error: Expected Name, found \"}\".")
+    assertSdkError(result)("Query failed: Graphql server returned error: Field \"messages\" of type \"[Message]\" must have a selection of subfields. Did you mean \"messages { ... }\"?")
+  }
+
+  it should "batch_query" in {
+    val filter = Map("now" -> Map("gt" -> 20)).asJson
+    val q1: Request.QueryCollection = Request.QueryCollection("blocks_signatures", filter = None, result = "id", order = None, limit = Option(1))
+    val q2 = Request.AggregateCollection("accounts", filter = None, fields = Some(Seq(FieldAggregation("", "COUNT"))))
+    val q3 = Request.WaitForCollection("transactions", filter = Some(filter), result = "id now", timeout = None)
+
+    val result = devNet { implicit ctx =>
+      call(Request.BatchQuery(Seq(q1,q2,q3)))
+    }
+    assertExpression(result)(_.results.size == 3)
   }
 
   it should "wait_for_collection transactions" in {
@@ -146,7 +158,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.WaitForCollection("transactions", "", timeout = Option(1)))
     }
-    assertSdkError(result)("WaitFor failed: Graphql server returned error: Syntax Error: Expected Name, found \"}\".")
+    assertSdkError(result)("WaitFor failed: Graphql server returned error: Field \"transactions\" of type \"[Transaction]\" must have a selection of subfields. Did you mean \"transactions { ... }\"?")
   }
 
   it should "unsubscribe handle that does not exist" in {
@@ -163,6 +175,13 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.Query(query, variables))
     }
     assertValue(result)(Result.Query(json"""{"data":{"messages":[]}}"""))
+  }
+
+  it should "aggregate_collection" in {
+    val result = devNet { implicit ctx =>
+      call(Request.AggregateCollection("accounts", None, Some(Seq(FieldAggregation("", "COUNT")))))
+    }
+    assertExpression(result){r:Result.CollectionAggregation => r.values.head.asString.exists(_.toInt > 0)}
   }
 
   it should "not query" in {

@@ -94,6 +94,7 @@ object Crypto {
     final case class SigningBoxGetPublicKey(handle: SigningBoxHandle)
     final case class SigningBoxSign(signing_box: SigningBoxHandle, unsigned: String)
     final case class RemoveSigningBox(handle: SigningBoxHandle)
+    final case class NaclSignDetachedVerify(unsigned: String, signature: String, public: String)
   }
 
   object Result {
@@ -118,6 +119,7 @@ object Crypto {
     final case class PubKey(pubkey: String)
     final case class MnemonicWords(words: String)   { def wordCount: Int = words.split(" ").length  }
     final case class MnemonicPhrase(phrase: String) { def wordCount: Int = phrase.split(" ").length }
+    final case class SuccessFlag(succeeded: Boolean)
   }
 
   import io.circe.generic.auto._
@@ -154,6 +156,8 @@ object Crypto {
   implicit val naclSign                        = new SdkCall[Request.NaclSign, Result.Signed]                        { override val function: String = s"$module.nacl_sign"                             }
   implicit val naclSignOpen                    = new SdkCall[Request.NaclSignOpen, Result.Unsigned]                  { override val function: String = s"$module.nacl_sign_open"                        }
   implicit val naclSignDetached                = new SdkCall[Request.NaclSignDetached, Result.Signature]             { override val function: String = s"$module.nacl_sign_detached"                    }
+  implicit val naclSignDetachedVerify          = new SdkCall[Request.NaclSignDetachedVerify, Result.SuccessFlag]     { override val function: String = s"$module.nacl_sign_detached_verify"             }
+
   // UNSTABLE
   implicit val registerSigningBox     = new SdkCall[Request.RegisterSigningBox, RegisteredSigningBox] { override val function: String = s"$module.register_signing_box"       }
   implicit val getSigningBox          = new SdkCall[Request.GetSigningBox, RegisteredSigningBox]      { override val function: String = s"$module.get_signing_box"            }

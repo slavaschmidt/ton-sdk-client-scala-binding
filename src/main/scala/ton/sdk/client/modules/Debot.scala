@@ -40,6 +40,8 @@ object Debot {
     final case class Fetch(address: String)
     final case class Execute(debot_handle: DebotHandle, action: DebotAction)
     final case class Remove(debot_handle: DebotHandle)
+    final case class Send(debot_handle: DebotHandle, source: String, func_id: Long, params: String)
+
   }
 
   object Result {
@@ -51,6 +53,7 @@ object Debot {
   object ParamsOfAppDebotBrowser {
     case object GetSigningBox                                             extends BaseAppCallback
     final case class Log(msg: String)                                     extends BaseAppCallback
+    final case class Send(message: String)                                extends BaseAppCallback
     final case class Switch(context_id: Int)                              extends BaseAppCallback
     final case class SwitchCompleted(context_id: Option[Int])             extends BaseAppCallback
     final case class Input(prompt: String)                                extends BaseAppCallback
@@ -60,6 +63,7 @@ object Debot {
     def fromMap(map: Json, tpe: String) = tpe match {
       case "GetSigningBox"   => Right(GetSigningBox)
       case "Log"             => map.as[Log]
+      case "Send"            => map.as[Send]
       case "Switch"          => map.as[Switch]
       case "SwitchCompleted" => map.as[SwitchCompleted]
       case "Input"           => map.as[Input]
@@ -74,11 +78,10 @@ object Debot {
     }
   }
 
-  implicit val remove = new SdkCall[Request.Remove, Unit] { override val function: String = s"$module.remove" }
-  //import ton.sdk.client.binding.Decoders.encodeDebotExecute
-
+  implicit val remove  = new SdkCall[Request.Remove, Unit]                    { override val function: String = s"$module.remove"  }
   implicit val fetch   = new DebotCall[Request.Fetch, Result.RegisteredDebot] { override val function: String = s"$module.fetch"   }
   implicit val start   = new DebotCall[Request.Start, Result.RegisteredDebot] { override val function: String = s"$module.start"   }
   implicit val execute = new DebotCall[Request.Execute, Unit]                 { override val function: String = s"$module.execute" }
+  implicit val send    = new DebotCall[Request.Send, Unit]                    { override val function: String = s"$module.send"    }
 
 }
