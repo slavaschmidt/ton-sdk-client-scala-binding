@@ -26,10 +26,10 @@ jobs:
             - "~/.sbt"
             - "~/.m2"
 
-  build-linux-15:
+  build-linux-16:
     <<: *build-linux
     docker:
-      - image: 'circleci/openjdk:15-jdk'
+      - image: 'circleci/openjdk:16-jdk-buster'
 
   build-linux-11:
     <<: *build-linux
