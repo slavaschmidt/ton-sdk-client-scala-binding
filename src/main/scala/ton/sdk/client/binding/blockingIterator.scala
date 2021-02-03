@@ -96,7 +96,10 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
 
   // adds element to the iterator, to be used by the callback
   protected[binding] def append(a: A): Boolean = listener.synchronized {
-    listener.fold(buf.add(a))(_.tryComplete(Success(a)))
+    listener.fold(buf.add(a)) { l =>
+      listener = None
+      l.tryComplete(Success(a))
+    }
   }
 
   // to be used by the callback to signal that this {@code BlockingIterator} should close with success or failure
@@ -114,12 +117,10 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
         listener = Option(pr)
       }
     }
-    if (listener.isEmpty) next().get
-    else
-      try {
-        Await.result(listener.get.future, timeout)
-      } finally {
-        listener = None
-      }
+    if (listener.isEmpty) {
+      next().get
+    } else {
+      Await.result(listener.get.future, timeout)
+    }
   }
 }

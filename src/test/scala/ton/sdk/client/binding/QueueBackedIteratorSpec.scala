@@ -90,8 +90,7 @@ class QueueBackedIteratorSpec extends AsyncFlatSpec {
     val t = new Thread() {
       override def run(): Unit = {
         Thread.sleep(1000)
-        bit.append(1)
-        bit.append(2)
+        val _ = bit.append(1) && bit.append(2)
       }
     }
     t.start()
