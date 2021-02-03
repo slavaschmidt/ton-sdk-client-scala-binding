@@ -95,7 +95,7 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
   }
 
   // adds element to the iterator, to be used by the callback
-  protected[binding] def append(a: A): Boolean = {
+  protected[binding] def append(a: A): Boolean = listener.synchronized {
     listener.fold(buf.add(a))(_.tryComplete(Success(a)))
   }
 
@@ -108,16 +108,18 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
   private var listener: Option[Promise[A]] = None
 
   override def getNext(timeout: Duration): A = {
-    if (hasNext) {
-      next().get
-    } else {
-      val pr = Promise[A]()
-      listener = Option(pr)
+    listener.synchronized {
+      if (!hasNext) {
+        val pr = Promise[A]()
+        listener = Option(pr)
+      }
+    }
+    if (listener.isEmpty) next().get
+    else
       try {
-        Await.result(pr.future, timeout)
+        Await.result(listener.get.future, timeout)
       } finally {
         listener = None
       }
-    }
   }
 }
