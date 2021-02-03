@@ -1,42 +1,71 @@
-# Scala CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/sample-config/ for more details
-#
-version: 2
+version: 2.1
+
+orbs:
+  win: circleci/windows@2.2.0
+
 jobs:
-  build:
+  build-linux-common: &build-linux
     docker:
-      # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-    working_directory: ~/repo
-
-    environment:
-      # Customize the JVM maximum heap limit
-      JVM_OPTS: -Xmx3200m
-      TERM: dumb
-
+      - image: ""
     steps:
       - checkout
-
-      # Download and cache dependencies
       - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.sbt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - run: cat /dev/null | sbt test:compile
+          key: sbt-cache
+      - run:
+          name: Compile test coverage
+          command: cat /dev/null | sbt clean coverage test coverageReport
+      - run:
+          name: Upload coverage
+          command: cat /dev/null | bash <(curl -s https://codecov.io/bash)
 
       - save_cache:
+          key: sbt-cache
           paths:
-            - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
 
-      # run tests!
-      - run: cat /dev/null | sbt test:test
+  build-linux-15:
+    <<: *build-linux
+    docker:
+      - image: 'cimg/openjdk:15.0.0'
+
+  build-linux-11:
+    <<: *build-linux
+    docker:
+      - image: 'circleci/openjdk:11-jdk'
+
+  build-linux-8:
+    <<: *build-linux
+    docker:
+      - image: 'circleci/openjdk:8-jdk'
+
+  build-windows:
+    executor: win/default
+
+    steps:
+      # INSTALL SBT IN WINDOWS
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: Compile test coverage
+          command: cat /dev/null | sbt clean coverage test coverageReport
+      - run:
+          name: Upload coverage
+          command: cat /dev/null | bash <(curl -s https://codecov.io/bash)
+
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+workflows:
+  build:
+    jobs:
+      - build-linux-8
+      - build-linux-11
+      - build-linux-15
+
+      # - build-windows
