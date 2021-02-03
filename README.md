@@ -4,7 +4,7 @@
 
 TON SDK Client library Scala bindings.
 
-[![Build Status](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding.svg?branch=main&env=BADGE=osx)](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding)
+[![Build Status](https://circleci.com/slavaschmidt/ton-sdk-client-scala-binding.svg?branch=main)](https://circleci.com/slavaschmidt/ton-sdk-client-scala-binding)
 [![codecov](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding/branch/main/graph/badge.svg?token=MRUA0KJ2BK)](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![Maven Central](https://img.shields.io/maven-central/v/com.dancingcode/freeton-sdk-client-scala-binding_2.12)](https://repo.maven.apache.org/maven2/com/dancingcode/freeton-sdk-client-scala-binding_2.12/1.0.0-M2/)

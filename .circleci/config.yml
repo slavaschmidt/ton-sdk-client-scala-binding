@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   win: circleci/windows@2.2.0
+#  codecov: codecov/codecov@1.1.3
 
 jobs:
   build-linux-common: &build-linux
@@ -28,7 +29,7 @@ jobs:
   build-linux-15:
     <<: *build-linux
     docker:
-      - image: 'cimg/openjdk:15.0.0'
+      - image: 'circleci/openjdk:15-jdk'
 
   build-linux-11:
     <<: *build-linux
@@ -51,9 +52,8 @@ jobs:
       - run:
           name: Compile test coverage
           command: cat /dev/null | sbt clean coverage test coverageReport
-      - run:
-          name: Upload coverage
-          command: cat /dev/null | bash <(curl -s https://codecov.io/bash)
+      - codecov/upload:
+          file: {{ coverage_report_filepath }}
 
       - save_cache:
           key: sbt-cache
