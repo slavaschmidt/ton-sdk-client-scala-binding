@@ -51,7 +51,10 @@ object Net {
 
   }
 
-  import io.circe.generic.auto._
+  import io.circe.generic.extras.auto._
+  import io.circe.generic.extras.Configuration
+
+  implicit val genDevConfig: Configuration = Configuration.default.withDiscriminator("type")
 
   implicit val query                 = new SdkCall[Request.Query, Result.Query]                               { override val function: String = s"$module.query"                 }
   implicit val queryCollection       = new SdkCall[Request.QueryCollection, Result.QueryCollection]           { override val function: String = s"$module.query_collection"      }
