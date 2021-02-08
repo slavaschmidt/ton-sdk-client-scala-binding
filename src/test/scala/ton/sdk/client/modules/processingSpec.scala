@@ -29,7 +29,7 @@ class processingSpec extends AsyncFlatSpec with SdkAssertions[Future] {
   private val tvc       = base64(tvcSrc)
   private val deploySet = DeploySet(tvc)
 
-  it should "process_message" in {
+  ignore should "process_message" in {
     val result = devNet { implicit ctx =>
       for {
         // Prepare data for deployment message
