@@ -5,12 +5,12 @@ version := "1.6.3-M1"
 organization := "com.dancingcode"
 
 
-lazy val scala212 = "2.12.13"
+lazy val scala212 = "2.12.12"
 lazy val scala213 = "2.13.3"
 
 scalaVersion := scala212
 
-lazy val crossScalaVersions = List(scala212, scala213)
+// lazy val crossScalaVersions = List(scala212, scala213)
 
 libraryDependencies ++= Seq(
   "org.slf4j"      % "slf4j-api"       % "1.7.30",
@@ -30,8 +30,7 @@ scalacOptions in Compile ++= Seq(
   "-unchecked",
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard",
-  "-Yrangepos",
-  "-Xlint:byname-implicit"
+  "-Yrangepos"
 )
 
 fork in Test := true
