@@ -1,0 +1,71 @@
+version: 2.1
+
+orbs:
+  win: circleci/windows@2.2.0
+#  codecov: codecov/codecov@1.1.3
+
+jobs:
+  build-linux-common: &build-linux
+    docker:
+      - image: ""
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: Compile test coverage
+          command: cat /dev/null | sbt clean coverage test coverageReport
+      - run:
+          name: Upload coverage
+          command: cat /dev/null | bash <(curl -s https://codecov.io/bash)
+
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  build-linux-16:
+    <<: *build-linux
+    docker:
+      - image: 'circleci/openjdk:16-jdk-buster'
+
+  build-linux-11:
+    <<: *build-linux
+    docker:
+      - image: 'circleci/openjdk:11-jdk'
+
+  build-linux-8:
+    <<: *build-linux
+    docker:
+      - image: 'circleci/openjdk:8-jdk'
+
+  build-windows:
+    executor: win/default
+
+    steps:
+      # INSTALL SBT IN WINDOWS
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: Compile test coverage
+          command: cat /dev/null | sbt clean coverage test coverageReport
+      - codecov/upload:
+          file: {{ coverage_report_filepath }}
+
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+workflows:
+  build:
+    jobs:
+      - build-linux-8
+      - build-linux-11
+      - build-linux-16
+
+      # - build-windows

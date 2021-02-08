@@ -48,11 +48,11 @@ trait BlockingIterator[+A] {
   def next(): Option[A]
 
   /**
-   * Awaits first available element and returns it.
-   *
-   * @return first element put into the queue {@code element}
-   * @throws TimeoutException if there is a timeout
-   */
+    * Awaits first available element and returns it.
+    *
+    * @return first element put into the queue {@code element}
+    * @throws TimeoutException if there is a timeout
+    */
   def getNext(timeout: Duration): A
 
   /**
@@ -95,8 +95,11 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
   }
 
   // adds element to the iterator, to be used by the callback
-  protected[binding] def append(a: A): Boolean = {
-    listener.fold(buf.add(a))(_.tryComplete(Success(a)))
+  protected[binding] def append(a: A): Boolean = listener.synchronized {
+    listener.fold(buf.add(a)) { l =>
+      listener = None
+      l.tryComplete(Success(a))
+    }
   }
 
   // to be used by the callback to signal that this {@code BlockingIterator} should close with success or failure
@@ -108,16 +111,16 @@ class QueueBackedIterator[A]() extends BlockingIterator[A] {
   private var listener: Option[Promise[A]] = None
 
   override def getNext(timeout: Duration): A = {
-    if (hasNext) {
+    listener.synchronized {
+      if (!hasNext) {
+        val pr = Promise[A]()
+        listener = Option(pr)
+      }
+    }
+    if (listener.isEmpty) {
       next().get
     } else {
-      val pr = Promise[A]()
-      listener = Option(pr)
-      try {
-        Await.result(pr.future, timeout)
-      } finally  {
-        listener = None
-      }
+      Await.result(listener.get.future, timeout)
     }
   }
 }

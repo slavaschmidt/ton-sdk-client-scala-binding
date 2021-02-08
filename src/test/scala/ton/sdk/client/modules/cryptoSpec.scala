@@ -8,7 +8,7 @@ import ton.sdk.client.binding.Context._
 import scala.util.Try
 import ton.sdk.client.modules.Crypto._
 import ton.sdk.client.binding.Context
-import ton.sdk.client.modules.Crypto.Result.{Signature, Validity}
+import ton.sdk.client.modules.Crypto.Result.{Signature, SuccessFlag, Validity}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
@@ -20,12 +20,12 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
   it should "work with signing box" in {
     val result = devNet { implicit ctx =>
       for {
-        keys <- call(Request.GenerateRandomSignKeys)
+        keys   <- call(Request.GenerateRandomSignKeys)
         handle <- call(Request.GetSigningBox(keys.public, keys.secret))
         public <- call(Request.SigningBoxGetPublicKey(handle.handle))
-        _ = assert(keys.public == public.pubkey)
+        _       = assert(keys.public == public.pubkey)
         message = base64("Sign with box")
-        box <- call(Request.SigningBoxSign(handle.handle, message))
+        box       <- call(Request.SigningBoxSign(handle.handle, message))
         signature <- call(Request.Sign(message, keys))
         r = assert(signature.signature.get == box.signature)
         _ <- call(Request.RemoveSigningBox(handle.handle))
@@ -346,7 +346,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.NaclBoxKeyPairFromSecretKey("Top secret"))
     }
-    assertSdkError(result)("Invalid secret key [Invalid character 'T' at position 0]: Top secret")
+    assertSdkError(result)("Invalid secret key [Top secret]: Invalid character 'T' at position 0")
   }
 
   val nonce1      = "cd7f99924bf422544046e83595dd5803f17536f5c9a11746"
@@ -404,6 +404,8 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   val signSecret       = "56b6a77093d6fdf14e593f36275d872d75de5b341942376b2a08759f3cbae78f1869b7ef29d58026217e9cf163cbfbd0de889bdf1bf4daebf5433a312f5b8d6e"
   val naclSignExpected = Result.Signed("i7MMLJ8a5vUdNPenG6pV2JFC8KeE0EeEera9NmxRe+wazZ1Jx4h8rhMlyIagPRW8zYemO4RAocJefrBxG+XmCExvbmcgbGl2ZSBGcmVlIFRPTg==", None)
   val unsigned         = "TG9uZyBsaXZlIEZyZWUgVE9O"
+  val open             = "1869b7ef29d58026217e9cf163cbfbd0de889bdf1bf4daebf5433a312f5b8d6e"
+  val signature        = "8bb30c2c9f1ae6f51d34f7a71baa55d89142f0a784d047847ab6bd366c517bec1acd9d49c7887cae1325c886a03d15bccd87a63b8440a1c25e7eb0711be5e608"
 
   it should "nacl_sign" in {
     val result = local { implicit ctx =>
@@ -421,7 +423,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "nacl_sign_open" in {
     val result = local { implicit ctx =>
-      call(Request.NaclSignOpen(naclSignExpected.signed, "1869b7ef29d58026217e9cf163cbfbd0de889bdf1bf4daebf5433a312f5b8d6e"))
+      call(Request.NaclSignOpen(naclSignExpected.signed, open))
     }
     assertValue(result)(Result.Unsigned(unsigned))
   }
@@ -437,7 +439,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.NaclSignDetached(unsigned, signSecret))
     }
-    assertValue(result)(Signature("8bb30c2c9f1ae6f51d34f7a71baa55d89142f0a784d047847ab6bd366c517bec1acd9d49c7887cae1325c886a03d15bccd87a63b8440a1c25e7eb0711be5e608"))
+    assertValue(result)(Signature(signature))
   }
 
   it should "not nacl_sign_detached" in {
@@ -445,6 +447,20 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.NaclSignDetached("OOOOoooooopppppps", signSecret))
     }
     assertSdkError(result)("Invalid base64 string: Encoded text cannot have a 6-bit remainder.\r\nbase64: [OOOOoooooopppppps]")
+  }
+
+  it should "nacl_sign_detached_verify" in {
+    val result = local { implicit ctx =>
+      call(Request.NaclSignDetachedVerify(unsigned, signature, open))
+    }
+    assertValue(result)(SuccessFlag(true))
+  }
+
+  it should "not nacl_sign_detached_verify" in {
+    val result = local { implicit ctx =>
+      call(Request.NaclSignDetachedVerify(unsigned, signature.reverse, open))
+    }
+    assertValue(result)(SuccessFlag(false))
   }
 
   it should "nacl_sign_keypair_from_secret_key" in {
@@ -458,7 +474,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.NaclSignKeypairFromSecretKey("Not a secret really"))
     }
-    assertSdkError(result)("Invalid secret key [Odd number of digits]: Not a secret really")
+    assertSdkError(result)("Invalid secret key [Not a secret really]: Odd number of digits")
   }
 
   it should "crypt" in {
@@ -545,7 +561,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.Sign(base64("I will not be signed"), KeyPair("1", "2")))
     }
-    assertSdkError(result)("Invalid key [Odd number of digits]: 1")
+    assertSdkError(result)("Invalid key [1]: Odd number of digits")
   }
 
   it should "not verify_signature" in {

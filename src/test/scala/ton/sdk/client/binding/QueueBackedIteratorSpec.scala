@@ -35,9 +35,9 @@ class QueueBackedIteratorSpec extends AsyncFlatSpec {
     }
     t.start()
     val timeout = 2.seconds
-    val before = System.currentTimeMillis()
-    val items = bit.collect(timeout)
-    val after = System.currentTimeMillis()
+    val before  = System.currentTimeMillis()
+    val items   = bit.collect(timeout)
+    val after   = System.currentTimeMillis()
     t.join()
     (after - before) / 1000 shouldEqual timeout.length
     bit.hasNext shouldBe true
@@ -71,9 +71,9 @@ class QueueBackedIteratorSpec extends AsyncFlatSpec {
 
   it should "not wait on closed" in {
     val timeout = 2.seconds
-    val before = System.currentTimeMillis()
-    val items = bit.collect(timeout)
-    val after = System.currentTimeMillis()
+    val before  = System.currentTimeMillis()
+    val items   = bit.collect(timeout)
+    val after   = System.currentTimeMillis()
     (after - before) / 1000 shouldEqual 0
     items.size shouldBe 0
   }
@@ -82,6 +82,27 @@ class QueueBackedIteratorSpec extends AsyncFlatSpec {
     val bit = new QueueBackedIterator[Int]()
     bit.close(Option(new Exception("Uh Oh")))
     bit.isSuccess shouldBe false
+  }
+
+  it should "getNext by waiting" in {
+    val timeout = 3.seconds
+    val before  = System.currentTimeMillis()
+    val t = new Thread() {
+      override def run(): Unit = {
+        Thread.sleep(1000)
+        val _ = bit.append(1) && bit.append(2)
+      }
+    }
+    t.start()
+    val next  = bit.getNext(timeout)
+    val after = System.currentTimeMillis()
+    (after - before) / 1000 shouldEqual 1
+    next shouldBe 1
+    val anotherNext = bit.getNext(timeout)
+    val end         = System.currentTimeMillis()
+    (end - after) / 1000 shouldEqual 0
+    bit.hasNext shouldBe false
+    anotherNext shouldBe 2
   }
 
 }

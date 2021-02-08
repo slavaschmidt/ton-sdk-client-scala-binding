@@ -15,6 +15,7 @@ final case class NetworkConfig(
   server_address: String,
   endpoints: Seq[String],
   network_retries_count: Option[Int] = None,
+  max_reconnect_timeout: Option[Int] = None,
   message_retries_count: Option[Int] = None,
   message_processing_timeout: Option[Int] = None,
   wait_for_timeout: Option[Int] = None,
@@ -158,7 +159,7 @@ case class Transaction(
 )
 
 final case class CallSet(function_name: String, header: Option[Map[String, Json]] = None, input: Option[Map[String, Json]] = None)
-final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None)
+final case class DeploySet(tvc: String, workchain_id: Int = 0, initial_data: Option[Map[String, Json]] = None, initial_pubkey: Option[String] = None)
 final case class Signer(`type`: String, keys: Option[KeyPair] = None, public_key: Option[String] = None, handle: Option[Int] = None)
 
 object Signer {

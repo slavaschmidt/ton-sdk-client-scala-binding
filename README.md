@@ -4,7 +4,7 @@
 
 TON SDK Client library Scala bindings.
 
-[![Build Status](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding.svg?branch=main&env=BADGE=osx)](https://travis-ci.com/slavaschmidt/ton-sdk-client-scala-binding)
+[![Build Status](https://circleci.com/gh/slavaschmidt/ton-sdk-client-scala-binding.svg?style=shield&branch=main)](https://circleci.com/gh/slavaschmidt/ton-sdk-client-scala-binding)
 [![codecov](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding/branch/main/graph/badge.svg?token=MRUA0KJ2BK)](https://codecov.io/gh/slavaschmidt/ton-sdk-client-scala-binding)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![Maven Central](https://img.shields.io/maven-central/v/com.dancingcode/freeton-sdk-client-scala-binding_2.12)](https://repo.maven.apache.org/maven2/com/dancingcode/freeton-sdk-client-scala-binding_2.12/1.0.0-M2/)
@@ -19,7 +19,7 @@ Instead, a thin C wrapper is implemented. The wrapper translates Java calls into
 
 ## Compatibility
 
-The current version is compatible with Freeton client v1.5.2, JDK 1.8+ and Scala 2.12.
+The current version is compatible with Freeton client v1.6.3, JDK 1.8+ and Scala 2.12.
 
 We use CI on Linux Focal Fossa and MacOs X hosts to run our tests.
 
@@ -30,9 +30,10 @@ Following systems confirmed to be compatible:
 - MacOs X (Catalina 10.15)
 - OpenJDK 8
 - OpenJDK 11
+- OpenJDK 16
 - OracleJDK 1.8.0
 
-We're currently working on adding Windows x86, Scala 2.13 and Freeton client v1.1.0 support.
+We're currently working on adding Scala 2.13 support.
 
 
 ## Prerequisites
@@ -111,6 +112,7 @@ The users of the library can easy create their own configurations by overriding 
     "network": {
         "server_address": "http://localhost",
         "network_retries_count": 5,
+        "max_reconnect_timeout": 120,
         "message_retries_count": 5,
         "message_processing_timeout": 40000,
         "wait_for_timeout": 40000,

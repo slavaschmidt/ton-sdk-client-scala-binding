@@ -41,7 +41,6 @@ object Api {
 
   type DebotHandle = Int
 
-
   /**
     * @param code the client error code
     * @param message the error message
