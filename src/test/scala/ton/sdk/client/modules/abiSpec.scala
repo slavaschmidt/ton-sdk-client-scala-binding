@@ -79,7 +79,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.DecodeMessage(abi, "Oh Weh"))
     }
-    assertSdkError(result)("Invalid base64 string: Invalid byte 32, offset 2.\r\nbase64: [Oh Weh]")
+    assertSdkError(result)("Message can't be decoded: Invalid BOC: error decode message BOC base64: Invalid byte 32, offset 2.")
   }
 
   it should "decode_message_body" in {

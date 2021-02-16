@@ -124,7 +124,7 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.ParseShardstate(boc, "zerostate:-1", -1))
     }
-    assertSdkError(result)("Invalid BOC: error decode block BOC base64: Encoded text cannot have a 6-bit remainder.")
+    assertSdkError(result)("Invalid BOC: error decode shardstate BOC base64: Encoded text cannot have a 6-bit remainder.")
   }
 
   it should "get_boc_hash" in {
