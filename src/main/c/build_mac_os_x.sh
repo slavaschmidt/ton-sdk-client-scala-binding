@@ -2,8 +2,7 @@
 
 export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 export LIBS="../resources"
-export SUFFIX="x86_64"
-# "aarch64"
+export SUFFIX="x86_64" # "aarch64"
 
 gcc \
   -dynamiclib \
@@ -20,5 +19,6 @@ gcc \
 cd $LIBS
 
 install_name_tool -change "libton_client_$SUFFIX.dylib" "@loader_path/libton_client_$SUFFIX.dylib" "libTonSdkClientJniBinding_$SUFFIX.dylib"
+install_name_tool -change "@loader_path/libton_client.dylib" "@loader_path/libton_client_$SUFFIX.dylib" "libTonSdkClientJniBinding_$SUFFIX.dylib"
 
 cd -
