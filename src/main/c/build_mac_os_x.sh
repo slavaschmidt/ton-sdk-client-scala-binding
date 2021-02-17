@@ -2,7 +2,10 @@
 
 export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
 export LIBS="../resources"
-export SUFFIX="x86_64" # "aarch64"
+
+
+ARCH=$(echo 'System.getProperty("os.arch")' | scala | grep arch | cut -f 2 -d'=' | sed 's/[[:space:]]//g')
+export SUFFIX=$ARCH # "x86_64" # "aarch64"
 
 gcc \
   -dynamiclib \
