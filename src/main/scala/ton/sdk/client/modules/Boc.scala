@@ -150,6 +150,9 @@ object Boc {
   )
 
   final case class ShardState(id: String, workchain_id: Int, seq_no: Long)
+  final case class BocCacheType(`type`: String, pin: Option[String])
+  def cacheTypePinned(pin: String) = BocCacheType("Pinned", Option(pin))
+  val cacheTypeUnpinned            = BocCacheType("Unpinned", None)
 
   object Request {
     final case class ParseMessage(boc: String)
@@ -160,12 +163,17 @@ object Boc {
     final case class ParseShardstate(boc: String, id: String, workchain_id: Int)
     final case class GetBocHash(boc: String)
     final case class GetCodeFromTvc(tvc: String)
+    final case class CacheGet(boc_ref: String)
+    final case class CacheSet(boc: String, cache_type: BocCacheType)
+    final case class CacheUnpin(pin: String, boc_ref: Option[String])
   }
   object Result {
     final case class Parsed[T](parsed: T)
     final case class ConfigBoc(config_boc: String)
     final case class BocHash(hash: String)
     final case class CodeFromTvc(code: String)
+    final case class CacheGet(boc: Option[String])
+    final case class CacheSet(boc_ref: String)
   }
 
   import io.circe.generic.auto._
@@ -178,5 +186,8 @@ object Boc {
   implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc]        { override val function: String = s"$module.get_blockchain_config" }
   implicit val parseShardstate     = new SdkCall[Request.ParseShardstate, Result.Parsed[ShardState]]   { override val function: String = s"$module.parse_shardstate"      }
   implicit val getBocHash          = new SdkCall[Request.GetBocHash, Result.BocHash]                   { override val function: String = s"$module.get_boc_hash"          }
-  implicit val GetCodeFromTvc      = new SdkCall[Request.GetCodeFromTvc, Result.CodeFromTvc]           { override val function: String = s"$module.get_code_from_tvc"     }
+  implicit val getCodeFromTvc      = new SdkCall[Request.GetCodeFromTvc, Result.CodeFromTvc]           { override val function: String = s"$module.get_code_from_tvc"     }
+  implicit val cacheSet            = new SdkCall[Request.CacheSet, Result.CacheSet]                    { override val function: String = s"$module.cache_set"             }
+  implicit val cacheGet            = new SdkCall[Request.CacheGet, Result.CacheGet]                    { override val function: String = s"$module.cache_get"             }
+  implicit val cacheUnpin          = new SdkCall[Request.CacheUnpin, Unit]                             { override val function: String = s"$module.cache_unpin"           }
 }
