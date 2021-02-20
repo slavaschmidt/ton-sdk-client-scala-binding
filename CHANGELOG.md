@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Featured
 - Support for TON-Client (1.8.0 Feb 11, 2021)
-
+g
 
 ## 1.7.0 Feb 20, 2021
 
