@@ -163,7 +163,7 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = local { implicit ctx =>
       call(Request.HdkeyPublicFromXprv(masterXprv))
     }
-    assertValue(result)(Result.PublicKey("02a8eb63085f73c33fa31b4d1134259406347284f8dab6fc68f4bf8c96f6c39b75"))
+    assertValue(result)(Result.PublicKey("7b70008d0c40992283d488b1046739cf827afeabf647a5f07c4ad1e7e45a6f89"))
   }
 
   it should "not hdkey_public_from_xprv" in {

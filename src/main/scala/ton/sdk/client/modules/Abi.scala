@@ -81,24 +81,27 @@ object Abi {
     final case class DecodeMessage(abi: AbiJson, message: String)
     final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean)
     final case class EncodeAccount(state_init: StateInitSource, balance: Option[BigInt], last_trans_lt: Option[BigInt], last_paid: Option[BigDecimal])
+    final case class EncodeInternalMessage(abi: AbiJson, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean])
   }
 
   object Result {
-    final case class ResultOfEncodeMessageBody(body: String, data_to_sign: Option[String])
-    final case class ResultOfAttachSignatureToMessageBody(body: String)
-    final case class ResultOfEncodeMessage(message: String, data_to_sign: Option[String], address: String, message_id: String)
+    final case class EncodeMessageBody(body: String, data_to_sign: Option[String])
+    final case class AttachSignatureToMessageBody(body: String)
+    final case class EncodeMessage(message: String, data_to_sign: Option[String], address: String, message_id: String)
     final case class DecodedMessageBody(body_type: MessageBodyType, name: String, value: Option[Json], header: Option[FunctionHeader])
-    final case class ResultOfEncodeAccount(account: String, id: String)
-    final case class ResultOfAttachSignature(message: String, message_id: String)
+    final case class EncodeAccount(account: String, id: String)
+    final case class AttachSignature(message: String, message_id: String)
+    final case class EncodeInternalMessage(message: String, address: String, message_id: String)
   }
 
   import io.circe.generic.auto._
 
-  implicit val attachSToMB       = new SdkCall[Request.AttachSignatureToMessageBody, Result.ResultOfAttachSignatureToMessageBody] { override val function: String = s"$module.attach_signature_to_message_body" }
-  implicit val encodeMessageBody = new SdkCall[Request.EncodeMessageBody, Result.ResultOfEncodeMessageBody]                       { override val function: String = s"$module.encode_message_body"              }
-  implicit val encodeMessage     = new SdkCall[Request.EncodeMessage, Result.ResultOfEncodeMessage]                               { override val function: String = s"$module.encode_message"                   }
-  implicit val attachSignature   = new SdkCall[Request.AttachSignature, Result.ResultOfAttachSignature]                           { override val function: String = s"$module.attach_signature"                 }
-  implicit val decodeMessage     = new SdkCall[Request.DecodeMessage, Result.DecodedMessageBody]                                  { override val function: String = s"$module.decode_message"                   }
-  implicit val decodeMessageBody = new SdkCall[Request.DecodeMessageBody, Result.DecodedMessageBody]                              { override val function: String = s"$module.decode_message_body"              }
-  implicit val encodeAccount     = new SdkCall[Request.EncodeAccount, Result.ResultOfEncodeAccount]                               { override val function: String = s"$module.encode_account"                   }
+  implicit val attachSToMB           = new SdkCall[Request.AttachSignatureToMessageBody, Result.AttachSignatureToMessageBody] { override val function: String = s"$module.attach_signature_to_message_body" }
+  implicit val encodeMessageBody     = new SdkCall[Request.EncodeMessageBody, Result.EncodeMessageBody]                       { override val function: String = s"$module.encode_message_body"              }
+  implicit val encodeMessage         = new SdkCall[Request.EncodeMessage, Result.EncodeMessage]                               { override val function: String = s"$module.encode_message"                   }
+  implicit val attachSignature       = new SdkCall[Request.AttachSignature, Result.AttachSignature]                           { override val function: String = s"$module.attach_signature"                 }
+  implicit val decodeMessage         = new SdkCall[Request.DecodeMessage, Result.DecodedMessageBody]                          { override val function: String = s"$module.decode_message"                   }
+  implicit val decodeMessageBody     = new SdkCall[Request.DecodeMessageBody, Result.DecodedMessageBody]                      { override val function: String = s"$module.decode_message_body"              }
+  implicit val encodeAccount         = new SdkCall[Request.EncodeAccount, Result.EncodeAccount]                               { override val function: String = s"$module.encode_account"                   }
+  implicit val encodeInternalMessage = new SdkCall[Request.EncodeInternalMessage, Result.EncodeInternalMessage]               { override val function: String = s"$module.encode_internal_message"          }
 }

@@ -17,8 +17,9 @@ import java.nio.file.StandardCopyOption;
 public class NativeLoader {
 
     private static final Logger log = LoggerFactory.getLogger(NativeLoader.class);
-    private static final String jniLibName = "TonSdkClientJniBinding";
-    private static final String tonClientLibName = "ton_client";
+    private static final String suffix = suffixForArchitecture();
+    private static final String jniLibName = "TonSdkClientJniBinding" + suffix;
+    private static final String tonClientLibName = "ton_client" + suffix;
     private static final String javaProp = "java.library.path";
     private static final String JAVA_IO_FREETONTMPDIR = "java.io.freetontmpdir";
 
@@ -29,6 +30,11 @@ public class NativeLoader {
         createTempLib(folder, tonClientLibName);
         addPath(folder);
         System.load(libFile(folder, jniLibName).getAbsolutePath());
+    }
+
+    private static String suffixForArchitecture() {
+        return "Mac OS X".equals(System.getProperty("os.name")) ?
+                "_" + System.getProperty("os.arch") : "";
     }
 
     private static void addPath(File path) {
@@ -50,7 +56,8 @@ public class NativeLoader {
             return Files.createTempDirectory(tonClientLibName).toFile();
         } else {
             File dir = new File(outer);
-            if (!dir.exists() && !dir.mkdirs()) throw new IOException("Couldn't create libs directory " + dir.getName());
+            if (!dir.exists() && !dir.mkdirs())
+                throw new IOException("Couldn't create libs directory " + dir.getName());
             dir.deleteOnExit();
             return dir;
         }

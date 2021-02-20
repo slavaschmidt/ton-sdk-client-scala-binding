@@ -34,13 +34,18 @@ object Tvm {
       account: AccountForExecutor,
       skip_transaction_check: Boolean = false,
       executionOptions: ExecutionOptions = emptyExecutionOptions,
-      abi: Option[AbiJson] = None
+      abi: Option[AbiJson] = None,
+      boc_cache: Option[Boc.BocCacheType] = None,
+      return_updated_account: Option[Boolean] = None
     )
+
     final case class RunTvm(
       message: String,
       account: String,
       abi: Option[AbiJson] = None,
-      executionOptions: ExecutionOptions = emptyExecutionOptions
+      executionOptions: ExecutionOptions = emptyExecutionOptions,
+      boc_cache: Option[Boc.BocCacheType] = None,
+      return_updated_account: Option[Boolean] = None
     )
     final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
   }

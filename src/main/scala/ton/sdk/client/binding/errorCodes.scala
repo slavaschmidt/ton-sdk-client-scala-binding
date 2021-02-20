@@ -83,10 +83,16 @@ object CryptoErrors {
 }
 
 object DebotErrors {
-  val DebotStartFailed     = ClientErrorCode(801)
-  val DebotFetchFailed     = ClientErrorCode(802)
-  val DebotExecutionFailed = ClientErrorCode(803)
-  val DebotInvalidHandle   = ClientErrorCode(804)
+  val DebotStartFailed       = ClientErrorCode(801)
+  val DebotFetchFailed       = ClientErrorCode(802)
+  val DebotExecutionFailed   = ClientErrorCode(803)
+  val DebotInvalidHandle     = ClientErrorCode(804)
+  val DebotInvalidJsonParams = ClientErrorCode(805)
+  val DebotInvalidFunctionId = ClientErrorCode(806)
+  val DebotInvalidAbi        = ClientErrorCode(807)
+  val DebotGetMethodFailed   = ClientErrorCode(808)
+  val DebotInvalidMsg        = ClientErrorCode(809)
+  val DebotExternaCallFailed = ClientErrorCode(810)
 }
 
 object NetErrors {
