@@ -21,7 +21,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   // Because of the test net timeouts
-  ignore should "execute_message" in {
+  it should "execute_message" in {
     val abi                = AbiJson.fromResource("Subscription.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc             = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Subscription.tvc").getFile).toPath)
     val tvc                = base64(tvcSrc)
@@ -60,12 +60,11 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         unlimitedAccount = AccountForExecutor.fromAccount(boc, Option(true))
         limitedAccount   = AccountForExecutor.fromAccount(boc, Option(false))
         // Run executor (unlimited balance should not affect account balance)
-        result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi)))
+        result2 <- call(Request.RunExecutor(encodedMsg.message, unlimitedAccount, abi = Option(abi), return_updated_account = Option(true)))
         // Get account balance again
         parsed2 <- call(Boc.Request.ParseAccount(result2.account))
-        assert1 = parsed.parsed.balance == parsed2.parsed.balance
         // Run executor in standard mode (limited balance)
-        result3 <- call(Request.RunExecutor(encodedMsg.message, limitedAccount, abi = Option(abi)))
+        result3 <- call(Request.RunExecutor(encodedMsg.message, limitedAccount, abi = Option(abi), return_updated_account = Option(true)))
         // Check subscription
         input   = Map("subscriptionId" -> subscriptionId.asJson)
         callSet = CallSet("getSubscription", None, Option(input))
@@ -76,7 +75,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
         assert3 = result3.fees.total_account_fees > 0
         assert4 = subscriptionPubkey == pubkey
       } yield {
-        assert1 && assert2 && assert3 && assert4
+        assert2 && assert3 && assert4
       }
     }
     assertValue(resultF)(true)
@@ -91,19 +90,17 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   behavior of "Tvm"
 
-  // Because strange failure since 1.7.0
-  ignore should "run_executor acc_none" in {
+  it should "run_executor acc_none" in {
     val message = "te6ccgEBAQEAXAAAs0gAV2lB0HI8/VEO/pBKDJJJeoOcIh+dL9JzpmRzM8PfdicAPGNEGwRWGaJsR6UYmnsFVC2llSo1ZZN5mgUnCiHf7ZaUBKgXyAAGFFhgAAAB69+UmQS/LjmiQA=="
     val result = devNet { implicit ctx =>
-      ef.flatMap(call(Request.RunExecutor(message, AccountForExecutor.none, skip_transaction_check = true))) { result =>
+      ef.flatMap(call(Request.RunExecutor(message, AccountForExecutor.none, skip_transaction_check = true, return_updated_account = Option(true)))) { result =>
         call(Boc.Request.ParseAccount(result.account))
       }
     }
     assertExpression(result)(p => p.parsed.id === "0:f18d106c11586689b11e946269ec1550b69654a8d5964de668149c28877fb65a" && p.parsed.acc_type_name === "Uninit")
   }
 
-  // Because strange failure since 1.7.0
-  ignore should "run_executor acc_uninit" in {
+  it should "run_executor acc_uninit" in {
     val abi = AbiJson.fromResource("Hello.abi.json", getClass.getClassLoader).toOption.get
     val tvc = tvcFromResource("Hello.tvc")
 
@@ -114,7 +111,7 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
         val callSet   = CallSet("constructor")
         ef.flatMap(call(Abi.Request.EncodeMessage(abi, None, Option(deploySet), Option(callSet), signer))) { deployMsg =>
           val account = AccountForExecutor.uninit
-          ef.flatMap(call(Tvm.Request.RunExecutor(deployMsg.message, account))) { result =>
+          ef.flatMap(call(Tvm.Request.RunExecutor(deployMsg.message, account, return_updated_account = Option(true)))) { result =>
             ef.map(call(Boc.Request.ParseAccount(result.account))) { parsed =>
               (deployMsg, parsed)
             }

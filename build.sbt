@@ -1,6 +1,6 @@
 name := "freeton-sdk-client-scala-binding"
 
-version := "1.8.0-M1"
+version := "1.8.0-M2"
 
 organization := "com.dancingcode"
 
@@ -53,4 +53,4 @@ envVars in Test := Map(
 )
 
 // To test against all versions: `> + test`
-// To cross-publish: `> ; + publishSigned; sonatypeBundleRelease`
+// To cross-publish: `> ; + publishSigned; sonatypeRelease`
