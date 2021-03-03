@@ -47,7 +47,13 @@ object Tvm {
       boc_cache: Option[Boc.BocCacheType] = None,
       return_updated_account: Option[Boolean] = None
     )
-    final case class RunGet(account: String, function_name: String, input: Option[Json] = None, execution_options: ExecutionOptions = emptyExecutionOptions)
+    final case class RunGet(
+      account: String,
+      function_name: String,
+      input: Option[Json] = None,
+      execution_options: ExecutionOptions = emptyExecutionOptions,
+      tuple_list_as_array: Boolean = false
+    )
   }
   object Result {
     final case class RunExecutor(transaction: Transaction, out_messages: Seq[String], decoded: Option[DecodedOutput], account: String, fees: TransactionFees)

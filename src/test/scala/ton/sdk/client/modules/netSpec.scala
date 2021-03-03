@@ -207,7 +207,8 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid address [fatal error]: baker street, london 221b")
   }
 
-  it should "fetch_endpoints" in {
+  // commented out in sdk tests
+  ignore should "fetch_endpoints" in {
     val network = ClientConfig.DEV_NET.network.map(cfg => cfg.copy(endpoints = Seq("cinet.tonlabs.io", "cinet2.tonlabs.io")))
     val config  = ClientConfig.DEV_NET.copy(network = network)
     val result = ef.managed(config) { implicit ctx =>

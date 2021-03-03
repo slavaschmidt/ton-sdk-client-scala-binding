@@ -1,11 +1,15 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 1.9.0 Mar 3, 2021
+
+### Featured
+- Support for TON-Client (1.9.0 Feb 19, 2021)
+
 ## 1.8.0 Feb 20, 2021
 
 ### Featured
 - Support for TON-Client (1.8.0 Feb 11, 2021)
-g
 
 ## 1.7.0 Feb 20, 2021
 
