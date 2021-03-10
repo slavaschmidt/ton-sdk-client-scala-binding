@@ -1,5 +1,6 @@
 package ton.sdk.client.modules
 
+import io.circe.Json
 import ton.sdk.client.binding.Transaction
 import ton.sdk.client.binding.Api.SdkCall
 
@@ -154,6 +155,21 @@ object Boc {
   def cacheTypePinned(pin: String) = BocCacheType("Pinned", Option(pin))
   val cacheTypeUnpinned            = BocCacheType("Unpinned", None)
 
+  final case class BuilderOp(`type`: String, size: Option[Int] = None, value: Option[Json] = None, builder: Option[Seq[BuilderOp]] = None, boc: Option[String] = None)
+
+  object BuilderOp {
+    def integer(size: Int, value: Json)        = BuilderOp("Integer", size = Option(size), value = Option(value))
+    def bitString(value: String): BuilderOp    = BuilderOp("BitString", value = Option(Json.fromString(value)))
+    def cell(value: Seq[BuilderOp]): BuilderOp = BuilderOp("Cell", builder = Option(value))
+    def boc(value: String)                     = BuilderOp("CellBoc", boc = Option(value))
+
+    def b(value: Byte): BuilderOp              = integer(1, Json.fromInt(value.intValue()))
+    def u128(value: BigInt): BuilderOp         = integer(128, Json.fromBigInt(value))
+    def u8(value: Long): BuilderOp             = integer(8, Json.fromLong(value))
+    def i8(value: Long): BuilderOp             = u8(value)
+    def i(size: Int, value: Number): BuilderOp = integer(size, Json.fromLong(value.longValue()))
+  }
+
   object Request {
     final case class ParseMessage(boc: String)
     final case class ParseTransaction(boc: String)
@@ -166,6 +182,7 @@ object Boc {
     final case class CacheGet(boc_ref: String)
     final case class CacheSet(boc: String, cache_type: BocCacheType)
     final case class CacheUnpin(pin: String, boc_ref: Option[String])
+    final case class EncodeBoc(builder: Seq[BuilderOp], boc_cache: Option[BocCacheType])
   }
   object Result {
     final case class Parsed[T](parsed: T)
@@ -174,6 +191,7 @@ object Boc {
     final case class CodeFromTvc(code: String)
     final case class CacheGet(boc: Option[String])
     final case class CacheSet(boc_ref: String)
+    final case class EncodedBoc(boc: String)
   }
 
   import io.circe.generic.auto._
@@ -190,4 +208,6 @@ object Boc {
   implicit val cacheSet            = new SdkCall[Request.CacheSet, Result.CacheSet]                    { override val function: String = s"$module.cache_set"             }
   implicit val cacheGet            = new SdkCall[Request.CacheGet, Result.CacheGet]                    { override val function: String = s"$module.cache_get"             }
   implicit val cacheUnpin          = new SdkCall[Request.CacheUnpin, Unit]                             { override val function: String = s"$module.cache_unpin"           }
+  implicit val encodeBoc           = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                 { override val function: String = s"$module.encode_boc"            }
+
 }

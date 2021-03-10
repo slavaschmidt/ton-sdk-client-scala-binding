@@ -81,7 +81,7 @@ object Abi {
     final case class DecodeMessage(abi: AbiJson, message: String)
     final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean)
     final case class EncodeAccount(state_init: StateInitSource, balance: Option[BigInt], last_trans_lt: Option[BigInt], last_paid: Option[BigDecimal])
-    final case class EncodeInternalMessage(abi: AbiJson, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean])
+    final case class EncodeInternalMessage(abi: Option[AbiJson], address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean], src_address: Option[String] = None)
   }
 
   object Result {

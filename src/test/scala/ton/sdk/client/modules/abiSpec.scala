@@ -226,7 +226,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   private def testEncodeInternalMessageDeploy(abi: AbiJson, tvc: String, callSet: Option[CallSet], expectedBoc: Option[String], expectedMessageId: String) = {
     val deploySet = Option(DeploySet(tvc))
     val resultF = local { implicit ctx =>
-        call(Request.EncodeInternalMessage(abi, None, deploySet, callSet, "0", None, None))
+        call(Request.EncodeInternalMessage(Option(abi), None, deploySet, callSet, "0", None, None))
     }
     assertExpression(resultF) { r: Result.EncodeInternalMessage =>
       println(r.message)
