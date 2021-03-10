@@ -41,7 +41,6 @@ object Debot {
     final case class Execute(debot_handle: DebotHandle, action: DebotAction)
     final case class Remove(debot_handle: DebotHandle)
     final case class Send(debot_handle: DebotHandle, source: String, func_id: Long, params: String)
-
   }
 
   object Result {
