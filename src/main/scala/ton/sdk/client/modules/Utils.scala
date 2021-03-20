@@ -26,13 +26,16 @@ object Utils {
 
   object Request {
     final case class ConvertAddress(address: String, output_format: AddressStringFormat)
+    final case class CalcStorageFee(account: String, period: Int)
   }
   object Result {
     final case class Address(address: String)
+    final case class Fee(fee: String)
   }
 
   import io.circe.generic.auto._
 
-  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.Address] { override val function: String = s"$module.convert_address" }
+  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.Address] { override val function: String = s"$module.convert_address"  }
+  implicit val calcStorageFee = new SdkCall[Request.CalcStorageFee, Result.Fee]     { override val function: String = s"$module.calc_storage_fee" }
 
 }

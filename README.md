@@ -19,7 +19,7 @@ Instead, a thin C wrapper is implemented. The wrapper translates Java calls into
 
 ## Compatibility
 
-The current version is compatible with Freeton client v1.10.0, JDK 1.8+ and Scala 2.12/2.13
+The current version is compatible with JDK 1.8+ and Scala 2.12/2.13
 
 We use CI on Linux Focal Fossa and MacOs X hosts (Intel and M1) to run our tests.
 
