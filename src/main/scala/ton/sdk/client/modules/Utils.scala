@@ -27,15 +27,23 @@ object Utils {
   object Request {
     final case class ConvertAddress(address: String, output_format: AddressStringFormat)
     final case class CalcStorageFee(account: String, period: Int)
+    final case class CompressZstd(uncompressed: String, level: Option[Int]) // 1 to 21
+    final case class DecompressZstd(compressed: String)                     // 1 to 21
+
   }
   object Result {
     final case class Address(address: String)
     final case class Fee(fee: String)
+    final case class Compressed(compressed: String)
+    final case class Decompressed(decompressed: String)
+
   }
 
   import io.circe.generic.auto._
 
-  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.Address] { override val function: String = s"$module.convert_address"  }
-  implicit val calcStorageFee = new SdkCall[Request.CalcStorageFee, Result.Fee]     { override val function: String = s"$module.calc_storage_fee" }
+  implicit val convertAddress = new SdkCall[Request.ConvertAddress, Result.Address]      { override val function: String = s"$module.convert_address"  }
+  implicit val calcStorageFee = new SdkCall[Request.CalcStorageFee, Result.Fee]          { override val function: String = s"$module.calc_storage_fee" }
+  implicit val compressZstd   = new SdkCall[Request.CompressZstd, Result.Compressed]     { override val function: String = s"$module.compress_zstd"    }
+  implicit val decompressZstd = new SdkCall[Request.DecompressZstd, Result.Decompressed] { override val function: String = s"$module.decompress_zstd"  }
 
 }
