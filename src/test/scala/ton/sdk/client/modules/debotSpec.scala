@@ -27,7 +27,8 @@ class State(var handle: Option[DebotHandle], var messages: Seq[String], var acti
   def print(): Unit = println(messageLog + "\n" + actionLog)
 }
 
-class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
+// disabled until debot interface stabilizes
+abstract class AsyncDebotSpec extends AsyncFlatSpec with SdkAssertions[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
   implicit private val timeout                             = 1.minute
