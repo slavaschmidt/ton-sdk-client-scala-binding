@@ -37,6 +37,7 @@ object Net {
     final case class SetEndpoints(endpoints: Seq[String])
     final case class AggregateCollection(collection: String, filter: Option[Json], fields: Option[Seq[FieldAggregation]]) extends QueryParams
     final case class BatchQuery(operations: Seq[QueryParams])
+    final case class QueryCounterparties(account: String, result: String, first: Option[Int], after: Option[String])
 
     case object Suspend
     case object Resume
@@ -68,5 +69,6 @@ object Net {
   implicit val find_last_shard_block = new SdkCall[Request.FindLastShardBlock, Result.LastShardBlock]         { override val function: String = s"$module.find_last_shard_block" }
   implicit val fetch_endpoints       = new SdkCall[Request.FetchEndpoints.type, EndpointsSet]                 { override val function: String = s"$module.fetch_endpoints"       }
   implicit val set_endpoints         = new SdkCall[Request.SetEndpoints, Unit]                                { override val function: String = s"$module.set_endpoints"         }
+  implicit val query_counterparties  = new SdkCall[Request.QueryCounterparties, Result.QueryCollection]       { override val function: String = s"$module.query_counterparties"  }
 
 }
