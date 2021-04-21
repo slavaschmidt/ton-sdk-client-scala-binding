@@ -226,4 +226,19 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertExpression(result)(_ == (()))
   }
 
+  it should "query_counterparties" in {
+    val result1 = devNet { implicit ctx =>
+      call(Request.QueryCounterparties(giverAddress, "counterparty last_message_id cursor", Some(5), None))
+    }
+    assertExpression(result1)(_.result.size == 5)
+    val result2 = ef.flatMap(result1) { r =>
+      val id = r.result(4).\\("cursor").head.asString
+      println(id)
+      devNet { implicit ctx =>
+        call(Request.QueryCounterparties(giverAddress, "counterparty last_message_id cursor", Some(5), id))
+      }
+    }
+    assertExpression(result2)(_.result != ef.unsafeGet(result1).result)
+  }
+
 }
