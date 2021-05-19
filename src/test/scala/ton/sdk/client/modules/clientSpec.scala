@@ -50,13 +50,15 @@ abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
+  private val versionNumber = "1.15.0"
+  
   behavior of "Client"
 
   it should "get expected version" in {
     val result = local { implicit ctx =>
       call(Request.Version)
     }
-    assertValue(result)(Result.Version("1.14.1"))
+    assertValue(result)(Result.Version(versionNumber))
   }
 
   it should "get response of type BuildInfo" in {
