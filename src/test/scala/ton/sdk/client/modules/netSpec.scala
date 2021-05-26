@@ -7,7 +7,7 @@ import org.scalatest.Succeeded
 import org.scalatest.flatspec.AsyncFlatSpec
 import ton.sdk.client.binding.{ClientConfig, Context, OrderBy}
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.modules.Net.{FieldAggregation, Request, Result}
+import ton.sdk.client.modules.Net.{FieldAggregation, Request, Result, suspend}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
@@ -239,6 +239,11 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       }
     }
     assertExpression(result2)(_.result != ef.unsafeGet(result1).result)
+  }
+
+  it should "query_transactiontree" in {
+    // TODO implement like in https://github.com/tonlabs/TON-SDK/blob/cc80feacd8672d7a41889b54bcd2b75d2099efcf/ton_client/src/net/tests.rs#L996
+    pending
   }
 
 }
