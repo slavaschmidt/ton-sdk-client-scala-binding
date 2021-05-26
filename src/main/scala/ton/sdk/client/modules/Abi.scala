@@ -58,16 +58,8 @@ object Abi {
     def fromTvc(tvc: String, public_key: Option[String], init_params: Option[StateInitParams]): StateInitSource = StateInitSource("Tvc", None, None, None, Option(tvc), public_key, init_params, None)
   }
 
-  final case class MessageSource(
-    `type`: String,
-    message: Option[String],
-    abi: Option[AbiJson],
-    address: Option[String],
-    deploy_set: Option[DeploySet],
-    call_set: Option[CallSet],
-    signer: Option[Signer],
-    processing_try_index: Option[Int]
-  )
+  final case class MessageSource(`type`: String, message: Option[String], abi: Option[AbiJson], address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Option[Signer], processing_try_index: Option[Int])
+
   object MessageSource {
     def fromEncoded(message: String, abi: Option[AbiJson]): MessageSource = MessageSource("Encoded", Option(message), abi, None, None, None, None, None)
     def fromEncodingParams(p: Request.EncodeMessage): MessageSource       = MessageSource("EncodingParams", None, Option(p.abi), p.address, p.deploy_set, p.call_set, Option(p.signer), p.processing_try_index)
