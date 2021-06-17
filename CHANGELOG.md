@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 1.16.1 Jun 17, 2021
+
+### Featured
+- Support for TON-Client (1.16.1 Jun 17, 2021)
+
 ## 1.16.0 May 26, 2021
 
 ### Featured

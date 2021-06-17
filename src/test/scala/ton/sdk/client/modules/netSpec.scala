@@ -226,7 +226,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertExpression(result)(_ == (()))
   }
 
-  it should "query_counterparties" in {
+  ignore should "query_counterparties" in {
     val result1 = devNet { implicit ctx =>
       call(Request.QueryCounterparties(giverAddress, "counterparty last_message_id cursor", Some(5), None))
     }

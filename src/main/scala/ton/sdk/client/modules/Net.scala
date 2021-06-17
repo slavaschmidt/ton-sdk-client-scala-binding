@@ -66,7 +66,7 @@ object Net {
     final case class AggregateCollection(collection: String, filter: Option[Json], fields: Option[Seq[FieldAggregation]]) extends QueryParams
     final case class BatchQuery(operations: Seq[QueryParams])
     final case class QueryCounterparties(account: String, result: String, first: Option[Int], after: Option[String])
-    final case class QueryTransactionTree(in_msg: String, abi_registry: Option[Seq[Abi[_]]])
+    final case class QueryTransactionTree(in_msg: String, abi_registry: Option[Seq[Abi[_]]], timeout: Long)
     case object Suspend
     case object Resume
   }
@@ -83,9 +83,9 @@ object Net {
   import io.circe.generic.extras.auto._
   import io.circe.generic.extras.Configuration
   implicit val encodeAbi: Encoder[Net.Abi[_]] = Encoder.instance {
-    case abi: Abi_Json => Encoder[Abi_Json].apply(abi)
-    case abi: Abi_Handle=> Encoder[Abi_Handle].apply(abi)
-    case abi: Abi_Contract=> Encoder[Abi_Contract].apply(abi)
+    case abi: Abi_Json       => Encoder[Abi_Json].apply(abi)
+    case abi: Abi_Handle     => Encoder[Abi_Handle].apply(abi)
+    case abi: Abi_Contract   => Encoder[Abi_Contract].apply(abi)
     case abi: Abi_Serialized => Encoder[Abi_Serialized].apply(abi)
   }
   implicit val encodeQueryTransactionTree: Encoder[QueryTransactionTree] =
