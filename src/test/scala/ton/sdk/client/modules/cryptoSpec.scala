@@ -35,6 +35,8 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
   }
 
   // TODO implement and  test RegisterSigningBox
+
+  // TODO implement and  test RegisterEncryptionBox
 }
 
 class SyncCryptoSpec extends CryptoSpec[Try] {
@@ -606,4 +608,17 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(result)("Invalid hex string: Odd number of digits\r\nhex: [bam]")
   }
 
+  it should "not get encryption box info" in {
+    val result = local { implicit ctx =>
+      call(Request.EncryptionBoxGetInfo(1))
+    }
+    assertSdkError(result)("Encryption box is not registered. ID 1")
+  }
+
+  it should "not remove encryption box info" in {
+    val result = local { implicit ctx =>
+      call(Request.RemoveEncryptionBox(1))
+    }
+    assertValue(result)(())
+  }
 }
