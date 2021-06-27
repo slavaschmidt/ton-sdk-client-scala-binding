@@ -1,10 +1,10 @@
 name := "freeton-sdk-client-scala-binding"
 
-version := "1.16.1-M1"
+version := "1.17.1"
 
 organization := "com.dancingcode"
 
-lazy val scala212 = "2.12.12"
+lazy val scala212 = "2.12.14"
 lazy val scala213 = "2.13.3"
 
 scalaVersion := scala212
