@@ -69,7 +69,15 @@ object Net {
     final case class QueryTransactionTree(in_msg: String, abi_registry: Option[Seq[Abi[_]]], timeout: Long)
     case object Suspend
     case object Resume
+    final case class CreateBlockIterator(start_time: Option[Long], end_time: Option[Long], shard_filter: Option[Seq[String]], result: Option[String])
+    final case class ResumeBlockIterator(resume_state: Json)
+    final case class CreateTransactionIterator(start_time: Option[Long], end_time: Option[Long], shard_filter: Option[Seq[String]], accounts_filter: Option[Seq[String]], result: Option[String], include_transfers: Option[Boolean])
+    final case class ResumeTransactionIterator(resume_state: Json, accounts_filter: Option[Seq[String]])
+    final case class IteratorNext(iterator: Long, limit: Option[Long], return_resume_state: Option[Boolean])
+    final case class RemoveIterator(handle: Long)
+
   }
+
   object Result {
     final case class Query(result: Json)
     final case class QueryCollection(result: Seq[Json])
@@ -78,6 +86,8 @@ object Net {
     final case class CollectionAggregation(values: Seq[Json])
     final case class BatchQuery(results: Seq[Json])
     final case class TransactionTree(messages: Seq[MessageNode], transactions: Seq[TransactionNode])
+    final case class RegisteredIterator(handle: Long)
+    final case class IteratorNext(items: Seq[Json], has_more: Boolean, resume_state: Option[Json])
   }
 
   import io.circe.generic.extras.auto._
@@ -93,19 +103,24 @@ object Net {
 
   implicit val genDevConfig: Configuration = Configuration.default.withDiscriminator("type")
 
-  implicit val query                  = new SdkCall[Request.Query, Result.Query]                               { override val function: String = s"$module.query"                  }
-  implicit val queryCollection        = new SdkCall[Request.QueryCollection, Result.QueryCollection]           { override val function: String = s"$module.query_collection"       }
-  implicit val waitForCollection      = new SdkCall[Request.WaitForCollection, Result.WaitForCollection]       { override val function: String = s"$module.wait_for_collection"    }
-  implicit val subscribeCollection    = new StreamingSdkCall[Request.SubscribeCollection, Handle, Json]        { override val function: String = s"$module.subscribe_collection"   }
-  implicit val unsubscribe            = new SdkCall[Request.Unsubscribe, Json]                                 { override val function: String = s"$module.unsubscribe"            }
-  implicit val aggregateCollection    = new SdkCall[Request.AggregateCollection, Result.CollectionAggregation] { override val function: String = s"$module.aggregate_collection"   }
-  implicit val batchQuery             = new SdkCall[Request.BatchQuery, Result.BatchQuery]                     { override val function: String = s"$module.batch_query"            }
-  implicit val suspend                = new SdkCall[Request.Suspend.type, Json]                                { override val function: String = s"$module.suspend"                }
-  implicit val resume                 = new SdkCall[Request.Resume.type, Json]                                 { override val function: String = s"$module.resume"                 }
-  implicit val find_last_shard_block  = new SdkCall[Request.FindLastShardBlock, Result.LastShardBlock]         { override val function: String = s"$module.find_last_shard_block"  }
-  implicit val fetch_endpoints        = new SdkCall[Request.FetchEndpoints.type, EndpointsSet]                 { override val function: String = s"$module.fetch_endpoints"        }
-  implicit val set_endpoints          = new SdkCall[Request.SetEndpoints, Unit]                                { override val function: String = s"$module.set_endpoints"          }
-  implicit val query_counterparties   = new SdkCall[Request.QueryCounterparties, Result.QueryCollection]       { override val function: String = s"$module.query_counterparties"   }
-  implicit val query_transaction_tree = new SdkCall[Request.QueryTransactionTree, Result.TransactionTree]      { override val function: String = s"$module.query_transaction_tree" }
-
+  implicit val query                       = new SdkCall[Request.Query, Result.Query]                                  { override val function: String = s"$module.query"                       }
+  implicit val queryCollection             = new SdkCall[Request.QueryCollection, Result.QueryCollection]              { override val function: String = s"$module.query_collection"            }
+  implicit val waitForCollection           = new SdkCall[Request.WaitForCollection, Result.WaitForCollection]          { override val function: String = s"$module.wait_for_collection"         }
+  implicit val subscribeCollection         = new StreamingSdkCall[Request.SubscribeCollection, Handle, Json]           { override val function: String = s"$module.subscribe_collection"        }
+  implicit val unsubscribe                 = new SdkCall[Request.Unsubscribe, Json]                                    { override val function: String = s"$module.unsubscribe"                 }
+  implicit val aggregateCollection         = new SdkCall[Request.AggregateCollection, Result.CollectionAggregation]    { override val function: String = s"$module.aggregate_collection"        }
+  implicit val batchQuery                  = new SdkCall[Request.BatchQuery, Result.BatchQuery]                        { override val function: String = s"$module.batch_query"                 }
+  implicit val suspend                     = new SdkCall[Request.Suspend.type, Json]                                   { override val function: String = s"$module.suspend"                     }
+  implicit val resume                      = new SdkCall[Request.Resume.type, Json]                                    { override val function: String = s"$module.resume"                      }
+  implicit val find_last_shard_block       = new SdkCall[Request.FindLastShardBlock, Result.LastShardBlock]            { override val function: String = s"$module.find_last_shard_block"       }
+  implicit val fetch_endpoints             = new SdkCall[Request.FetchEndpoints.type, EndpointsSet]                    { override val function: String = s"$module.fetch_endpoints"             }
+  implicit val set_endpoints               = new SdkCall[Request.SetEndpoints, Unit]                                   { override val function: String = s"$module.set_endpoints"               }
+  implicit val query_counterparties        = new SdkCall[Request.QueryCounterparties, Result.QueryCollection]          { override val function: String = s"$module.query_counterparties"        }
+  implicit val query_transaction_tree      = new SdkCall[Request.QueryTransactionTree, Result.TransactionTree]         { override val function: String = s"$module.query_transaction_tree"      }
+  implicit val create_block_iterator       = new SdkCall[Request.CreateBlockIterator, Result.RegisteredIterator]       { override val function: String = s"$module.create_block_iterator"       }
+  implicit val resume_block_iterator       = new SdkCall[Request.ResumeBlockIterator, Result.RegisteredIterator]       { override val function: String = s"$module.resume_block_iterator"       }
+  implicit val create_transaction_iterator = new SdkCall[Request.CreateTransactionIterator, Result.RegisteredIterator] { override val function: String = s"$module.create_transaction_iterator" }
+  implicit val resume_transaction_iterator = new SdkCall[Request.ResumeTransactionIterator, Result.RegisteredIterator] { override val function: String = s"$module.resume_transaction_iterator" }
+  implicit val iterator_next               = new SdkCall[Request.IteratorNext, Result.IteratorNext]                    { override val function: String = s"$module.iterator_next"               }
+  implicit val remove_iterator             = new SdkCall[Request.RemoveIterator, Unit]                                 { override val function: String = s"$module.remove_iterator"             }
 }
