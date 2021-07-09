@@ -12,7 +12,7 @@ import ton.sdk.client.modules.Processing
   * Network config.
   */
 final case class NetworkConfig(
-  server_address: String,
+  server_address: Option[String],
   endpoints: Seq[String],
   network_retries_count: Option[Int] = None,
   max_reconnect_timeout: Option[Int] = None,
@@ -39,11 +39,11 @@ final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Opt
   * Collection of known networks.
   */
 object ClientConfig {
-  def fromServer(server: String): ClientConfig = ClientConfig(Option(NetworkConfig(server, Seq(server))))
-  val MAIN_NET                                 = fromServer("main.ton.dev")
-  val DEV_NET                                  = fromServer("net.ton.dev")
-  val TEST_NET                                 = fromServer("testnet.ton.dev")
-  val LOCAL                                    = fromServer("127.0.0.1")
+  def fromServer(enpoints: String*): ClientConfig = ClientConfig(Option(NetworkConfig(None, enpoints)))
+  val MAIN_NET                                    = fromServer("https://main2.ton.dev/", "https://main3.ton.dev/", "https://main4.ton.dev/")
+  val DEV_NET                                     = fromServer("https://net1.ton.dev/", "https://net5.ton.dev/")
+  val TEST_NET                                    = fromServer("testnet.ton.dev")
+  val LOCAL                                       = fromServer("http://0.0.0.0/", "http://127.0.0.1/", " http://localhost/")
 }
 
 // TODO make type-safe like this:

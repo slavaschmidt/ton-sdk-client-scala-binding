@@ -74,6 +74,7 @@ object Abi {
     final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean)
     final case class EncodeAccount(state_init: StateInitSource, balance: Option[BigInt], last_trans_lt: Option[BigInt], last_paid: Option[BigDecimal])
     final case class EncodeInternalMessage(abi: Option[AbiJson], address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean], src_address: Option[String] = None)
+    final case class DecodeAccountData(abi: AbiJson, data: String)
   }
 
   object Result {
@@ -84,6 +85,7 @@ object Abi {
     final case class EncodeAccount(account: String, id: String)
     final case class AttachSignature(message: String, message_id: String)
     final case class EncodeInternalMessage(message: String, address: String, message_id: String)
+    final case class AccountData(data: Json)
   }
 
   import io.circe.generic.auto._
@@ -96,4 +98,5 @@ object Abi {
   implicit val decodeMessageBody     = new SdkCall[Request.DecodeMessageBody, Result.DecodedMessageBody]                      { override val function: String = s"$module.decode_message_body"              }
   implicit val encodeAccount         = new SdkCall[Request.EncodeAccount, Result.EncodeAccount]                               { override val function: String = s"$module.encode_account"                   }
   implicit val encodeInternalMessage = new SdkCall[Request.EncodeInternalMessage, Result.EncodeInternalMessage]               { override val function: String = s"$module.encode_internal_message"          }
+  implicit val decodeAccountData     = new SdkCall[Request.DecodeAccountData, Result.AccountData]                             { override val function: String = s"$module.decode_account_data"              }
 }

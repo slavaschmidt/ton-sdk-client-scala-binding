@@ -108,4 +108,23 @@ abstract class UtilsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertValue(result)((expected, uncompressed))
   }
+
+  it should "get_address_type" in {
+    val hex = local { implicit ctx =>
+      call(Request.GetAddressType("0:919db8e740d50bf349df2eea03fa30c385d846b991ff5542e67098ee833fc7f7"))
+    }
+    assertValue(hex)(Result.AddressType("Hex"))
+    val account = local { implicit ctx =>
+      call(Request.GetAddressType("919db8e740d50bf349df2eea03fa30c385d846b991ff5542e67098ee833fc7f7"))
+    }
+    assertValue(account)(Result.AddressType("AccountId"))
+    val base64 = local { implicit ctx =>
+      call(Request.GetAddressType("EQCRnbjnQNUL80nfLuoD-jDDhdhGuZH_VULmcJjugz_H9wam"))
+    }
+    assertValue(base64)(Result.AddressType("Base64"))
+    val result = local { implicit ctx =>
+      call(Request.GetAddressType("this is my address"))
+    }
+    assertSdkError(result)("Invalid address [fatal error]: this is my address")
+  }
 }
