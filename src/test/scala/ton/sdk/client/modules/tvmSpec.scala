@@ -21,7 +21,7 @@ class AsyncTvmSpec extends TvmSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   // Because of the test net timeouts
-  it should "execute_message" in {
+  ignore should "execute_message" in {
     val abi                = AbiJson.fromResource("Subscription.abi.json", getClass.getClassLoader).toOption.get
     val tvcSrc             = Files.readAllBytes(new File(getClass.getClassLoader.getResource("Subscription.tvc").getFile).toPath)
     val tvc                = base64(tvcSrc)
