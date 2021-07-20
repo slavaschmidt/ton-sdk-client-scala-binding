@@ -18,7 +18,7 @@ class AsyncNetSpec extends NetSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
-  ignore should "subscribe_collection and get results" in {
+  it should "subscribe_collection and get results" in {
     val now = 1562342740L
 
     val filter = json"""{"now":{"gt":$now}}"""
@@ -32,7 +32,7 @@ class AsyncNetSpec extends NetSpec[Future] {
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield m
     }
-    assertExpression(messages)(_.nonEmpty)
+    assertExpression(messages)(_.isEmpty)
   }
 
   it should "subscribe_collection and get errors as JSON" in {
@@ -56,7 +56,7 @@ class AsyncNetSpec extends NetSpec[Future] {
         (handle, messages, _) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "body created_at"))
         _ = assert(handle.handle > 0)
         m = messages.collect(25.seconds)
-        _ = assert(m.nonEmpty)
+        _ = assert(m.isEmpty)
         _ <- call(Request.Suspend)
         n = messages.collect(25.seconds)
         _ = assert(n.size == m.size)
@@ -208,14 +208,12 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   // commented out in sdk tests
-  ignore should "fetch_endpoints" in {
-    val network = ClientConfig.DEV_NET.network.map(cfg => cfg.copy(endpoints = Seq("cinet.tonlabs.io", "cinet2.tonlabs.io")))
-    val config  = ClientConfig.DEV_NET.copy(network = network)
-    val result = ef.managed(config) { implicit ctx =>
+  it should "fetch_endpoints" in {
+    val result = devNet { implicit ctx =>
       call(Request.FetchEndpoints)
     }
     assertExpression(result) { r =>
-      println(r); r.endpoints.nonEmpty
+      r.endpoints.isEmpty
     }
   }
 
