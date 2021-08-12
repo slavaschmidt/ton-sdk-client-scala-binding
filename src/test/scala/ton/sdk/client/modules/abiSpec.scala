@@ -229,7 +229,6 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
         call(Request.EncodeInternalMessage(Option(abi), None, deploySet, callSet, "0", None, None))
     }
     assertExpression(resultF) { r: Result.EncodeInternalMessage =>
-      println(r.message)
       r.address == "0:84a9510b0278047154b1b84b6dd445c1349d8d42d75a2eece07b72ad6e4ea136" &&
         r.message_id == expectedMessageId && expectedBoc.forall(_ == r.message)
     }

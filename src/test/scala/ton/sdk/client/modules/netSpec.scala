@@ -32,7 +32,7 @@ class AsyncNetSpec extends NetSpec[Future] {
         _ <- call(Request.Unsubscribe(handle.handle))
       } yield m
     }
-    assertExpression(messages)(_.isEmpty)
+    assertExpression(messages)(_.nonEmpty)
   }
 
   it should "subscribe_collection and get errors as JSON" in {
@@ -48,7 +48,7 @@ class AsyncNetSpec extends NetSpec[Future] {
     assertExpression(errors)(_.nonEmpty)
   }
 
-  ignore should "suspend resume" in {
+  it should "suspend resume" in {
     val filter = Map("created_at" -> Map("gt" -> (System.currentTimeMillis / 1000))).asJson
 
     val result = devNet { implicit ctx =>
@@ -56,7 +56,7 @@ class AsyncNetSpec extends NetSpec[Future] {
         (handle, messages, _) <- callS(Request.SubscribeCollection("messages", filter = Option(filter), result = "body created_at"))
         _ = assert(handle.handle > 0)
         m = messages.collect(25.seconds)
-        _ = assert(m.isEmpty)
+        _ = assert(m.nonEmpty)
         _ <- call(Request.Suspend)
         n = messages.collect(25.seconds)
         _ = assert(n.size == m.size)
@@ -231,7 +231,6 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertExpression(result1)(_.result.size == 5)
     val result2 = ef.flatMap(result1) { r =>
       val id = r.result(4).\\("cursor").head.asString
-      println(id)
       devNet { implicit ctx =>
         call(Request.QueryCounterparties(giverAddress, "counterparty last_message_id cursor", Some(5), id))
       }

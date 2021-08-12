@@ -170,7 +170,7 @@ abstract class TvmSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.RunGet(elector.account, "unknown_function"))
     }
-    assertSdkError(result)("Contract execution was terminated with error: code 11, value: 111484, exit code: 11 (unknown error). For more information about exit code check the contract source code or ask the contract developer")
+    assertSdkError(result)("Contract execution was terminated with error: Unknown error, exit code: 11 (unknown error).\nTip: For more information about exit code check the contract source code or ask the contract developer")
   }
 
   val expectedParticipantList =
