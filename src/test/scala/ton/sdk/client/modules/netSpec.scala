@@ -18,7 +18,8 @@ class AsyncNetSpec extends NetSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
-  it should "subscribe_collection and get results" in {
+  // this test is oscillating
+  ignore  should "subscribe_collection and get results" in {
     val now = 1562342740L
 
     val filter = json"""{"now":{"gt":$now}}"""
@@ -48,7 +49,8 @@ class AsyncNetSpec extends NetSpec[Future] {
     assertExpression(errors)(_.nonEmpty)
   }
 
-  it should "suspend resume" in {
+  // this test is oscillating
+  ignore should "suspend resume" in {
     val filter = Map("created_at" -> Map("gt" -> (System.currentTimeMillis / 1000))).asJson
 
     val result = devNet { implicit ctx =>
