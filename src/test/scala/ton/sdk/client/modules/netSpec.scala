@@ -96,7 +96,7 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.QueryCollection("blocks_signatures", result = "id", limit = Option(1)))
     }
-    assertExpression(result)(_.result.isEmpty)
+    assertExpression(result)(_.result.nonEmpty)
   }
 
   it should "query_collection accounts" in {
@@ -204,8 +204,8 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.FindLastShardBlock(giverAddress))
     }
-    // assertExpression(result)(_.block_id.length == 64)
-    assertSdkError(result)("No blocks for workchain 0 found")
+    assertExpression(result)(_.block_id.length == 64)
+    //assertSdkError(result)("No blocks for workchain 0 found")
   }
 
   it should "not find_last_shard_block" in {
