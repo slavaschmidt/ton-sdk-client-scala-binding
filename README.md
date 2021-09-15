@@ -28,11 +28,10 @@ Following systems confirmed to be compatible:
 - Ubuntu Linux (bionic 18-04)
 - Windows 10 x64
 - MacOs X (Catalina 10.15)
-- macOs (Big Sur 11.2)
-- OpenJDK 8
+- macOs Big Sur
+- macOs Monterey
 - OpenJDK 11
 - OpenJDK 16
-- OracleJDK 1.8.0
 
 
 ## Prerequisites

@@ -10,6 +10,7 @@ import ton.sdk.client.modules.Crypto._
 import ton.sdk.client.binding.Context
 import ton.sdk.client.modules.Crypto.Result.{Signature, SuccessFlag, Validity}
 
+import java.util.Base64
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
@@ -34,9 +35,22 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
     assertValue(result)(Succeeded)
   }
 
-  // TODO implement and  test RegisterSigningBox
+  it should "create encryption box" in {
+    def load(name: String) = getClass.getClassLoader.getResourceAsStream(name).readAllBytes()
+    val iv = bytesAsHex(load("aes.iv.bin"))
+    val encryptionKey = bytesAsHex(load("aes128.key.bin"))
+    val data = new String(Base64.getEncoder.encode(load("aes.plaintext.bin")))
+    val encrypted = new String(Base64.getEncoder.encode(load("cbc-aes128.ciphertext.bin")))
+    val result = local { implicit ctx =>
+      for {
+        handle <- call(Request.CreateEncryptionBox(EncryptionAlgorithm(AesParams("CBC", encryptionKey, Option(iv)))))
+        enc <- call(Request.EncryptionBoxEncrypt(handle.handle, data))
+        dec <- call(Request.EncryptionBoxDecrypt(handle.handle, encrypted))
+      } yield (enc.data, dec.data)
+    }
+    assertValue(result)((encrypted, data))
+  }
 
-  // TODO implement and  test RegisterEncryptionBox
 }
 
 class SyncCryptoSpec extends CryptoSpec[Try] {
@@ -620,5 +634,14 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.RemoveEncryptionBox(1))
     }
     assertValue(result)(())
+  }
+
+
+  def bytesAsHex(bytes: Array[Byte]): String = {
+    val sb = new StringBuilder
+    for (b <- bytes) {
+      sb.append(String.format("%02x", Byte.box(b)))
+    }
+    sb.toString
   }
 }

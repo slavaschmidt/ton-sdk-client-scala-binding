@@ -36,11 +36,6 @@ jobs:
     docker:
       - image: 'circleci/openjdk:11-jdk'
 
-  build-linux-8:
-    <<: *build-linux
-    docker:
-      - image: 'circleci/openjdk:8-jdk'
-
   build-windows:
     executor: win/default
 
@@ -64,7 +59,6 @@ jobs:
 workflows:
   build:
     jobs:
-      - build-linux-8
       - build-linux-11
       - build-linux-16
 
