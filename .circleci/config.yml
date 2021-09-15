@@ -59,7 +59,6 @@ jobs:
 workflows:
   build:
     jobs:
-      - build-linux-8
       - build-linux-11
       - build-linux-16
 
