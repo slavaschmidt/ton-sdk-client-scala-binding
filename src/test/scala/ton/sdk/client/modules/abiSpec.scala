@@ -27,7 +27,6 @@ class AsyncAbiSpec extends AbiSpec[Future] {
     val expectedUpdated = "te6ccgEBBwEARwABAcABAgPPoAQCAQFIAwAWc29tZSBzdHJpbmcCASAGBQADHuAAQQiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIoA=="
     val pubKey = asHex(new String(Array.fill[Byte](32)(0x22)))
     val initialPubkey = asHex(new String(Array.fill[Byte](64)(0)))
-    println(initialPubkey)
     val a = local { implicit ctx =>
       for {
         data <- call(Boc.Request.DecodeTvc(tvc("t24_initdata"), None))
