@@ -183,6 +183,11 @@ object Boc {
     final case class CacheSet(boc: String, cache_type: BocCacheType)
     final case class CacheUnpin(pin: String, boc_ref: Option[String])
     final case class EncodeBoc(builder: Seq[BuilderOp], boc_cache: Option[BocCacheType])
+    final case class GetCodeSalt(code: String, boc_cache: Option[BocCacheType])
+    final case class SetCodeSalt(code: String, salt: String, boc_cache: Option[BocCacheType])
+    final case class EncodeTvc(code: Option[String], data: Option[String], library: Option[String], tick: Option[Boolean], tock: Option[Boolean], split_depth: Option[Int], boc_cache: Option[BocCacheType])
+    final case class DecodeTvc(tvc: String, boc_cache: Option[BocCacheType])
+    final case class GetCompilerVersion(code: String)
   }
   object Result {
     final case class Parsed[T](parsed: T)
@@ -192,6 +197,11 @@ object Boc {
     final case class CacheGet(boc: Option[String])
     final case class CacheSet(boc_ref: String)
     final case class EncodedBoc(boc: String)
+    final case class CodeSaltSalt(salt: Option[String])
+    final case class CodeSaltCode(code: String)
+    final case class DecodedTvc(code: Option[String], data: Option[String], library: Option[String], tick: Option[Boolean], tock: Option[Boolean], split_depth: Option[Int])
+    final case class EncodedTvc(tvc: String)
+    final case class CompilerVersion(version: Option[String])
   }
 
   import io.circe.generic.auto._
@@ -209,5 +219,10 @@ object Boc {
   implicit val cacheGet            = new SdkCall[Request.CacheGet, Result.CacheGet]                    { override val function: String = s"$module.cache_get"             }
   implicit val cacheUnpin          = new SdkCall[Request.CacheUnpin, Unit]                             { override val function: String = s"$module.cache_unpin"           }
   implicit val encodeBoc           = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                 { override val function: String = s"$module.encode_boc"            }
+  implicit val getCodeSalt         = new SdkCall[Request.GetCodeSalt, Result.CodeSaltSalt]             { override val function: String = s"$module.get_code_salt"         }
+  implicit val setCodeSalt         = new SdkCall[Request.SetCodeSalt, Result.CodeSaltCode]             { override val function: String = s"$module.set_code_salt"         }
+  implicit val encodeTvc           = new SdkCall[Request.EncodeTvc, Result.EncodedTvc]                 { override val function: String = s"$module.encode_tvc"            }
+  implicit val decodeTvc           = new SdkCall[Request.DecodeTvc, Result.DecodedTvc]                 { override val function: String = s"$module.decode_tvc"            }
+  implicit val getCompilerVersion  = new SdkCall[Request.GetCompilerVersion, Result.CompilerVersion]   { override val function: String = s"$module.get_compiler_version"  }
 
 }
