@@ -1,18 +1,21 @@
 package ton.sdk.client.modules
 
 import io.circe.jawn.decode
+import org.scalatest.Assertion
 import org.scalatest.flatspec._
 import ton.sdk.client.binding._
 import ton.sdk.client.modules.Boc.{cacheTypePinned, _}
 import ton.sdk.client.binding.Context.{call, _}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.io.Source
 import scala.language.higherKinds
 import scala.util.Try
 
 class AsyncBocSpec extends BocSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
+  private val cl = getClass.getClassLoader
 
   private val boc1 =
     "te6ccgEBAQEAWAAAq2n+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE/zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzSsG8DgAAAAAjuOu9NAL7BxYpA"
@@ -51,6 +54,35 @@ class AsyncBocSpec extends BocSpec[Future] {
         ref1 <- call(Request.CacheSet(boc1, cacheTypeUnpinned))
         bocA <- call(Request.CacheGet(ref1.boc_ref))
       } yield bocA.boc.get == boc1
+    }
+    assertValue(result)(true)
+  }
+
+  // scalafmt: { maxColumn = 3000 }
+  it should "get_code_salt and set_code_salt" in {
+    checkSalt("old_cpp_sel_nosalt.boc", None, "te6ccgEBAQEAJAAAQ4AGPqCXQ2drhdqhLLt3rJ80LxA65YMTwgWLLUmt9EbElFA=", None)
+    checkSalt("old_cpp_sel_salt.boc", Some("te6ccgEBAQEAJAAAQ4AGPqCXQ2drhdqhLLt3rJ80LxA65YMTwgWLLUmt9EbElFA="), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", None)
+    checkSalt("new_sel_nodict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", Some("new_sel_nodict_salt.boc"))
+    checkSalt("new_sel_nodict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF", None)
+    checkSalt("new_sel_dict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF", Some("new_sel_dict_salt.boc"))
+    checkSalt("new_sel_dict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa", None)
+    checkSalt("mycode_sel_nodict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa", Some("mycode_sel_nodict_salt.boc"))
+    checkSalt("mycode_sel_nodict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG", None)
+    checkSalt("mycode_sel_dict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG", Some("mycode_sel_dict_salt.boc"))
+    checkSalt("mycode_sel_dict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", None)
+  }
+
+  private def checkSalt(name: String, readSalt: Option[String], setSalt: String, nameWithSalt: Option[String]): Assertion = {
+    val source = cl.getResourceAsStream(s"boc_salt/$name").readAllBytes()
+    val code = base64(source)
+    // val nameWS = nameWithSalt.map(n => base64(Source.fromResource(s"salt/$n").mkString))
+    val result = local { implicit ctx =>
+      for {
+        salt        <- call(Request.GetCodeSalt(code, None))
+        setResult   <- call(Request.SetCodeSalt(code, setSalt, Option(cacheTypeUnpinned)))
+        _           <- Future.successful(nameWithSalt.foreach(_ => call(Request.CacheGet(setResult.code))))
+        finalResult <- call(Request.GetCodeSalt(setResult.code, None))
+      } yield finalResult.salt.get == setSalt && salt.salt == readSalt
     }
     assertValue(result)(true)
   }
@@ -209,7 +241,20 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "encode_boc" in {
     import BuilderOp._
     val c = Seq(bitString("n101100111000"), bitString("N100111000"), i(3, -1), i(3, 2), i(16, Integer.parseInt("100111000", 2)), i(16, 0x123), i(16, 0x123), i(16, -0x123))
-    val builder = Seq(b(1), b(0), u8(255), i8(127), i8(-127), u128(123456789123456789L), bitString("8A_"), bitString("x{8A0_}"), bitString("123"), bitString("x2d9_"), bitString("80_"), cell(c))
+    val builder = Seq(
+      b(1),
+      b(0),
+      u8(255),
+      i8(127),
+      i8(-127),
+      u128(123456789123456789L),
+      bitString("8A_"),
+      bitString("x{8A0_}"),
+      bitString("123"),
+      bitString("x2d9_"),
+      bitString("80_"),
+      cell(c)
+    )
     val result = local { implicit ctx =>
       call(Request.EncodeBoc(builder, None))
     }
