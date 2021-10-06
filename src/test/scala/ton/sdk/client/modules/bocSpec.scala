@@ -6,16 +6,16 @@ import org.scalatest.flatspec._
 import ton.sdk.client.binding._
 import ton.sdk.client.modules.Boc.{cacheTypePinned, _}
 import ton.sdk.client.binding.Context.{call, _}
+import ton.sdk.client.modules.Boc.Result.{CompilerVersion, DecodedTvc}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.Source
 import scala.language.higherKinds
 import scala.util.Try
 
 class AsyncBocSpec extends BocSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
-  private val cl = getClass.getClassLoader
+  private val cl                                           = getClass.getClassLoader
 
   private val boc1 =
     "te6ccgEBAQEAWAAAq2n+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE/zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzSsG8DgAAAAAjuOu9NAL7BxYpA"
@@ -58,23 +58,82 @@ class AsyncBocSpec extends BocSpec[Future] {
     assertValue(result)(true)
   }
 
-  // scalafmt: { maxColumn = 3000 }
+  it should "get_compiler_version" in {
+    val result = local { implicit ctx =>
+      for {
+        code    <- call(Request.DecodeTvc(tvc("t24_initdata"), None))
+        version <- call(Request.GetCompilerVersion(code.code.get))
+      } yield version
+    }
+    assertValue(result)(CompilerVersion(Some("sol 0.51.0")))
+  }
+
   it should "get_code_salt and set_code_salt" in {
     checkSalt("old_cpp_sel_nosalt.boc", None, "te6ccgEBAQEAJAAAQ4AGPqCXQ2drhdqhLLt3rJ80LxA65YMTwgWLLUmt9EbElFA=", None)
-    checkSalt("old_cpp_sel_salt.boc", Some("te6ccgEBAQEAJAAAQ4AGPqCXQ2drhdqhLLt3rJ80LxA65YMTwgWLLUmt9EbElFA="), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", None)
+    checkSalt(
+      "old_cpp_sel_salt.boc",
+      Some("te6ccgEBAQEAJAAAQ4AGPqCXQ2drhdqhLLt3rJ80LxA65YMTwgWLLUmt9EbElFA="),
+      "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk",
+      None
+    )
     checkSalt("new_sel_nodict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", Some("new_sel_nodict_salt.boc"))
-    checkSalt("new_sel_nodict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF", None)
+    checkSalt(
+      "new_sel_nodict_salt.boc",
+      Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk"),
+      "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF",
+      None
+    )
     checkSalt("new_sel_dict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF", Some("new_sel_dict_salt.boc"))
-    checkSalt("new_sel_dict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa", None)
+    checkSalt(
+      "new_sel_dict_salt.boc",
+      Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABF"),
+      "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa",
+      None
+    )
     checkSalt("mycode_sel_nodict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa", Some("mycode_sel_nodict_salt.boc"))
-    checkSalt("mycode_sel_nodict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG", None)
+    checkSalt(
+      "mycode_sel_nodict_salt.boc",
+      Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKa"),
+      "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG",
+      None
+    )
     checkSalt("mycode_sel_dict_nosalt.boc", None, "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG", Some("mycode_sel_dict_salt.boc"))
-    checkSalt("mycode_sel_dict_salt.boc", Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG"), "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk", None)
+    checkSalt(
+      "mycode_sel_dict_salt.boc",
+      Some("te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACG"),
+      "te6ccgEBAQEAIgAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADk",
+      None
+    )
   }
+
+  it should "encode_tvc and decode_tvc" in {
+    val decoded = Result.DecodedTvc(
+      code = Some("te6ccgECFAEAA6EAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/P9/Ie1E0CDXScIBn9P/0wD0Bfhqf/hh+Gb4Yo4b9AVt+GpwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4SgQIA1xgg+QFY+EIg+GX5EPKo3iP4QvhFIG6SMHDeuvLgZSHTP9MfNDH4IyEBvvK5IfkAIPhKgQEA9A4gkTHeswUATvLgZvgAIfhKIgFVAcjLP1mBAQD0Q/hqIwRfBNMfAfAB+EdukvI83gIBIAwHAgFYCwgBCbjomPxQCQH++EFujhLtRNDT/9MA9AX4an/4Yfhm+GLe0XBtbwL4SoEBAPSGlQHXCz9/k3BwcOKRII43IyMjbwJvIsgizwv/Ic8LPzExAW8iIaQDWYAg9ENvAjQi+EqBAQD0fJUB1ws/f5NwcHDiAjUzMehfA8iCEHdEx+KCEIAAAACxzwsfIQoAom8iAssf9ADIglhgAAAAAAAAAAAAAAAAzwtmgQOYIs8xAbmWcc9AIc8XlXHPQSHN4iDJcfsAWzDA/44S+ELIy//4Rs8LAPhKAfQAye1U3n/4ZwDFuRar5/8ILdHG3aiaBBrpOEAz+n/6YB6Avw1P/ww/DN8MUcN+gK2/DU4AMAgegd5XuuF//wxOHwxuHwzP/ww8W98I0l5Gcm4/DNxfABo/CFkZf/8I2eFgHwlAPoAZPaqP/wzwAgEgDw0B17sV75NfhBbo4S7UTQ0//TAPQF+Gp/+GH4Zvhi3vpA1w1/ldTR0NN/39cMAJXU0dDSAN/RIiIic8hxzwsBIs8KAHPPQCTPFiP6AoBpz0Byz0AgySL7AF8F+EqBAQD0hpUB1ws/f5NwcHDikSCA4Ako4t+CMiAbuf+EojASEBgQEA9FswMfhq3iL4SoEBAPR8lQHXCz9/k3BwcOICNTMx6F8DXwP4QsjL//hGzwsA+EoB9ADJ7VR/+GcCASAREADHuORhh18ILdHCXaiaGn/6YB6Avw1P/ww/DN8MW9qaPwhfCKQN0kYOG9deXAy/AB8IWRl//wjZ4WAfCUA+gBk9qp8B5B9ghBodo92qfgBGHwhZGX//CNnhYB8JQD6AGT2qj/8M8AIC2hMSAC2vhCyMv/+EbPCwD4SgH0AMntVPgP8gCAB1pwIccAnSLQc9ch1wsAwAGQkOLgIdcNH5LyPOFTEcAAkODBAyKCEP////28sZLyPOAB8AH4R26S8jzeg="),
+      data = Some("te6ccgEBBQEANQABAcABAgPPIAQCAQHeAwAD0CAAQdgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA=="),
+      library = None,
+      split_depth = None,
+      tick = None,
+      tock = None
+    )
+
+    checkTvcEncodeDecode(tvc("GiverV2"), decoded)
+  }
+//    let tvc = base64::encode(include_bytes!("test_data/state_init_lib.boc"));
+//    let decoded = ResultOfDecodeTvc {
+//      code: Some(String::from("te6ccgEBBAEAhwABFP8A9KQT9LzyyAsBAgEgAwIA36X//3aiaGmP6f/o5CxSZ4WPkOeF/+T2qmRnxET/s2X/wQgC+vCAfQFANeegZLh9gEB354V/wQgD39JAfQFANeegZLhkZ82JA6Mrm6RBCAOt5or9AUA156BF6kMrY2N5YQO7e5NjIQxni2S4fYB9gEAAAtI=")),
+//      data: Some(String::from("te6ccgEBAQEAJgAASBHvVgMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==")),
+//      library: Some(String::from("te6ccgEBBgEAYAACAWIEAQFCv0EkKSBepm1vIATt+lcPb1az6F5ZuqG++8c7faXVW9xhAgEEEjQDAARWeAFCv1ou71BWd19blXL/OtY90qcdH7KByhd6Xhx0cw7MsuUTBQAPq6yrrausq6g=")),
+//      split_depth: None,
+//      tick: Some(true),
+//      tock: Some(true),
+//    };
+//
+//    check_encode_tvc(&client, tvc, decoded);
+//  }
 
   private def checkSalt(name: String, readSalt: Option[String], setSalt: String, nameWithSalt: Option[String]): Assertion = {
     val source = cl.getResourceAsStream(s"boc_salt/$name").readAllBytes()
-    val code = base64(source)
+    val code   = base64(source)
     // val nameWS = nameWithSalt.map(n => base64(Source.fromResource(s"salt/$n").mkString))
     val result = local { implicit ctx =>
       for {
@@ -83,6 +142,16 @@ class AsyncBocSpec extends BocSpec[Future] {
         _           <- Future.successful(nameWithSalt.foreach(_ => call(Request.CacheGet(setResult.code))))
         finalResult <- call(Request.GetCodeSalt(setResult.code, None))
       } yield finalResult.salt.get == setSalt && salt.salt == readSalt
+    }
+    assertValue(result)(true)
+  }
+
+  private def checkTvcEncodeDecode(tvc: String, decoded: DecodedTvc) = {
+    val result = local { implicit ctx =>
+      for {
+        result <- call(Request.DecodeTvc(tvc, None))
+        encoded <- call(Request.EncodeTvc(result.code, result.data, result.library, result.tick, result.tock, result.split_depth, None))
+      } yield result == decoded && encoded.tvc == tvc
     }
     assertValue(result)(true)
   }
