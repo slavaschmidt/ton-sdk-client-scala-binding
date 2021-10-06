@@ -1,5 +1,6 @@
 package ton.sdk.client.modules
 
+import io.circe.JsonObject
 import io.circe.literal._
 import io.circe.syntax._
 import org.scalatest.flatspec._
@@ -20,6 +21,24 @@ class SyncAbiSpec extends AbiSpec[Try] {
 class AsyncAbiSpec extends AbiSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
   implicit override val ef: Context.Effect[Future]         = futureEffect
+
+  it should "decode_initial_data and update_initial_data" in {
+    val initialData = JsonObject("a"-> 123.asJson, "s" -> "some string".asJson).asJson
+    val expectedUpdated = "te6ccgEBBwEARwABAcABAgPPoAQCAQFIAwAWc29tZSBzdHJpbmcCASAGBQADHuAAQQiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIoA=="
+    val pubKey = asHex(new String(Array.fill[Byte](32)(0x22)))
+    val initialPubkey = asHex(new String(Array.fill[Byte](64)(0)))
+    val a = local { implicit ctx =>
+      for {
+        data <- call(Boc.Request.DecodeTvc(tvc("t24_initdata"), None))
+        result <- call(Request.DecodeInitialData(Option(abiJson("t24_initdata")), data.data.get))
+        updated <- call(Request.UpdateInitialData(Option(abiJson("t24_initdata")), data.data.get, Some(initialData), Option(pubKey), None))
+      } yield result.initial_pubkey == initialPubkey &&
+        result.initial_data.contains(JsonObject.empty.asJson) &&
+        updated.data == expectedUpdated
+    }
+    assertValue(a)(true)
+  }
+
 }
 
 abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
@@ -222,6 +241,8 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val expectedBoc2 = Option("""te6ccgECFwEAA0kAAmliAEJUqIWBPAI4qljcJbbqIuCaTsaha60XdnA9uVa3J1CbAAAAAAAAAAAAAAAAAAIxotV8/gYBAQHAAgIDzyAFAwEB3gQAA9AgAEHYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgHI/38h7UTQINdJwgGOENP/0z/TANF/+GH4Zvhj+GKOGPQFcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLTAAGOHYECANcYIPkBAdMAAZTT/wMBkwL4QuIg+GX5EPKoldMAAfJ64tM/AQsAao4e+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+CANPI02NMfAfgjvPK50x8B8AH4R26S8jzeAgEgEg0CASAPDgC9uotV8/+EFujjXtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4t74RvJzcfhm0fgA+ELIy//4Q88LP/hGzwsAye1Uf/hngCASAREADluIAGtb8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFvfSDK6mjofSBv6PwikDdJGDhvfCFdeXAyfABkZP2CEGRnwoRnRoIEB9AAAAAAAAAAAAAAAAAAIGeLZMCAQH2AGHwhZGX//CHnhZ/8I2eFgGT2qj/8M8ADFuZPCot8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFva4b/yupo6Gn/7+j8AGRF7gAAAAAAAAAAAAAAAAhni2fA58jjyxi9EOeF/+S4/YAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAgFIFhMBCbi3xYJQFAH8+EFujhPtRNDT/9M/0wDRf/hh+Gb4Y/hi3tcN/5XU0dDT/9/R+ADIi9wAAAAAAAAAAAAAAAAQzxbPgc+Rx5YxeiHPC//JcfsAyIvcAAAAAAAAAAAAAAAAEM8Wz4HPklb4sEohzwv/yXH7ADD4QsjL//hDzws/+EbPCwDJ7VR/FQAE+GcActxwItDWAjHSADDcIccAkvI74CHXDR+S8jzhUxGS8jvhwQQighD////9vLGS8jzgAfAB+EdukvI83g==""".stripMargin)
     testEncodeInternalMessageDeploy(abi, tvc, callSet, expectedBoc2, "d9c17520aa562ce7f0d754eddf3ebe43f5608cd1f43f316089f099305b6d616e")
   }
+
+
 
   private def testEncodeInternalMessageDeploy(abi: AbiJson, tvc: String, callSet: Option[CallSet], expectedBoc: Option[String], expectedMessageId: String) = {
     val deploySet = Option(DeploySet(tvc))

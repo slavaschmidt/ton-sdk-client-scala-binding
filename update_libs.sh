@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
-wget http://binaries.tonlabs.io/tonclient_1_win32_lib.gz
-wget http://binaries.tonlabs.io/tonclient_1_win32_dll.gz
-wget http://binaries.tonlabs.io/tonclient_1_darwin.gz
-wget http://binaries.tonlabs.io/tonclient_1_darwin_arm64.gz
-wget http://binaries.tonlabs.io/tonclient_1_linux.gz
+wget https://binaries.tonlabs.io/tonclient_1_win32_lib.gz
+wget https://binaries.tonlabs.io/tonclient_1_win32_dll.gz
+wget https://binaries.tonlabs.io/tonclient_1_darwin.gz
+wget https://binaries.tonlabs.io/tonclient_1_darwin_arm64.gz
+wget https://binaries.tonlabs.io/tonclient_1_linux.gz
 
 gunzip tonclient_1_win32_lib.gz
 gunzip tonclient_1_win32_dll.gz

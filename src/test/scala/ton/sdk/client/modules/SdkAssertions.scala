@@ -37,7 +37,7 @@ trait SdkAssertions[T[_]] extends Assertions {
   }
 
   def sendGrams(address: String): T[Result.ResultOfProcessMessage] = {
-    val abi     = AbiJson.fromResource("Giver.abi.json", getClass.getClassLoader).toOption.get
+    val abi = abiJson("Giver", 1)
     val callSet = CallSet("grant", input = Option(Map("addr" -> address.asJson)))
     val params  = MessageEncodeParams(abi, Signer.none, Option(giverAddress), None, Option(callSet))
     devNet { implicit ctx =>
@@ -49,6 +49,12 @@ trait SdkAssertions[T[_]] extends Assertions {
     val tvcSrc = Files.readAllBytes(new File(getClass.getClassLoader.getResource(name).getFile).toPath)
     base64(tvcSrc)
   }
+
+  def tvc(name: String, abiVersion: Int = 2) =
+    tvcFromResource(s"contracts/abi_v$abiVersion/$name.tvc")
+
+  def abiJson(name: String, abiVersion: Int = 2) =
+    AbiJson.fromResource(s"contracts/abi_v$abiVersion/$name.abi.json", getClass.getClassLoader).toOption.get
 
   def asHex(j: Json)   = j.noSpaces.toList.map(_.toInt.toHexString).mkString
   def asHex(s: String) = s.toList.map(_.toInt.toHexString).mkString
