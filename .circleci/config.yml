@@ -29,12 +29,12 @@ jobs:
   build-linux-16:
     <<: *build-linux
     docker:
-      - image: 'circleci/openjdk:16.0.2-jdk-buster'
+      - image: 'cimg/openjdk:16.0.2-jdk-buster'
 
   build-linux-11:
     <<: *build-linux
     docker:
-      - image: 'ubuntu-2004:202107-02'
+      - image: 'cimg/openjdk:11.0.13-jdk-buster'
 
   build-windows:
     executor: win/default
