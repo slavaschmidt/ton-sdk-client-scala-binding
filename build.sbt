@@ -4,7 +4,7 @@ version := "1.24.0-M1"
 
 organization := "com.dancingcode"
 
-lazy val scala212 = "2.12.12"
+lazy val scala212 = "2.12.15"
 lazy val scala213 = "2.13.3"
 
 scalaVersion := scala212
