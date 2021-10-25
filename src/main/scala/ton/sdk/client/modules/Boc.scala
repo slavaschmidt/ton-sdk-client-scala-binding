@@ -188,6 +188,7 @@ object Boc {
     final case class EncodeTvc(code: Option[String], data: Option[String], library: Option[String], tick: Option[Boolean], tock: Option[Boolean], split_depth: Option[Int], boc_cache: Option[BocCacheType])
     final case class DecodeTvc(tvc: String, boc_cache: Option[BocCacheType])
     final case class GetCompilerVersion(code: String)
+    final case class GetBocDepth(boc: String)
   }
   object Result {
     final case class Parsed[T](parsed: T)
@@ -199,9 +200,23 @@ object Boc {
     final case class EncodedBoc(boc: String)
     final case class CodeSaltSalt(salt: Option[String])
     final case class CodeSaltCode(code: String)
-    final case class DecodedTvc(code: Option[String], data: Option[String], library: Option[String], tick: Option[Boolean], tock: Option[Boolean], split_depth: Option[Int])
     final case class EncodedTvc(tvc: String)
     final case class CompilerVersion(version: Option[String])
+    final case class BocDepth(depth: Int)
+
+    final case class DecodedTvc(
+      code: Option[String],
+      code_depth: Option[Int],
+      data: Option[String],
+      data_hash: Option[String],
+      data_depth: Option[Int],
+      library: Option[String],
+      tick: Option[Boolean],
+      tock: Option[Boolean],
+      split_depth: Option[Int],
+      compiler_version: Option[String]
+    )
+
   }
 
   import io.circe.generic.auto._
@@ -224,5 +239,5 @@ object Boc {
   implicit val encodeTvc           = new SdkCall[Request.EncodeTvc, Result.EncodedTvc]                 { override val function: String = s"$module.encode_tvc"            }
   implicit val decodeTvc           = new SdkCall[Request.DecodeTvc, Result.DecodedTvc]                 { override val function: String = s"$module.decode_tvc"            }
   implicit val getCompilerVersion  = new SdkCall[Request.GetCompilerVersion, Result.CompilerVersion]   { override val function: String = s"$module.get_compiler_version"  }
-
+  implicit val getBocDepth         = new SdkCall[Request.GetBocDepth, Result.BocDepth]                 { override val function: String = s"$module.get_boc_depth"         }
 }
