@@ -6,7 +6,9 @@ import io.circe.syntax._
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context._
 import ton.sdk.client.binding._
+import ton.sdk.client.modules.Abi.Result.DecodedBoc
 import ton.sdk.client.modules.Abi._
+import ton.sdk.client.modules.Net.AbiParam
 
 import java.io.File
 import java.nio.file.Files
@@ -23,18 +25,18 @@ class AsyncAbiSpec extends AbiSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   it should "decode_initial_data and update_initial_data" in {
-    val initialData = JsonObject("a"-> 123.asJson, "s" -> "some string".asJson).asJson
+    val initialData     = JsonObject("a" -> 123.asJson, "s" -> "some string".asJson).asJson
     val expectedUpdated = "te6ccgEBBwEARwABAcABAgPPoAQCAQFIAwAWc29tZSBzdHJpbmcCASAGBQADHuAAQQiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIoA=="
-    val pubKey = asHex(new String(Array.fill[Byte](32)(0x22)))
-    val initialPubkey = asHex(new String(Array.fill[Byte](64)(0)))
+    val pubKey          = asHex(new String(Array.fill[Byte](32)(0x22)))
+    val initialPubkey   = asHex(new String(Array.fill[Byte](64)(0)))
     val a = local { implicit ctx =>
       for {
-        data <- call(Boc.Request.DecodeTvc(tvc("t24_initdata"), None))
-        result <- call(Request.DecodeInitialData(Option(abiJson("t24_initdata")), data.data.get))
+        data    <- call(Boc.Request.DecodeTvc(tvc("t24_initdata"), None))
+        result  <- call(Request.DecodeInitialData(Option(abiJson("t24_initdata")), data.data.get))
         updated <- call(Request.UpdateInitialData(Option(abiJson("t24_initdata")), data.data.get, Some(initialData), Option(pubKey), None))
       } yield result.initial_pubkey == initialPubkey &&
-        result.initial_data.contains(JsonObject.empty.asJson) &&
-        updated.data == expectedUpdated
+      result.initial_data.contains(JsonObject.empty.asJson) &&
+      updated.data == expectedUpdated
     }
     assertValue(a)(true)
   }
@@ -234,24 +236,46 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertSdkError(encodedF)("Function `process_message` must not be used with external message signing.")
   }
 
+  val expectedBoc1 = Option(
+    """te6ccgECFwEAA0UAAmFiAEJUqIWBPAI4qljcJbbqIuCaTsaha60XdnA9uVa3J1CbAAAAAAAAAAAAAAAAAAIyBgEBAcACAgPPIAUDAQHeBAAD0CAAQdgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAIm/wD0pCAiwAGS9KDhiu1TWDD0oQkHAQr0pCD0oQgAAAIBIAwKAcj/fyHtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4dgQIA1xgg+QEB0wABlNP/AwGTAvhC4iD4ZfkQ8qiV0wAB8nri0z8BCwBqjh74QyG5IJ8wIPgjgQPoqIIIG3dAoLnekvhj4IA08jTY0x8B+CO88rnTHwHwAfhHbpLyPN4CASASDQIBIA8OAL26i1Xz/4QW6ONe1E0CDXScIBjhDT/9M/0wDRf/hh+Gb4Y/hijhj0BXABgED0DvK91wv/+GJw+GNw+GZ/+GHi3vhG8nNx+GbR+AD4QsjL//hDzws/+EbPCwDJ7VR/+GeAIBIBEQAOW4gAa1vwgt0cJ9qJoaf/pn+mAaL/8MPwzfDH8MW99IMrqaOh9IG/o/CKQN0kYOG98IV15cDJ8AGRk/YIQZGfChGdGggQH0AAAAAAAAAAAAAAAAAAgZ4tkwIBAfYAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAMW5k8Ki3wgt0cJ9qJoaf/pn+mAaL/8MPwzfDH8MW9rhv/K6mjoaf/v6PwAZEXuAAAAAAAAAAAAAAAACGeLZ8DnyOPLGL0Q54X/5Lj9gBh8IWRl//wh54Wf/CNnhYBk9qo//DPACAUgWEwEJuLfFglAUAfz4QW6OE+1E0NP/0z/TANF/+GH4Zvhj+GLe1w3/ldTR0NP/39H4AMiL3AAAAAAAAAAAAAAAABDPFs+Bz5HHljF6Ic8L/8lx+wDIi9wAAAAAAAAAAAAAAAAQzxbPgc+SVviwSiHPC//JcfsAMPhCyMv/+EPPCz/4Rs8LAMntVH8VAAT4ZwBy3HAi0NYCMdIAMNwhxwCS8jvgIdcNH5LyPOFTEZLyO+HBBCKCEP////28sZLyPOAB8AH4R26S8jze""".stripMargin
+  )
+
   it should "encode_internal_message" in {
-    val expectedBoc1 = Option("""te6ccgECFwEAA0UAAmFiAEJUqIWBPAI4qljcJbbqIuCaTsaha60XdnA9uVa3J1CbAAAAAAAAAAAAAAAAAAIyBgEBAcACAgPPIAUDAQHeBAAD0CAAQdgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAIm/wD0pCAiwAGS9KDhiu1TWDD0oQkHAQr0pCD0oQgAAAIBIAwKAcj/fyHtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4tMAAY4dgQIA1xgg+QEB0wABlNP/AwGTAvhC4iD4ZfkQ8qiV0wAB8nri0z8BCwBqjh74QyG5IJ8wIPgjgQPoqIIIG3dAoLnekvhj4IA08jTY0x8B+CO88rnTHwHwAfhHbpLyPN4CASASDQIBIA8OAL26i1Xz/4QW6ONe1E0CDXScIBjhDT/9M/0wDRf/hh+Gb4Y/hijhj0BXABgED0DvK91wv/+GJw+GNw+GZ/+GHi3vhG8nNx+GbR+AD4QsjL//hDzws/+EbPCwDJ7VR/+GeAIBIBEQAOW4gAa1vwgt0cJ9qJoaf/pn+mAaL/8MPwzfDH8MW99IMrqaOh9IG/o/CKQN0kYOG98IV15cDJ8AGRk/YIQZGfChGdGggQH0AAAAAAAAAAAAAAAAAAgZ4tkwIBAfYAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAMW5k8Ki3wgt0cJ9qJoaf/pn+mAaL/8MPwzfDH8MW9rhv/K6mjoaf/v6PwAZEXuAAAAAAAAAAAAAAAACGeLZ8DnyOPLGL0Q54X/5Lj9gBh8IWRl//wh54Wf/CNnhYBk9qo//DPACAUgWEwEJuLfFglAUAfz4QW6OE+1E0NP/0z/TANF/+GH4Zvhj+GLe1w3/ldTR0NP/39H4AMiL3AAAAAAAAAAAAAAAABDPFs+Bz5HHljF6Ic8L/8lx+wDIi9wAAAAAAAAAAAAAAAAQzxbPgc+SVviwSiHPC//JcfsAMPhCyMv/+EPPCz/4Rs8LAMntVH8VAAT4ZwBy3HAi0NYCMdIAMNwhxwCS8jvgIdcNH5LyPOFTEZLyO+HBBCKCEP////28sZLyPOAB8AH4R26S8jze""".stripMargin)
     testEncodeInternalMessageDeploy(abi, tvc, None, expectedBoc1, "9170a240d27f988c8d47a1a94d6630f1b67da11da365202c070c9fb4d938634a")
     val callSet = Option(CallSet("constructor"))
-    val expectedBoc2 = Option("""te6ccgECFwEAA0kAAmliAEJUqIWBPAI4qljcJbbqIuCaTsaha60XdnA9uVa3J1CbAAAAAAAAAAAAAAAAAAIxotV8/gYBAQHAAgIDzyAFAwEB3gQAA9AgAEHYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgHI/38h7UTQINdJwgGOENP/0z/TANF/+GH4Zvhj+GKOGPQFcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLTAAGOHYECANcYIPkBAdMAAZTT/wMBkwL4QuIg+GX5EPKoldMAAfJ64tM/AQsAao4e+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+CANPI02NMfAfgjvPK50x8B8AH4R26S8jzeAgEgEg0CASAPDgC9uotV8/+EFujjXtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4t74RvJzcfhm0fgA+ELIy//4Q88LP/hGzwsAye1Uf/hngCASAREADluIAGtb8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFvfSDK6mjofSBv6PwikDdJGDhvfCFdeXAyfABkZP2CEGRnwoRnRoIEB9AAAAAAAAAAAAAAAAAAIGeLZMCAQH2AGHwhZGX//CHnhZ/8I2eFgGT2qj/8M8ADFuZPCot8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFva4b/yupo6Gn/7+j8AGRF7gAAAAAAAAAAAAAAAAhni2fA58jjyxi9EOeF/+S4/YAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAgFIFhMBCbi3xYJQFAH8+EFujhPtRNDT/9M/0wDRf/hh+Gb4Y/hi3tcN/5XU0dDT/9/R+ADIi9wAAAAAAAAAAAAAAAAQzxbPgc+Rx5YxeiHPC//JcfsAyIvcAAAAAAAAAAAAAAAAEM8Wz4HPklb4sEohzwv/yXH7ADD4QsjL//hDzws/+EbPCwDJ7VR/FQAE+GcActxwItDWAjHSADDcIccAkvI74CHXDR+S8jzhUxGS8jvhwQQighD////9vLGS8jzgAfAB+EdukvI83g==""".stripMargin)
+    val expectedBoc2 = Option(
+      """te6ccgECFwEAA0kAAmliAEJUqIWBPAI4qljcJbbqIuCaTsaha60XdnA9uVa3J1CbAAAAAAAAAAAAAAAAAAIxotV8/gYBAQHAAgIDzyAFAwEB3gQAA9AgAEHYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgHI/38h7UTQINdJwgGOENP/0z/TANF/+GH4Zvhj+GKOGPQFcAGAQPQO8r3XC//4YnD4Y3D4Zn/4YeLTAAGOHYECANcYIPkBAdMAAZTT/wMBkwL4QuIg+GX5EPKoldMAAfJ64tM/AQsAao4e+EMhuSCfMCD4I4ED6KiCCBt3QKC53pL4Y+CANPI02NMfAfgjvPK50x8B8AH4R26S8jzeAgEgEg0CASAPDgC9uotV8/+EFujjXtRNAg10nCAY4Q0//TP9MA0X/4Yfhm+GP4Yo4Y9AVwAYBA9A7yvdcL//hicPhjcPhmf/hh4t74RvJzcfhm0fgA+ELIy//4Q88LP/hGzwsAye1Uf/hngCASAREADluIAGtb8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFvfSDK6mjofSBv6PwikDdJGDhvfCFdeXAyfABkZP2CEGRnwoRnRoIEB9AAAAAAAAAAAAAAAAAAIGeLZMCAQH2AGHwhZGX//CHnhZ/8I2eFgGT2qj/8M8ADFuZPCot8ILdHCfaiaGn/6Z/pgGi//DD8M3wx/DFva4b/yupo6Gn/7+j8AGRF7gAAAAAAAAAAAAAAAAhni2fA58jjyxi9EOeF/+S4/YAYfCFkZf/8IeeFn/wjZ4WAZPaqP/wzwAgFIFhMBCbi3xYJQFAH8+EFujhPtRNDT/9M/0wDRf/hh+Gb4Y/hi3tcN/5XU0dDT/9/R+ADIi9wAAAAAAAAAAAAAAAAQzxbPgc+Rx5YxeiHPC//JcfsAyIvcAAAAAAAAAAAAAAAAEM8Wz4HPklb4sEohzwv/yXH7ADD4QsjL//hDzws/+EbPCwDJ7VR/FQAE+GcActxwItDWAjHSADDcIccAkvI74CHXDR+S8jzhUxGS8jvhwQQighD////9vLGS8jzgAfAB+EdukvI83g==""".stripMargin
+    )
     testEncodeInternalMessageDeploy(abi, tvc, callSet, expectedBoc2, "d9c17520aa562ce7f0d754eddf3ebe43f5608cd1f43f316089f099305b6d616e")
   }
 
+  it should "decode_boc" in {
+    import ton.sdk.client.modules.Boc.BuilderOp
 
+    val params = Seq(
+      AbiParam("a", "uint32", None),
+      AbiParam("c", "bool", None)
+    )
+    val builder = Seq(
+      BuilderOp.u32(0),
+      BuilderOp.b(1)
+    )
+
+    val encodedF = local { implicit ctx =>
+      val boc = ef.unsafeGet(call(Boc.Request.EncodeBoc(builder, None)))
+      call(Request.DecodeBoc(params, boc.boc, allow_partial = false))
+    }
+    assertValue(encodedF)(DecodedBoc(JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson))
+  }
 
   private def testEncodeInternalMessageDeploy(abi: AbiJson, tvc: String, callSet: Option[CallSet], expectedBoc: Option[String], expectedMessageId: String) = {
     val deploySet = Option(DeploySet(tvc))
     val resultF = local { implicit ctx =>
-        call(Request.EncodeInternalMessage(Option(abi), None, deploySet, callSet, "0", None, None))
+      call(Request.EncodeInternalMessage(Option(abi), None, deploySet, callSet, "0", None, None))
     }
     assertExpression(resultF) { r: Result.EncodeInternalMessage =>
       r.address == "0:84a9510b0278047154b1b84b6dd445c1349d8d42d75a2eece07b72ad6e4ea136" &&
-        r.message_id == expectedMessageId && expectedBoc.forall(_ == r.message)
+      r.message_id == expectedMessageId && expectedBoc.forall(_ == r.message)
     }
   }
 

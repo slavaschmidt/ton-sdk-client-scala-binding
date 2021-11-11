@@ -4,6 +4,7 @@ import io.circe.{Json, ParsingFailure}
 import ton.sdk.client.binding.{CallSet, DeploySet, FunctionHeader, Signer}
 import ton.sdk.client.binding.Api._
 import ton.sdk.client.modules.Boc.BocCacheType
+import ton.sdk.client.modules.Net.AbiParam
 
 import scala.io.Source
 
@@ -78,6 +79,7 @@ object Abi {
     final case class DecodeAccountData(abi: AbiJson, data: String)
     final case class UpdateInitialData(abi: Option[AbiJson], data: String, initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
     final case class DecodeInitialData(abi: Option[AbiJson], data: String)
+    final case class DecodeBoc(params: Seq[AbiParam], boc: String, allow_partial: Boolean)
 
   }
 
@@ -92,6 +94,7 @@ object Abi {
     final case class AccountData(data: Json)
     final case class UpdatedInitialData(data: String)
     final case class DecodedInitialData(initial_data: Option[Json], initial_pubkey: String)
+    final case class DecodedBoc(data: Json)
   }
 
   import io.circe.generic.auto._
@@ -107,5 +110,6 @@ object Abi {
   implicit val decodeAccountData     = new SdkCall[Request.DecodeAccountData, Result.AccountData]                             { override val function: String = s"$module.decode_account_data"              }
   implicit val updateInitialData     = new SdkCall[Request.UpdateInitialData, Result.UpdatedInitialData]                      { override val function: String = s"$module.update_initial_data"              }
   implicit val decodeInitialData     = new SdkCall[Request.DecodeInitialData, Result.DecodedInitialData]                      { override val function: String = s"$module.decode_initial_data"              }
+  implicit val decodeBoc             = new SdkCall[Request.DecodeBoc, Result.DecodedBoc]                                      { override val function: String = s"$module.decode_boc"                       }
 
 }

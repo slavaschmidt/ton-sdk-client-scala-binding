@@ -142,3 +142,10 @@ object TvmErrors {
   val InvalidMessageType         = ClientErrorCode(413)
   val ContractExecutionError     = ClientErrorCode(414)
 }
+
+object ProofsErrorCode {
+  val InvalidData           = ClientErrorCode(901)
+  val ProofCheckFailed      = ClientErrorCode(902)
+  val InternalError         = ClientErrorCode(903)
+  val DataDiffersFromProven = ClientErrorCode(904)
+}
