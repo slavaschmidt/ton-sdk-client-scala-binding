@@ -165,6 +165,7 @@ object Boc {
 
     def b(value: Byte): BuilderOp              = integer(1, Json.fromInt(value.intValue()))
     def u128(value: BigInt): BuilderOp         = integer(128, Json.fromBigInt(value))
+    def u32(value: Long): BuilderOp            = integer(32, Json.fromLong(value))
     def u8(value: Long): BuilderOp             = integer(8, Json.fromLong(value))
     def i8(value: Long): BuilderOp             = u8(value)
     def i(size: Int, value: Number): BuilderOp = integer(size, Json.fromLong(value.longValue()))

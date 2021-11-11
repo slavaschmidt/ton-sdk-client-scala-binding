@@ -50,7 +50,7 @@ abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
-  private val versionNumber = "1.24.0"
+  private val versionNumber = "1.25.0"
 
   behavior of "Client"
 
@@ -76,8 +76,8 @@ abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     val api = ef.map(result)(_.api)
     assertExpression(api) { r =>
-      r.modules.length == 9 &&
-      r.modules.map(_.name).sorted == List("abi", "boc", "client", "crypto", "debot", "net", "processing", "tvm", "utils")
+      r.modules.length == 10 &&
+      r.modules.map(_.name).sorted == List("abi", "boc", "client", "crypto", "debot", "net", "processing", "proofs", "tvm", "utils")
     }
   }
 }
