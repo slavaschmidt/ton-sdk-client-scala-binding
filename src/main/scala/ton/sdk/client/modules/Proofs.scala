@@ -20,6 +20,7 @@ object Proofs {
   object Request {
     final case class ProofBlockData(block: Json)
     final case class ProofTransactionData(transaction: Json)
+    final case class ProofMessageData(message: Json)
   }
   object Result {
     final case class Address(address: String)
@@ -33,4 +34,6 @@ object Proofs {
 
   implicit val proof_block_data       = new SdkCall[Request.ProofBlockData, Unit]       { override val function: String = s"$module.proof_block_data"       }
   implicit val proof_transaction_data = new SdkCall[Request.ProofTransactionData, Unit] { override val function: String = s"$module.proof_transaction_data" }
+  implicit val proof_message_data = new SdkCall[Request.ProofMessageData, Unit] { override val function: String = s"$module.proof_message_data" }
+
 }
