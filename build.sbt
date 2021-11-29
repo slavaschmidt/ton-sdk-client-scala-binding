@@ -1,6 +1,6 @@
 name := "freeton-sdk-client-scala-binding"
 
-version := "1.25.0-M1"
+version := "1.26.0-M1"
 
 organization := "com.dancingcode"
 
@@ -13,7 +13,7 @@ scalaVersion := scala212
 
 libraryDependencies ++= Seq(
   "org.slf4j"      % "slf4j-api"       % "1.7.32",
-  "ch.qos.logback" % "logback-classic" % "1.2.6" % Provided,
+  "ch.qos.logback" % "logback-classic" % "1.2.7" % Provided,
   "org.scalatest"  %% "scalatest"      % "3.2.9" % Test
 )
 

@@ -186,4 +186,23 @@ abstract class ProofsSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertValue(result)(())
   }
 
+  it should "proof_message_data" in {
+    val id = "4a9389e2fa34a83db0c814674bc4c7569fd3e92042289e2b2d4802231ecabec9".asJson
+    val fields = """
+     |id
+     |boc
+     |created_lt(format:DEC)
+     |fwd_fee(format:DEC)
+     |ihr_fee(format:DEC)
+     |import_fee(format:DEC)
+     |value(format:DEC)
+     |value_other{value(format:DEC)}""".stripMargin
+    val query = Net.Request.QueryCollection("messages", fields, filter = Some(JsonObject("id" -> JsonObject("eq" -> id).asJson).asJson), limit = Option(1))
+
+    val result = mainNet { implicit ctx =>
+      val transactions = ef.unsafeGet(call(query))
+      call(Request.ProofMessageData(transactions.result.head))
+    }
+    assertValue(result)(())
+  }
 }
