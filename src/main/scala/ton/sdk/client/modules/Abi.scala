@@ -78,9 +78,9 @@ object Abi {
     final case class EncodeInternalMessage(abi: Option[AbiJson], address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean], src_address: Option[String] = None)
     final case class DecodeAccountData(abi: AbiJson, data: String)
     final case class UpdateInitialData(abi: Option[AbiJson], data: String, initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
+    final case class EncodeInitialData(abi: Option[AbiJson], initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
     final case class DecodeInitialData(abi: Option[AbiJson], data: String)
     final case class DecodeBoc(params: Seq[AbiParam], boc: String, allow_partial: Boolean)
-
   }
 
   object Result {
@@ -92,7 +92,7 @@ object Abi {
     final case class AttachSignature(message: String, message_id: String)
     final case class EncodeInternalMessage(message: String, address: String, message_id: String)
     final case class AccountData(data: Json)
-    final case class UpdatedInitialData(data: String)
+    final case class InitialData(data: String)
     final case class DecodedInitialData(initial_data: Option[Json], initial_pubkey: String)
     final case class DecodedBoc(data: Json)
   }
@@ -108,8 +108,9 @@ object Abi {
   implicit val encodeAccount         = new SdkCall[Request.EncodeAccount, Result.EncodeAccount]                               { override val function: String = s"$module.encode_account"                   }
   implicit val encodeInternalMessage = new SdkCall[Request.EncodeInternalMessage, Result.EncodeInternalMessage]               { override val function: String = s"$module.encode_internal_message"          }
   implicit val decodeAccountData     = new SdkCall[Request.DecodeAccountData, Result.AccountData]                             { override val function: String = s"$module.decode_account_data"              }
-  implicit val updateInitialData     = new SdkCall[Request.UpdateInitialData, Result.UpdatedInitialData]                      { override val function: String = s"$module.update_initial_data"              }
+  implicit val updateInitialData     = new SdkCall[Request.UpdateInitialData, Result.InitialData]                             { override val function: String = s"$module.update_initial_data"              }
   implicit val decodeInitialData     = new SdkCall[Request.DecodeInitialData, Result.DecodedInitialData]                      { override val function: String = s"$module.decode_initial_data"              }
+  implicit val encodeInitialData     = new SdkCall[Request.EncodeInitialData, Result.InitialData]                             { override val function: String = s"$module.encode_initial_data"              }
   implicit val decodeBoc             = new SdkCall[Request.DecodeBoc, Result.DecodedBoc]                                      { override val function: String = s"$module.decode_boc"                       }
 
 }

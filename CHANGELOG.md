@@ -1,6 +1,13 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## [1.27.1] – 2021-12-15
+
+### Featured
+- Support for TON-Client ([1.27.1] – 2021-12-09)
+- Support for TON-Client ([1.27.0] – 2021-12-03)
+- Support for TON-Client ([1.26.1] – 2021-12-01)
+
 ## [1.26.0] – 2021-11-27
 
 ### Featured
