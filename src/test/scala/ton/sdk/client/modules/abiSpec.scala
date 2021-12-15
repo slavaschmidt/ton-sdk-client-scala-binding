@@ -6,7 +6,7 @@ import io.circe.syntax._
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context._
 import ton.sdk.client.binding._
-import ton.sdk.client.modules.Abi.Result.DecodedBoc
+import ton.sdk.client.modules.Abi.Result.{DecodedBoc, InitialData}
 import ton.sdk.client.modules.Abi._
 import ton.sdk.client.modules.Net.AbiParam
 
@@ -266,6 +266,16 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Request.DecodeBoc(params, boc.boc, allow_partial = false))
     }
     assertValue(encodedF)(DecodedBoc(JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson))
+  }
+
+  it should "encode_initial_data " in {
+    val initialData = JsonObject("a" -> 123.asJson, "s" -> "some string".asJson).asJson
+    val expected    = InitialData("te6ccgEBBwEARwABAcABAgPPoAQCAQFIAwAWc29tZSBzdHJpbmcCASAGBQADHuAAQQiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIoA==")
+    val pubKey      = asHex(new String(Array.fill[Byte](32)(0x22)))
+    val encodedID = local { implicit ctx =>
+      call(Request.EncodeInitialData(Option(abiJson("t24_initdata")), Some(initialData), Option(pubKey), None))
+    }
+    assertValue(encodedID)(expected)
   }
 
   private def testEncodeInternalMessageDeploy(abi: AbiJson, tvc: String, callSet: Option[CallSet], expectedBoc: Option[String], expectedMessageId: String) = {

@@ -145,7 +145,6 @@ class AsyncBocSpec extends BocSpec[Future] {
       for {
         result  <- call(Request.DecodeTvc(tvc, None))
         encoded <- call(Request.EncodeTvc(result.code, result.data, result.library, result.tick, result.tock, result.split_depth, None))
-        _ = println(result)
       } yield result == decoded && encoded.tvc == tvc
     }
     assertValue(result)(true)
