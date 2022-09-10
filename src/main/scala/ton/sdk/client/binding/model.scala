@@ -21,7 +21,8 @@ final case class NetworkConfig(
   wait_for_timeout: Option[Int] = None,
   out_of_sync_threshold: Option[BigInt] = None,
   reconnect_timeout: Option[Int] = None,
-  access_key: Option[String] = None
+  access_key: Option[String] = None,
+  queries_protocol: Option[String] = None
 )
 
 final case class CryptoConfig(
