@@ -81,6 +81,8 @@ object Abi {
     final case class EncodeInitialData(abi: Option[AbiJson], initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
     final case class DecodeInitialData(abi: Option[AbiJson], data: String)
     final case class DecodeBoc(params: Seq[AbiParam], boc: String, allow_partial: Boolean)
+    final case class EncodeBoc(params: Seq[AbiParam], data: Json, boc_cache: Option[BocCacheType])
+
   }
 
   object Result {
@@ -95,6 +97,8 @@ object Abi {
     final case class InitialData(data: String)
     final case class DecodedInitialData(initial_data: Option[Json], initial_pubkey: String)
     final case class DecodedBoc(data: Json)
+    final case class EncodedBoc(boc: String)
+
   }
 
   import io.circe.generic.auto._
@@ -112,5 +116,5 @@ object Abi {
   implicit val decodeInitialData     = new SdkCall[Request.DecodeInitialData, Result.DecodedInitialData]                      { override val function: String = s"$module.decode_initial_data"              }
   implicit val encodeInitialData     = new SdkCall[Request.EncodeInitialData, Result.InitialData]                             { override val function: String = s"$module.encode_initial_data"              }
   implicit val decodeBoc             = new SdkCall[Request.DecodeBoc, Result.DecodedBoc]                                      { override val function: String = s"$module.decode_boc"                       }
-
+  implicit val encodeBoc             = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                                      { override val function: String = s"$module.encode_boc"                       }
 }
