@@ -40,8 +40,8 @@ final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Opt
   */
 object ClientConfig {
   def fromServer(enpoints: String*): ClientConfig = ClientConfig(Option(NetworkConfig(None, enpoints)))
-  val MAIN_NET                                    = fromServer("https://main2.ton.dev/", "https://main3.ton.dev/", "https://main4.ton.dev/")
-  val DEV_NET                                     = fromServer("https://net1.ton.dev/", "https://net2.ton.dev/")
+  val MAIN_NET                                    = fromServer("https://main.ton.dev/", "https://main3.ton.dev/", "https://main4.ton.dev/")
+  val DEV_NET                                     = fromServer("https://eri01.net.everos.dev", "https://rbx01.net.everos.dev", "https://gra01.net.everos.dev")
   val TEST_NET                                    = fromServer("testnet.ton.dev")
   val LOCAL                                       = fromServer("http://0.0.0.0/", "http://127.0.0.1/", " http://localhost/")
 }
