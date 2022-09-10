@@ -2,17 +2,14 @@ package ton.sdk.client.modules
 
 import org.scalatest.Succeeded
 import org.scalatest.flatspec._
-import ton.sdk.client.binding.{ClientConfig, KeyPair}
 import ton.sdk.client.binding.Context._
-
-import scala.util.Try
+import ton.sdk.client.binding.{ClientConfig, Context, KeyPair}
+import ton.sdk.client.modules.Crypto.Result.{CryptoBoxInfo, RegisteredEncryptionBox, RegisteredSigningBox, Signature, SuccessFlag, Validity}
 import ton.sdk.client.modules.Crypto._
-import ton.sdk.client.binding.Context
-import ton.sdk.client.modules.Crypto.Result.{Signature, SuccessFlag, Validity}
 
-import java.util.Base64
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
+import scala.util.Try
 
 class AsyncCryptoSpec extends CryptoSpec[Future] {
   implicit override def executionContext: ExecutionContext = ExecutionContext.Implicits.global
@@ -37,18 +34,40 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
 
   it should "create encryption box" in {
     def load(name: String) = getClass.getClassLoader.getResourceAsStream(name).readAllBytes()
-    val iv = bytesAsHex(load("aes.iv.bin"))
-    val encryptionKey = bytesAsHex(load("aes128.key.bin"))
-    val data = new String(Base64.getEncoder.encode(load("aes.plaintext.bin")))
-    val encrypted = new String(Base64.getEncoder.encode(load("cbc-aes128.ciphertext.bin")))
+    val iv                 = bytesAsHex(load("aes.iv.bin"))
+    val encryptionKey      = bytesAsHex(load("aes128.key.bin"))
+    val data               = base64(load("aes.plaintext.bin"))
+    val encrypted          = base64(load("cbc-aes128.ciphertext.bin"))
     val result = local { implicit ctx =>
       for {
         handle <- call(Request.CreateEncryptionBox(EncryptionAlgorithm(AesParams("CBC", encryptionKey, Option(iv)))))
-        enc <- call(Request.EncryptionBoxEncrypt(handle.handle, data))
-        dec <- call(Request.EncryptionBoxDecrypt(handle.handle, encrypted))
+        enc    <- call(Request.EncryptionBoxEncrypt(handle.handle, data))
+        dec    <- call(Request.EncryptionBoxDecrypt(handle.handle, encrypted))
       } yield (enc.data, dec.data)
     }
     assertValue(result)((encrypted, data))
+  }
+
+
+  // TODO implement AppPasswordProvider callback
+
+  it should "create_crypto_box, get_crypto_box_info, get_crypto_box_seed_phrase, get_signing_box_from_crypto_box, get_encryption_box_from_crypto_box, clear_crypto_box_secret_cache, remove_crypto_box" in {
+    val result = local { implicit ctx =>
+      for {
+        box <- call(Request.CreateCryptoBox("123123123", CryptoBoxSecretEncryptedSecret(base64("bliblablu".getBytes))))
+        cryptoBoxId = box.handle
+        info          <- call(Request.GetCryptoBoxInfo(cryptoBoxId))
+        signingBox    <- call(Request.GetSigningBoxFromCryptoBox(cryptoBoxId, None, None))
+        encryptionBox <- call(Request.GetEncryptionBoxFromCryptoBox(cryptoBoxId, None, BoxEncryptionAlgorithm(BoxEncryption.ChaCha20("nonce")), None))
+        // seed <- call(Request.GetCryptoBoxSeedPhrase(cryptoBoxId)) no seed in this secret
+        _ <- call(Request.ClearCryptoBoxSecretCache(cryptoBoxId))
+        _ <- call(Request.RemoveCryptoBox(cryptoBoxId))
+      } yield (info, signingBox, encryptionBox)
+    }
+    val expectedRSB = RegisteredSigningBox(2)
+    val expectedREB = RegisteredEncryptionBox(3)
+    val expectedCBI = CryptoBoxInfo("YmxpYmxhYmx1")
+    assertValue(result)((expectedCBI, expectedRSB, expectedREB))
   }
 
 }
@@ -635,7 +654,6 @@ abstract class CryptoSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     }
     assertValue(result)(())
   }
-
 
   def bytesAsHex(bytes: Array[Byte]): String = {
     val sb = new StringBuilder
