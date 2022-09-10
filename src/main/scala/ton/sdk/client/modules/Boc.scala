@@ -190,6 +190,7 @@ object Boc {
     final case class DecodeTvc(tvc: String, boc_cache: Option[BocCacheType])
     final case class GetCompilerVersion(code: String)
     final case class GetBocDepth(boc: String)
+    final case class EncodeExternalInMessage(src: Option[String], dst: String, init: Option[String], body: Option[String], boc_cache: Option[BocCacheType])
   }
   object Result {
     final case class Parsed[T](parsed: T)
@@ -204,41 +205,32 @@ object Boc {
     final case class EncodedTvc(tvc: String)
     final case class CompilerVersion(version: Option[String])
     final case class BocDepth(depth: Int)
-
-    final case class DecodedTvc(
-      code: Option[String],
-      code_depth: Option[Int],
-      data: Option[String],
-      data_hash: Option[String],
-      data_depth: Option[Int],
-      library: Option[String],
-      tick: Option[Boolean],
-      tock: Option[Boolean],
-      split_depth: Option[Int],
-      compiler_version: Option[String]
-    )
+    final case class DecodedTvc(code: Option[String], code_depth: Option[Int], data: Option[String], data_hash: Option[String], data_depth: Option[Int], library: Option[String], tick: Option[Boolean], tock: Option[Boolean], split_depth: Option[Int], compiler_version: Option[String])
+    final case class EncodedExternalMessage(message: String, message_id: String)
 
   }
 
   import io.circe.generic.auto._
   import ton.sdk.client.binding.Decoders.decodeCompute
 
-  implicit val parseMessage        = new SdkCall[Request.ParseMessage, Result.Parsed[Message]]         { override val function: String = s"$module.parse_message"         }
-  implicit val parseTransaction    = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]] { override val function: String = s"$module.parse_transaction"     }
-  implicit val parseAccount        = new SdkCall[Request.ParseAccount, Result.Parsed[Account]]         { override val function: String = s"$module.parse_account"         }
-  implicit val parseBlock          = new SdkCall[Request.ParseBlock, Result.Parsed[Block]]             { override val function: String = s"$module.parse_block"           }
-  implicit val getBlockchainConfig = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc]        { override val function: String = s"$module.get_blockchain_config" }
-  implicit val parseShardstate     = new SdkCall[Request.ParseShardstate, Result.Parsed[ShardState]]   { override val function: String = s"$module.parse_shardstate"      }
-  implicit val getBocHash          = new SdkCall[Request.GetBocHash, Result.BocHash]                   { override val function: String = s"$module.get_boc_hash"          }
-  implicit val getCodeFromTvc      = new SdkCall[Request.GetCodeFromTvc, Result.CodeFromTvc]           { override val function: String = s"$module.get_code_from_tvc"     }
-  implicit val cacheSet            = new SdkCall[Request.CacheSet, Result.CacheSet]                    { override val function: String = s"$module.cache_set"             }
-  implicit val cacheGet            = new SdkCall[Request.CacheGet, Result.CacheGet]                    { override val function: String = s"$module.cache_get"             }
-  implicit val cacheUnpin          = new SdkCall[Request.CacheUnpin, Unit]                             { override val function: String = s"$module.cache_unpin"           }
-  implicit val encodeBoc           = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                 { override val function: String = s"$module.encode_boc"            }
-  implicit val getCodeSalt         = new SdkCall[Request.GetCodeSalt, Result.CodeSaltSalt]             { override val function: String = s"$module.get_code_salt"         }
-  implicit val setCodeSalt         = new SdkCall[Request.SetCodeSalt, Result.CodeSaltCode]             { override val function: String = s"$module.set_code_salt"         }
-  implicit val encodeTvc           = new SdkCall[Request.EncodeTvc, Result.EncodedTvc]                 { override val function: String = s"$module.encode_tvc"            }
-  implicit val decodeTvc           = new SdkCall[Request.DecodeTvc, Result.DecodedTvc]                 { override val function: String = s"$module.decode_tvc"            }
-  implicit val getCompilerVersion  = new SdkCall[Request.GetCompilerVersion, Result.CompilerVersion]   { override val function: String = s"$module.get_compiler_version"  }
-  implicit val getBocDepth         = new SdkCall[Request.GetBocDepth, Result.BocDepth]                 { override val function: String = s"$module.get_boc_depth"         }
+  implicit val parseMessage            = new SdkCall[Request.ParseMessage, Result.Parsed[Message]]                   { override val function: String = s"$module.parse_message"              }
+  implicit val parseTransaction        = new SdkCall[Request.ParseTransaction, Result.Parsed[Transaction]]           { override val function: String = s"$module.parse_transaction"          }
+  implicit val parseAccount            = new SdkCall[Request.ParseAccount, Result.Parsed[Account]]                   { override val function: String = s"$module.parse_account"              }
+  implicit val parseBlock              = new SdkCall[Request.ParseBlock, Result.Parsed[Block]]                       { override val function: String = s"$module.parse_block"                }
+  implicit val getBlockchainConfig     = new SdkCall[Request.GetBlockchainConfig, Result.ConfigBoc]                  { override val function: String = s"$module.get_blockchain_config"      }
+  implicit val parseShardstate         = new SdkCall[Request.ParseShardstate, Result.Parsed[ShardState]]             { override val function: String = s"$module.parse_shardstate"           }
+  implicit val getBocHash              = new SdkCall[Request.GetBocHash, Result.BocHash]                             { override val function: String = s"$module.get_boc_hash"               }
+  implicit val getCodeFromTvc          = new SdkCall[Request.GetCodeFromTvc, Result.CodeFromTvc]                     { override val function: String = s"$module.get_code_from_tvc"          }
+  implicit val cacheSet                = new SdkCall[Request.CacheSet, Result.CacheSet]                              { override val function: String = s"$module.cache_set"                  }
+  implicit val cacheGet                = new SdkCall[Request.CacheGet, Result.CacheGet]                              { override val function: String = s"$module.cache_get"                  }
+  implicit val cacheUnpin              = new SdkCall[Request.CacheUnpin, Unit]                                       { override val function: String = s"$module.cache_unpin"                }
+  implicit val encodeBoc               = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                           { override val function: String = s"$module.encode_boc"                 }
+  implicit val getCodeSalt             = new SdkCall[Request.GetCodeSalt, Result.CodeSaltSalt]                       { override val function: String = s"$module.get_code_salt"              }
+  implicit val setCodeSalt             = new SdkCall[Request.SetCodeSalt, Result.CodeSaltCode]                       { override val function: String = s"$module.set_code_salt"              }
+  implicit val encodeTvc               = new SdkCall[Request.EncodeTvc, Result.EncodedTvc]                           { override val function: String = s"$module.encode_tvc"                 }
+  implicit val decodeTvc               = new SdkCall[Request.DecodeTvc, Result.DecodedTvc]                           { override val function: String = s"$module.decode_tvc"                 }
+  implicit val getCompilerVersion      = new SdkCall[Request.GetCompilerVersion, Result.CompilerVersion]             { override val function: String = s"$module.get_compiler_version"       }
+  implicit val getBocDepth             = new SdkCall[Request.GetBocDepth, Result.BocDepth]                           { override val function: String = s"$module.get_boc_depth"              }
+  implicit val encodeExternalInMessage = new SdkCall[Request.EncodeExternalInMessage, Result.EncodedExternalMessage] { override val function: String = s"$module.encode_external_in_message" }
+
 }

@@ -50,7 +50,7 @@ abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   implicit val ef: Effect[T]
 
-  private val versionNumber = "1.27.1"
+  private val versionNumber = "1.37.1"
 
   behavior of "Client"
 

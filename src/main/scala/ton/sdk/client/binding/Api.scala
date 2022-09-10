@@ -37,6 +37,8 @@ object Api {
     }
   }
 
+  type ResponseHandler = (Json, Int) => Unit
+
   type DebotCallback = (ResponseType, Json) => Unit
 
   type DebotHandle = Int

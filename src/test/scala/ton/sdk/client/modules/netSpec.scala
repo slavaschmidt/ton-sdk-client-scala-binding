@@ -19,7 +19,7 @@ class AsyncNetSpec extends NetSpec[Future] {
   implicit override val ef: Context.Effect[Future]         = futureEffect
 
   // this test is oscillating
-  ignore  should "subscribe_collection and get results" in {
+  it  should "subscribe_collection and get results" in {
     val now = 1562342740L
 
     val filter = json"""{"now":{"gt":$now}}"""
@@ -50,7 +50,7 @@ class AsyncNetSpec extends NetSpec[Future] {
   }
 
   // this test is oscillating
-  ignore should "suspend resume" in {
+  it should "suspend resume" in {
     val filter = Map("created_at" -> Map("gt" -> (System.currentTimeMillis / 1000))).asJson
 
     val result = devNet { implicit ctx =>
@@ -71,6 +71,33 @@ class AsyncNetSpec extends NetSpec[Future] {
     assertValue(result)(Succeeded)
   }
 
+  it should "subscribe and get errors as JSON" in {
+    val filter = json"""{"now":{"gt":100000000}}"""
+    val errors = devNet { implicit ctx =>
+      for {
+        (handle, _, errors) <- callS(Request.Subscribe("give me an error", filter))
+        _ = assert(handle.handle > 0)
+        e = errors.collect(5.seconds)
+        _ <- call(Request.Unsubscribe(handle.handle))
+      } yield e
+    }
+    assertExpression(errors)(_.nonEmpty)
+  }
+  it should "subscribe and get data as JSON" in {
+    val returned = devNet { implicit ctx =>
+      for {
+        (handle, results, errors) <- callS(Request.Subscribe("query{info{version}}", json"{}"))
+        _ = assert(handle.handle > 0)
+        e = errors.collect(1.seconds)
+        r = results.collect(5.seconds)
+        _ <- call(Request.Unsubscribe(handle.handle))
+      } yield (e, r)
+    }
+    assertExpression(returned) { case (errors, results) =>
+      println(results)
+      errors.isEmpty && results.head == json"""{"result": {"info": {"version": "0.53.2" } } }"""
+    }
+  }
 }
 
 class SyncNetSpec extends NetSpec[Try] {
@@ -136,29 +163,26 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   // this test is oscillating
-  ignore should "batch_query" in {
-    val filter = Map("now" -> Map("gt" -> 20)).asJson
-    val q1: Request.QueryCollection = Request.QueryCollection("blocks_signatures", filter = None, result = "id", order = None, limit = Option(1))
+  it should "batch_query" in {
+    val filter = json"""{}"""
+    val q1: Request.QueryCollection = Request.QueryCollection("messages", filter = None, result = "id", order = None, limit = Option(1))
     val q2 = Request.AggregateCollection("accounts", filter = None, fields = Some(Seq(FieldAggregation("", "COUNT"))))
     val q3 = Request.WaitForCollection("transactions", filter = Some(filter), result = "id now", timeout = None)
 
     val result = devNet { implicit ctx =>
       call(Request.BatchQuery(Seq(q1,q2,q3)))
     }
-    assertExpression(result)(_.results.size == 2)
-    assertSdkError(result)("Query failed: wait_for operation did not return anything during the specified timeout")
+    assertExpression(result)(_.results.size == 3)
   }
 
   // this test is oscillating
-  ignore should "wait_for_collection transactions" in {
+  it should "wait_for_collection transactions" in {
     val filter = Map("now" -> Map("gt" -> 1562342740L)).asJson
     val resultF = devNet { implicit ctx =>
       call(Request.WaitForCollection("transactions", "id now", Option(filter)))
     }
     val result = ef.unsafeGet(resultF)
     assert(result.result.\\("now").forall(_.as[Long].toOption.get > 1562342740L))
-    assertSdkError(resultF)("WaitFor failed: wait_for operation did not return anything during the specified timeout")
-
   }
 
   it should "not wait_for_collection because of timeout" in {
@@ -229,10 +253,10 @@ abstract class NetSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     val result = devNet { implicit ctx =>
       call(Request.SetEndpoints(Seq("localhost")))
     }
-    assertExpression(result)(_ == (()))
+    assertValue(result)(())
   }
 
-  ignore should "query_counterparties" in {
+  it should "query_counterparties" in {
     val result1 = devNet { implicit ctx =>
       call(Request.QueryCounterparties(giverAddress, "counterparty last_message_id cursor", Some(5), None))
     }

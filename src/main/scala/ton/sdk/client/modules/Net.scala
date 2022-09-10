@@ -75,7 +75,7 @@ object Net {
     final case class ResumeTransactionIterator(resume_state: Json, accounts_filter: Option[Seq[String]])
     final case class IteratorNext(iterator: Long, limit: Option[Long], return_resume_state: Option[Boolean])
     final case class RemoveIterator(handle: Long)
-
+    final case class Subscribe(subscription: String, variables: Json)
   }
 
   object Result {
@@ -123,4 +123,6 @@ object Net {
   implicit val resume_transaction_iterator = new SdkCall[Request.ResumeTransactionIterator, Result.RegisteredIterator] { override val function: String = s"$module.resume_transaction_iterator" }
   implicit val iterator_next               = new SdkCall[Request.IteratorNext, Result.IteratorNext]                    { override val function: String = s"$module.iterator_next"               }
   implicit val remove_iterator             = new SdkCall[Request.RemoveIterator, Unit]                                 { override val function: String = s"$module.remove_iterator"             }
+  implicit val subscribe                   = new StreamingSdkCall[Request.Subscribe, Handle, Json]                     { override val function: String = s"$module.subscribe"                   }
+
 }
