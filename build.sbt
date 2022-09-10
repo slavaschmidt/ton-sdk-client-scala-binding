@@ -4,7 +4,7 @@ version := "1.27.1-M1"
 
 organization := "com.dancingcode"
 
-lazy val scala212 = "2.12.12"
+lazy val scala212 = "2.12.16"
 lazy val scala213 = "2.13.3"
 
 scalaVersion := scala212
@@ -12,9 +12,9 @@ scalaVersion := scala212
 // lazy val crossScalaVersions = List(scala212, scala213)
 
 libraryDependencies ++= Seq(
-  "org.slf4j"      % "slf4j-api"       % "1.7.32",
-  "ch.qos.logback" % "logback-classic" % "1.2.7" % Provided,
-  "org.scalatest"  %% "scalatest"      % "3.2.9" % Test
+  "org.slf4j"      % "slf4j-api"       % "2.0.0",
+  "ch.qos.logback" % "logback-classic" % "1.4.0" % Provided,
+  "org.scalatest"  %% "scalatest"      % "3.2.12" % Test
 )
 
 libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal", "circe-generic-extras").map("io.circe" %% _ % "0.13.0")
