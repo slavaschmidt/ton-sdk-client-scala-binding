@@ -8,6 +8,20 @@ All notable changes to this project will be documented in this file.
 - Support for TON-Client [1.28.1] – 2022-01-25
 - Support for TON-Client [1.29.0] – 2022-02-03
 - Support for TON-Client [1.30.0] – 2022-02-04
+- Support for TON-Client [1.31.0] – 2022-03-09
+- Support for TON-Client [1.32.0] – 2022-03-22
+- Support for TON-Client [1.33.0] – 2022-05-02
+- Support for TON-Client [1.33.1] – 2022-05-10
+- Support for TON-Client [1.34.0] – 2022-05-18
+- Support for TON-Client [1.34.1] – 2022-05-26
+- Support for TON-Client [1.34.2] – 2022-05-30
+- Support for TON-Client [1.34.3] – 2022-06-08
+- Support for TON-Client [1.35.0] – 2022-06-28
+- Support for TON-Client [1.35.1] – 2022-06-28
+- Support for TON-Client [1.36.0] – 2022-07-01
+- Support for TON-Client [1.36.1] – 2022-07-18
+- Support for TON-Client [1.37.0] – 2022-07-28
+- Support for TON-Client [1.37.1] – 2022-08-03
 
 ## [1.27.1] – 2021-12-15
 
