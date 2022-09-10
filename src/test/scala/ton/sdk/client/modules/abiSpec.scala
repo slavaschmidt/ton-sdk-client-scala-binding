@@ -6,7 +6,8 @@ import io.circe.syntax._
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context._
 import ton.sdk.client.binding._
-import ton.sdk.client.modules.Abi.Result.{DecodedBoc, InitialData}
+import ton.sdk.client.modules.Abi.Request.EncodeBoc
+import ton.sdk.client.modules.Abi.Result.{DecodedBoc, EncodedBoc, InitialData}
 import ton.sdk.client.modules.Abi._
 import ton.sdk.client.modules.Net.AbiParam
 
@@ -250,22 +251,28 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   }
 
   it should "decode_boc" in {
-    import ton.sdk.client.modules.Boc.BuilderOp
-
     val params = Seq(
       AbiParam("a", "uint32", None),
       AbiParam("c", "bool", None)
     )
-    val builder = Seq(
-      BuilderOp.u32(0),
-      BuilderOp.b(1)
+    val data = JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson
+    val encodedF = local { implicit ctx =>
+      val boc = ef.unsafeGet(call(EncodeBoc(params, data, None)))
+      call(Request.DecodeBoc(params, boc.boc, allow_partial = false))
+    }
+    assertValue(encodedF)(DecodedBoc(data))
+  }
+
+  it should "encode_boc" in {
+    val params = Seq(
+      AbiParam("a", "uint32", None),
+      AbiParam("c", "bool", None)
     )
 
     val encodedF = local { implicit ctx =>
-      val boc = ef.unsafeGet(call(Boc.Request.EncodeBoc(builder, None)))
-      call(Request.DecodeBoc(params, boc.boc, allow_partial = false))
+      call(Abi.Request.EncodeBoc(params, JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson, None))
     }
-    assertValue(encodedF)(DecodedBoc(JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson))
+    assertValue(encodedF)(EncodedBoc("te6ccgEBAQEABwAACQAAAADA"))
   }
 
   it should "encode_initial_data " in {
