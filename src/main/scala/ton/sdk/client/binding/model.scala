@@ -22,7 +22,9 @@ final case class NetworkConfig(
   out_of_sync_threshold: Option[BigInt] = None,
   reconnect_timeout: Option[Int] = None,
   access_key: Option[String] = None,
-  queries_protocol: Option[String] = None
+  queries_protocol: Option[String] = None,
+  first_remp_status_timeout: Option[Int] = None,
+  next_remp_status_timeout: Option[Int] = None
 )
 
 final case class CryptoConfig(

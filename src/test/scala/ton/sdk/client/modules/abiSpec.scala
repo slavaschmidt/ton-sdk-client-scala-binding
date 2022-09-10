@@ -33,7 +33,7 @@ class AsyncAbiSpec extends AbiSpec[Future] {
     val a = local { implicit ctx =>
       for {
         data    <- call(Boc.Request.DecodeTvc(tvc("t24_initdata"), None))
-        result  <- call(Request.DecodeInitialData(Option(abiJson("t24_initdata")), data.data.get))
+        result  <- call(Request.DecodeInitialData(Option(abiJson("t24_initdata")), data.data.get, None))
         updated <- call(Request.UpdateInitialData(Option(abiJson("t24_initdata")), data.data.get, Some(initialData), Option(pubKey), None))
       } yield result.initial_pubkey == initialPubkey &&
       result.initial_data.contains(JsonObject.empty.asJson) &&
@@ -66,7 +66,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "decode_message Input" in {
     val result = local { implicit ctx =>
-      call(Request.DecodeMessage(abi, encodedMessage))
+      call(Request.DecodeMessage(abi, encodedMessage, None))
     }
     val expectedValue   = json"""{"id": "0x0000000000000000000000000000000000000000000000000000000000000000"}"""
     val header          = FunctionHeader(Option(1599458404), Option(BigInt(1599458364291L)), Option("4c7c408ff1ddebb8d6405ee979c716a14fdd6cc08124107a61d3c25597099499"))
@@ -77,7 +77,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "decode_message Event" in {
     val message = "te6ccgEBAQEAVQAApeACvg5/pmQpY4m61HmJ0ne+zjHJu3MNG8rJxUDLbHKBu/AAAAAAAAAMJL6z6ro48sYvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA"
     val result = local { implicit ctx =>
-      call(Request.DecodeMessage(abi, message))
+      call(Request.DecodeMessage(abi, message, None))
     }
 
     val expectedValue   = json"""{"id": "0x0000000000000000000000000000000000000000000000000000000000000000"}"""
@@ -88,7 +88,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "decode_message Output" in {
     val message = "te6ccgEBAQEAVQAApeACvg5/pmQpY4m61HmJ0ne+zjHJu3MNG8rJxUDLbHKBu/AAAAAAAAAMKr6z6rxK3xYJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA"
     val result = local { implicit ctx =>
-      call(Request.DecodeMessage(abi, message))
+      call(Request.DecodeMessage(abi, message, None))
     }
 
     val expectedValue   = json"""{"value0": "0x0000000000000000000000000000000000000000000000000000000000000000"}"""
@@ -98,7 +98,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
 
   it should "not decode_message" in {
     val result = local { implicit ctx =>
-      call(Request.DecodeMessage(abi, "Oh Weh"))
+      call(Request.DecodeMessage(abi, "Oh Weh", None))
     }
     assertSdkError(result)("Message can't be decoded: Invalid BOC: error decode message BOC base64: Invalid byte 32, offset 2.")
   }
@@ -106,7 +106,7 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
   it should "decode_message_body" in {
     val result = local { implicit ctx =>
       ef.flatMap(call(Boc.Request.ParseMessage(encodedMessage))) { parsed =>
-        call(Request.DecodeMessageBody(abi, parsed.parsed.body.get, is_internal = false))
+        call(Request.DecodeMessageBody(abi, parsed.parsed.body.get, is_internal = false, None))
       }
     }
 

@@ -21,6 +21,7 @@ object Processing {
   // TODO the version 1.6.3 of the client also accepts a response handler.
   // It is not possible to implement support for this inconsistency in the API without full refactoring.
   // The support is postponed until explicitly requested by users of the binding
+  type ResponseHandler = (Json, Int) => Unit
 
   private val module = "processing"
 
