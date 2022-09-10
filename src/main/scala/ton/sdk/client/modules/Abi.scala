@@ -68,7 +68,7 @@ object Abi {
   }
 
   object Request {
-    final case class EncodeMessageBody(abi: AbiJson, call_set: CallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])
+    final case class EncodeMessageBody(abi: AbiJson, call_set: CallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int], address: Option[String])
     final case class AttachSignatureToMessageBody(abi: AbiJson, public_key: String, message: String, signature: String)
     final case class EncodeMessage(abi: AbiJson, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Option[Int] = None)
     final case class AttachSignature(abi: AbiJson, public_key: String, message: String, signature: String)
