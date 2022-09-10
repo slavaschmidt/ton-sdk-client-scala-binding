@@ -190,6 +190,8 @@ final case class FetchNextBlockMessage(`type`: String, shard_block_id: String, m
 
 final case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
 
+final case class RequestData(app_request_id: Long, request_data: Json)
+
 /**
   * Overrides for circe decoders where defaults are not match SDK representation
   */

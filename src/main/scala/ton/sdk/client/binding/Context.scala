@@ -1,17 +1,19 @@
 package ton.sdk.client.binding
 
 import io.circe
-
-import java.io.Closeable
-import java.util.concurrent.atomic.AtomicBoolean
+import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.circe._
 import org.slf4j.LoggerFactory
 import ton.sdk.client.binding.Api._
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.jni.{Binding, Handler}
+import ton.sdk.client.jni.{Binding, Callback, Handler}
+import ton.sdk.client.modules.Client.AppRequestResult
+import ton.sdk.client.modules.Client.Request.ResolveAppRequest
 
+import java.io.Closeable
+import java.util.concurrent.atomic.AtomicBoolean
+import scala.collection.mutable
 import scala.concurrent._
 import scala.concurrent.duration.DurationInt
 import scala.language.higherKinds
@@ -54,12 +56,12 @@ final case class Context private (id: Long) extends Closeable {
     * @tparam E - the way the request should be executed
     * @return the result of the call wrapped in appropriate effect type
     */
-  def request[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
+  def request[P, R, E[_]](params: P, callback: Option[Callback] = None)(implicit call: SdkCall[P, R], effect: Effect[E]): E[R] = {
     implicit val context: Context    = this
     implicit val decoder: Decoder[R] = call.decoder
     val fnName                       = call.function
     val jsonIn                       = call.toJson(params)
-    effect.request(fnName, jsonPrinter.print(jsonIn))
+    effect.request(fnName, jsonPrinter.print(jsonIn), callback)
   }
 
   /**
@@ -143,8 +145,8 @@ object Context {
     * @tparam E - the way the request should be executed
     * @return the result of the call wrapped in appropriate effect type
     */
-  def call[P, R, E[_]](params: P)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
-    ctx.request(params)
+  def call[P, R, E[_]](params: P, callback: Option[Callback] = None)(implicit call: SdkCall[P, R], ctx: Context, eff: Effect[E]): E[R] =
+    ctx.request(params, callback)
 
   /**
     * Client call with messages
@@ -197,7 +199,7 @@ object Context {
     */
   trait Effect[T[_]] {
     /* Request without messages */
-    def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
+    def request[R](functionName: String, functionParams: String, callback: Option[Callback])(implicit c: Context, decoder: io.circe.Decoder[R]): T[R]
 
     /* Request with messages */
     def request[R, S](functionName: String, functionParams: String, streamingEvidence: StreamingEvidence[T])(
@@ -235,7 +237,7 @@ object Context {
       decoders: (io.circe.Decoder[R], io.circe.Decoder[S])
     ): Try[StreamingCallResult[R, S]] = throw new NotImplementedError("Calling this method should not compile, hence no implementation")
 
-    override def request[R](functionName: String, functionParams: String)(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
+    override def request[R](functionName: String, functionParams: String, callback: Option[Callback])(implicit c: Context, decoder: io.circe.Decoder[R]): Try[R] = {
       if (!c.isOpen.get()) {
         Failure(new IllegalStateException(s"Request(sync) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
@@ -277,8 +279,8 @@ object Context {
       requestStreamingFuture(functionName, functionParams)
 
     /* Call without messages */
-    override def request[R](functionName: String, functionParams: String)(implicit c: Context, d: Decoder[R]): Future[R] =
-      requestFuture(functionName, functionParams)
+    override def request[R](functionName: String, functionParams: String, callback: Option[Callback])(implicit c: Context, d: Decoder[R]): Future[R] =
+      requestFuture(functionName, functionParams, callback)
 
     /* Call with messages */
     private def requestStreamingFuture[R, S](
@@ -314,17 +316,19 @@ object Context {
         }
       }
       if (!c.isOpen.get()) {
-        p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
+        p.failure(new IllegalStateException(s"Request(async streaming) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        Binding.request(c.id, functionName, functionParams, handler)
+        Binding.request(c.id, functionName, functionParams, handler, null, null)
       }
       result.result.map((_, result.messages, result.errors))
     }
 
+    val noopHandler: Handler = (requestId, paramsJson, responseType, finished) => logger.trace(s"$requestId, $paramsJson, $responseType, $finished")
+
     /* Call without messages */
-    private def requestFuture[R, S](functionName: String, functionParams: String)(implicit c: Context, r: Decoder[R]): Future[R] = {
+    private def requestFuture[R, S](functionName: String, functionParams: String, callback: Option[Callback])(implicit c: Context, r: Decoder[R]): Future[R] = {
       val p   = Promise[R]()
-      val buf = StringBuilder.newBuilder
+      val buf = mutable.StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"$requestId: $responseType ($finished) - $paramsJson - ${buf.result}")
         ResponseType(responseType) match {
@@ -333,7 +337,7 @@ object Context {
 
           case ResponseTypeResult =>
             buf.append(paramsJson)
-            successIfFinished(requestId, finished, p, buf.result())
+            successIfFinished(requestId, true, p, buf.result())
 
           case ResponseTypeError =>
             if (!finished) logger.warn(errUndefinedBehaviour)
@@ -345,24 +349,43 @@ object Context {
             buf.append(paramsJson)
             successIfFinished(requestId, finished, p, buf.result())
 
-          case ResponseTypeAppNotify | ResponseTypeAppRequest =>
-            logger.warn(s"Debot response in non-debot request: $requestId: $responseType($finished) - $paramsJson")
+          case ResponseTypeAppNotify =>
             buf.append(paramsJson)
+            successIfFinished(requestId, finished, p, buf.result())
+
+          case ResponseTypeAppRequest =>
+            logger.info(s"ResponseTypeAppRequest: $requestId: $responseType($finished) - $paramsJson")
+            val callback = Binding.callbacks.get(requestId)
+            if (callback != null) {
+              SdkResultOrError
+                .fromJsonPlain[RequestData](requestId, paramsJson)
+                .fold(
+                  f => sys.error(f.getMessage),
+                  json => {
+                    val result = callback.call(json.request_data)
+                    val ok     = ResolveAppRequest(json.app_request_id, AppRequestResult("Ok", None, Option(result))).asJson.noSpaces
+                    Binding.request(c.id, "client.resolve_app_request", ok, noopHandler, null, json.app_request_id)
+                  }
+                )
+            }
             successIfFinished(requestId, finished, p, buf.result())
         }
       }
       if (!c.isOpen.get()) {
         p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        Binding.request(c.id, functionName, functionParams, handler)
+        Binding.request(c.id, functionName, functionParams, handler, callback.orNull, null)
       }
       p.future
     }
 
     private def successIfFinished[R: Decoder](requestId: Long, finished: Boolean, p: Promise[R], buf: String): Unit = {
       val _ =
-        if (finished && !p.isCompleted)
+        if (finished && !p.isCompleted) {
+          Binding.callbacks.remove(requestId)
+          Binding.handlers.remove(requestId)
           SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(exToSdkError(requestId, buf, ex)), p.success(_))
+        }
     }
 
     private def exToSdkError(requestId: Long, buf: String, ex: Throwable) = ex match {
@@ -394,7 +417,7 @@ object Context {
 
     override def requestDebot[R](functionName: String, functionParams: String, debotCallback: DebotCallback)(implicit c: Context, d: Decoder[R]): Future[R] = {
       val p   = Promise[R]()
-      val buf = StringBuilder.newBuilder
+      val buf = mutable.StringBuilder.newBuilder
       val handler: Handler = (requestId: Long, paramsJson: String, responseType: Long, finished: Boolean) => {
         logger.trace(s"$requestId: $responseType ($finished) - $paramsJson")
         ResponseType(responseType) match {
@@ -427,9 +450,9 @@ object Context {
         }
       }
       if (!c.isOpen.get()) {
-        p.failure(new IllegalStateException(s"Request(async) is called on closed context ${c.id}: $functionName, $functionParams"))
+        p.failure(new IllegalStateException(s"Request(debot) is called on closed context ${c.id}: $functionName, $functionParams"))
       } else {
-        Binding.request(c.id, functionName, functionParams, handler)
+        Binding.request(c.id, functionName, functionParams, handler, null, null)
       }
       p.future
     }

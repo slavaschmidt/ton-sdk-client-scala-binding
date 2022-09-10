@@ -74,7 +74,7 @@ object Client {
     final case object Config
     final case object BuildInfo
     final case object ApiReference
-    final case class ResolveAppRequest(app_request_id: Int, result: AppRequestResult)
+    final case class ResolveAppRequest(app_request_id: Long, result: AppRequestResult)
   }
   object Result {
     final case class Version(version: String)

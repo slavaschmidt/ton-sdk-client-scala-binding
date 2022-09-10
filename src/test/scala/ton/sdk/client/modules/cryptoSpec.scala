@@ -1,10 +1,14 @@
 package ton.sdk.client.modules
 
+import io.circe.Decoder.Result
+import io.circe.JsonObject
+import io.circe.syntax.EncoderOps
 import org.scalatest.Succeeded
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context._
 import ton.sdk.client.binding.{ClientConfig, Context, KeyPair}
-import ton.sdk.client.modules.Crypto.Result.{CryptoBoxInfo, RegisteredEncryptionBox, RegisteredSigningBox, Signature, SuccessFlag, Validity}
+import ton.sdk.client.jni.Callback
+import ton.sdk.client.modules.Crypto.Result._
 import ton.sdk.client.modules.Crypto._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,13 +52,10 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
     assertValue(result)((encrypted, data))
   }
 
-
-  // TODO implement AppPasswordProvider callback
-
   it should "create_crypto_box, get_crypto_box_info, get_crypto_box_seed_phrase, get_signing_box_from_crypto_box, get_encryption_box_from_crypto_box, clear_crypto_box_secret_cache, remove_crypto_box" in {
     val result = local { implicit ctx =>
       for {
-        box <- call(Request.CreateCryptoBox("123123123", CryptoBoxSecretEncryptedSecret(base64("bliblablu".getBytes))))
+        box <- call(Request.CreateCryptoBox("123123123", CryptoBoxSecretEncryptedSecret(base64("bliblablu"))))
         cryptoBoxId = box.handle
         info          <- call(Request.GetCryptoBoxInfo(cryptoBoxId))
         signingBox    <- call(Request.GetSigningBoxFromCryptoBox(cryptoBoxId, None, None))
@@ -68,6 +69,24 @@ class AsyncCryptoSpec extends CryptoSpec[Future] {
     val expectedREB = RegisteredEncryptionBox(3)
     val expectedCBI = CryptoBoxInfo("YmxpYmxhYmx1")
     assertValue(result)((expectedCBI, expectedRSB, expectedREB))
+  }
+
+  it should "not create_crypto_box" in {
+    val callback: Callback = in => {
+      val tpe = in.hcursor.get[String]("type").right.get
+      assert(tpe == "GetPassword")
+      val publicKey = "06117f59ade83e097e0fb33e5d29e8735bda82b3bf78a015542aaa853bb69600"
+      JsonObject(
+        "type" -> tpe.asJson,
+        "encrypted_password" -> "y58eG9p/ZDbzTlpPRIV0jvg=".asJson,
+        "app_encryption_pubkey" -> publicKey.asJson
+      ).asJson
+    }
+
+    val result = local { implicit ctx =>
+      call(Request.CreateCryptoBox("bliblablu", CryptoBoxSecretRandomSeedPhrase(0, 12)), Option(callback))
+    }
+    assertSdkError(result)("Box failed: box open failed")
   }
 
 }

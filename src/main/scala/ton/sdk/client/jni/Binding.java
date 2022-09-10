@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * The JNI calls are done in a specific manner using Java types so it is not possible to call SDK client directly.
  * Instead, there is a thin C implementation that performs call forwarding and type conversion.
  * All the heavy lifting for context and callback management is done by the scala counterpart.
- *
+ * <p>
  * This class represents the TON SDK client definition one-to-one with the exception of the
  * signed long JDK type being used to represent uint in SDK client definition.
  */
@@ -26,9 +26,10 @@ public class Binding {
 
     private static native void tcRequest(long context, String functionName, String functionParamsJson, long requestId);
 
-    public static void request(long context, String functionName, String functionParamsJson, Handler responseHandler) {
-        long id = counter.incrementAndGet();
-        mapping.put(id, responseHandler);
+    public static void request(long context, String functionName, String functionParamsJson, Handler responseHandler, Callback callback, Long recurrentId) {
+        long id = recurrentId == null ? counter.incrementAndGet() : recurrentId;
+        handlers.put(id, responseHandler);
+        if (callback != null) callbacks.put(id, callback);
         try {
             tcRequest(context, functionName, functionParamsJson, id);
         } catch (Throwable ex) {
@@ -37,20 +38,21 @@ public class Binding {
     }
 
     private static void handle(long requestId, String paramsJson, long responseType, boolean finished) {
-        Handler handler = mapping.get(requestId);
+        Handler handler = handlers.get(requestId);
         try {
             handler.handle(requestId, paramsJson, responseType, finished);
         } catch (Throwable ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
             if (finished) {
-                mapping.remove(requestId);
+                handlers.remove(requestId);
+                callbacks.remove(requestId);
             }
         }
     }
 
     // request to callback mapping and request id generator
-    private static final ConcurrentHashMap<Long, Handler> mapping = new ConcurrentHashMap<>();
     private static final AtomicLong counter = new AtomicLong(0);
-
+    public static final ConcurrentHashMap<Long, Callback> callbacks = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Long, Handler> handlers = new ConcurrentHashMap<>();
 }
