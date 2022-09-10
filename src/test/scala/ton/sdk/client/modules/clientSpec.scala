@@ -3,7 +3,7 @@ package ton.sdk.client.modules
 import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context
 import ton.sdk.client.binding.Context._
-import ton.sdk.client.modules.Client.Result.BuildInfo
+import ton.sdk.client.modules.Client.Result.{BuildInfo, ClientConfig}
 import ton.sdk.client.modules.Client._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -79,5 +79,41 @@ abstract class ClientSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       r.modules.length == 10 &&
       r.modules.map(_.name).sorted == List("abi", "boc", "client", "crypto", "debot", "net", "processing", "proofs", "tvm", "utils")
     }
+  }
+
+  it should "get config" in {
+    val expectation = ClientConfig(
+      Some(
+        NetworkConfig(
+          None,
+          None,
+          Some(List("http://0.0.0.0/", "http://127.0.0.1/", "http://localhost/")),
+          Some(1000),
+          Some(60000),
+          Some(60000),
+          Some(120000),
+          Some(40000),
+          Some(5),
+          Some(5),
+          Some(5000),
+          Some(15000),
+          Some("HTTP"),
+          Some(60000),
+          Some(1000),
+          Some(1),
+          Some(40000)
+        )
+      ),
+      Some(CryptoConfig(Some(1), Some(12), Some("m/44'/396'/0'/0/0"))),
+      Some(AbiConfig(Some(0), Some(40000), Some(1.5))),
+      Some(BocConfig(Some(10240))),
+      Some(ProofsConfig(Some(true))),
+      None
+    )
+
+    val result = local { implicit ctx =>
+      call(Request.Config)
+    }
+    assertValue(result)(expectation)
   }
 }

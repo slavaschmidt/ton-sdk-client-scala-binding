@@ -53,7 +53,7 @@ object ClientConfig {
   )
   val DEV_NET  = fromServer("https://eri01.net.everos.dev", "https://rbx01.net.everos.dev", "https://gra01.net.everos.dev")
   val TEST_NET = fromServer("testnet.ton.dev")
-  val LOCAL    = fromServer("http://0.0.0.0/", "http://127.0.0.1/", " http://localhost/")
+  val LOCAL    = fromServer("http://0.0.0.0/", "http://127.0.0.1/", "http://localhost/")
 }
 
 // TODO make type-safe like this:
@@ -74,7 +74,10 @@ case class TransactionFees(
   gas_fee: BigInt,
   out_msgs_fwd_fee: BigInt,
   total_account_fees: BigInt,
-  total_output: BigInt
+  total_output: BigInt,
+  ext_in_msg_fee: BigInt,
+  total_fwd_fees: BigInt,
+  account_fees: BigInt
 )
 
 case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)

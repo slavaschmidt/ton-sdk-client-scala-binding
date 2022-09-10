@@ -27,6 +27,43 @@ object Client {
   final case class ApiDescription(version: String, modules: List[Module])
   final case class Dependency(name: String, git_commit: String)
   final case class AppRequestResult(`type`: String, text: Option[String], result: Option[Json])
+
+  final case class CryptoConfig(
+    mnemonic_dictionary: Option[BigInt],
+    mnemonic_word_count: Option[BigInt],
+    hdkey_derivation_path: Option[String]
+  )
+
+  final case class AbiConfig(
+    workchain: Option[BigInt],
+    message_expiration_timeout: Option[BigInt],
+    message_expiration_timeout_grow_factor: Option[BigDecimal]
+  )
+
+  final case class BocConfig(cache_max_size: Option[BigInt])
+
+  final case class ProofsConfig(cache_in_local_storage: Option[Boolean])
+
+  final case class NetworkConfig(
+    server_address: Option[String],
+    access_key: Option[String],
+    endpoints: Option[Seq[String]],
+    first_remp_status_timeout: Option[BigInt],
+    latency_detection_interval: Option[BigInt],
+    max_latency: Option[BigInt],
+    max_reconnect_timeout: Option[BigInt],
+    message_processing_timeout: Option[BigInt],
+    message_retries_count: Option[BigInt],
+    network_retries_count: Option[BigInt],
+    next_remp_status_timeout: Option[BigInt],
+    out_of_sync_threshold: Option[BigInt],
+    queries_protocol: Option[String],
+    query_timeout: Option[BigInt],
+    reconnect_timeout: Option[BigInt],
+    sending_endpoint_count: Option[BigInt],
+    wait_for_timeout: Option[BigInt]
+  )
+
   object AppRequest {
     def Error(text: String) = AppRequestResult("Error", Option(text), None)
     def Ok(result: Json)    = AppRequestResult("Ok", None, Option(result))
@@ -34,6 +71,7 @@ object Client {
 
   object Request {
     final case object Version
+    final case object Config
     final case object BuildInfo
     final case object ApiReference
     final case class ResolveAppRequest(app_request_id: Int, result: AppRequestResult)
@@ -42,6 +80,8 @@ object Client {
     final case class Version(version: String)
     final case class BuildInfo(build_number: Long, dependencies: Seq[Dependency])
     final case class ApiReference(api: ApiDescription)
+    final case class ClientConfig(network: Option[NetworkConfig], crypto: Option[CryptoConfig], abi: Option[AbiConfig], boc: Option[BocConfig], proofs: Option[ProofsConfig], local_storage_path: Option[String])
+
   }
 
   import io.circe.generic.auto._
@@ -50,5 +90,6 @@ object Client {
   implicit val version           = new SdkCall[Request.Version.type, Result.Version]           { override val function: String = s"$module.version"             }
   implicit val buildInfo         = new SdkCall[Request.BuildInfo.type, Result.BuildInfo]       { override val function: String = s"$module.build_info"          }
   implicit val resolveAppRequest = new SdkCall[Request.ResolveAppRequest, Unit]                { override val function: String = s"$module.resolve_app_request" }
+  implicit val config            = new SdkCall[Request.Config.type, Result.ClientConfig]       { override val function: String = s"$module.config"              }
 
 }
