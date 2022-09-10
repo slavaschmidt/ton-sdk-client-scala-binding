@@ -82,7 +82,7 @@ object Abi {
     final case class DecodeInitialData(abi: Option[AbiJson], data: String, allow_partial: Option[Boolean])
     final case class DecodeBoc(params: Seq[AbiParam], boc: String, allow_partial: Boolean)
     final case class EncodeBoc(params: Seq[AbiParam], data: Json, boc_cache: Option[BocCacheType])
-
+    final case class CalcFunctionId(abi: AbiJson, function_name: String, output: Option[Boolean])
   }
 
   object Result {
@@ -98,6 +98,7 @@ object Abi {
     final case class DecodedInitialData(initial_data: Option[Json], initial_pubkey: String)
     final case class DecodedBoc(data: Json)
     final case class EncodedBoc(boc: String)
+    final case class FunctionId(function_id: Long)
 
   }
 
@@ -117,4 +118,6 @@ object Abi {
   implicit val encodeInitialData     = new SdkCall[Request.EncodeInitialData, Result.InitialData]                             { override val function: String = s"$module.encode_initial_data"              }
   implicit val decodeBoc             = new SdkCall[Request.DecodeBoc, Result.DecodedBoc]                                      { override val function: String = s"$module.decode_boc"                       }
   implicit val encodeBoc             = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                                      { override val function: String = s"$module.encode_boc"                       }
+  implicit val calcFunctionId        = new SdkCall[Request.CalcFunctionId, Result.FunctionId]                                 { override val function: String = s"$module.calc_function_id"                 }
+
 }

@@ -7,7 +7,7 @@ import org.scalatest.flatspec._
 import ton.sdk.client.binding.Context._
 import ton.sdk.client.binding._
 import ton.sdk.client.modules.Abi.Request.EncodeBoc
-import ton.sdk.client.modules.Abi.Result.{DecodedBoc, EncodedBoc, InitialData}
+import ton.sdk.client.modules.Abi.Result.{DecodedBoc, EncodedBoc, FunctionId, InitialData}
 import ton.sdk.client.modules.Abi._
 import ton.sdk.client.modules.Net.AbiParam
 
@@ -273,6 +273,13 @@ abstract class AbiSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
       call(Abi.Request.EncodeBoc(params, JsonObject("a" -> "0".asJson, "c" -> true.asJson).asJson, None))
     }
     assertValue(encodedF)(EncodedBoc("te6ccgEBAQEABwAACQAAAADA"))
+  }
+
+  it should "calc_function_id" in {
+    val id = local { implicit ctx =>
+      call(Abi.Request.CalcFunctionId(abi, "emitValue", Option(true)))
+    }
+    assertValue(id)(FunctionId(3432912150L))
   }
 
   it should "encode_initial_data " in {
