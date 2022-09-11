@@ -14,7 +14,7 @@ jobs:
           key: sbt-cache
       - run:
           name: Compile test coverage
-          command: cat /dev/null | sbt clean coverage test coverageReport
+          command: cat /dev/null | SCALACTIC_FILL_FILE_PATHNAMES=yes sbt clean coverage test coverageReport
       - run:
           name: Upload coverage
           command: cat /dev/null | bash <(curl -s https://codecov.io/bash)
@@ -46,7 +46,7 @@ jobs:
           key: sbt-cache
       - run:
           name: Compile test coverage
-          command: cat /dev/null | sbt clean coverage test coverageReport
+          command: cat /dev/null | SCALACTIC_FILL_FILE_PATHNAMES=yes sbt clean coverage test coverageReport
       - codecov/upload:
           file: {{ coverage_report_filepath }}
 

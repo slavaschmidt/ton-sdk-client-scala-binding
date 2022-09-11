@@ -20,9 +20,7 @@ class AsyncNetSpec extends NetSpec[Future] {
 
   // this test is oscillating
   it  should "subscribe_collection and get results" in {
-    val now = 1562342740L
-
-    val filter = json"""{"now":{"gt":$now}}"""
+    val filter = json"""{"now":{"gt":1562342740}}"""
 
     val messages = devNet { implicit ctx =>
       for {

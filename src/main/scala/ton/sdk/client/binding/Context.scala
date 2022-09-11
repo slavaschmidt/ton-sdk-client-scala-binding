@@ -382,8 +382,6 @@ object Context {
     private def successIfFinished[R: Decoder](requestId: Long, finished: Boolean, p: Promise[R], buf: String): Unit = {
       val _ =
         if (finished && !p.isCompleted) {
-          Binding.callbacks.remove(requestId)
-          Binding.handlers.remove(requestId)
           SdkResultOrError.fromJsonPlain(requestId, buf).fold(ex => p.failure(exToSdkError(requestId, buf, ex)), p.success(_))
         }
     }

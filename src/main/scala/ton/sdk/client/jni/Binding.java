@@ -40,7 +40,11 @@ public class Binding {
     private static void handle(long requestId, String paramsJson, long responseType, boolean finished) {
         Handler handler = handlers.get(requestId);
         try {
-            handler.handle(requestId, paramsJson, responseType, finished);
+            if (handler != null) {
+                handler.handle(requestId, paramsJson, responseType, finished);
+            } else {
+                logger.error("Could not get handler for request " + requestId);
+            }
         } catch (Throwable ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
