@@ -42,3 +42,10 @@ tc_string_handle_t* tc_request_sync(
 
 tc_string_data_t tc_read_string(const tc_string_handle_t* handle);
 void tc_destroy_string(const tc_string_handle_t* handle);
+
+void tc_request_ptr(
+    uint32_t context,
+    tc_string_data_t function_name,
+    tc_string_data_t function_params_json,
+    void* request_ptr,
+    tc_response_handler_ptr_t response_handler);

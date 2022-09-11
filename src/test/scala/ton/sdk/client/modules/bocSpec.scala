@@ -339,6 +339,13 @@ abstract class BocSpec[T[_]] extends AsyncFlatSpec with SdkAssertions[T] {
     assertValue(result)(Result.EncodedBoc("te6ccgEBAgEAKQABL7/f4EAAAAAAAAAAAG2m0us0F8ViiEjLZAEAF7OJx0AnACRgJH/bsA=="))
   }
 
+  it should "encode_external_in_message" in {
+    val result = local { implicit ctx =>
+      call(Request.EncodeExternalInMessage(None, "-1:0000000000000000000000000000000000000000000000000000000000000000", None, None, None))
+    }
+    assertValue(result)(Result.EncodedExternalMessage("te6ccgEBAQEAJQAARYn+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE", "d77047f6f0f286f72b88f846ae933231e8d27d2bab988fcd69e92e30b8060730"))
+  }
+
   private val jsonVerison = 8
 
   val expectedBlockchainConfig =

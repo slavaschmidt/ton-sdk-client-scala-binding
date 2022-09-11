@@ -51,6 +51,9 @@ object AbiErrors {
   val RequiredPublicKeyMissingForFunctionHeader = ClientErrorCode(309)
   val InvalidSigner                             = ClientErrorCode(310)
   val InvalidAbi                                = ClientErrorCode(311)
+  val InvalidFunctionId                         = ClientErrorCode(312)
+  val InvalidData                               = ClientErrorCode(313)
+  val EncodeInitialDataFailed                   = ClientErrorCode(314)
 }
 
 object BocErrors {

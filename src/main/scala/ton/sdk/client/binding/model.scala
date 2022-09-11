@@ -21,7 +21,10 @@ final case class NetworkConfig(
   wait_for_timeout: Option[Int] = None,
   out_of_sync_threshold: Option[BigInt] = None,
   reconnect_timeout: Option[Int] = None,
-  access_key: Option[String] = None
+  access_key: Option[String] = None,
+  queries_protocol: Option[String] = None,
+  first_remp_status_timeout: Option[Int] = None,
+  next_remp_status_timeout: Option[Int] = None
 )
 
 final case class CryptoConfig(
@@ -40,10 +43,17 @@ final case class ClientConfig(network: Option[NetworkConfig] = None, crypto: Opt
   */
 object ClientConfig {
   def fromServer(enpoints: String*): ClientConfig = ClientConfig(Option(NetworkConfig(None, enpoints)))
-  val MAIN_NET                                    = fromServer("https://main2.ton.dev/", "https://main3.ton.dev/", "https://main4.ton.dev/")
-  val DEV_NET                                     = fromServer("https://net1.ton.dev/", "https://net2.ton.dev/")
-  val TEST_NET                                    = fromServer("testnet.ton.dev")
-  val LOCAL                                       = fromServer("http://0.0.0.0/", "http://127.0.0.1/", " http://localhost/")
+
+  val MAIN_NET = fromServer(
+    "https://eri01.main.everos.dev",
+    "https://gra01.main.everos.dev",
+    "https://gra02.main.everos.dev",
+    "https://lim01.main.everos.dev",
+    "https://rbx01.main.everos.dev"
+  )
+  val DEV_NET  = fromServer("https://eri01.net.everos.dev", "https://rbx01.net.everos.dev", "https://gra01.net.everos.dev")
+  val TEST_NET = fromServer("testnet.ton.dev")
+  val LOCAL    = fromServer("http://0.0.0.0/", "http://127.0.0.1/", "http://localhost/")
 }
 
 // TODO make type-safe like this:
@@ -64,7 +74,10 @@ case class TransactionFees(
   gas_fee: BigInt,
   out_msgs_fwd_fee: BigInt,
   total_account_fees: BigInt,
-  total_output: BigInt
+  total_output: BigInt,
+  ext_in_msg_fee: BigInt,
+  total_fwd_fees: BigInt,
+  account_fees: BigInt
 )
 
 case class Storage(storage_fees_collected: String, status_change: Int, status_change_name: String)
@@ -176,6 +189,8 @@ final case class Handle(handle: Long)
 final case class FetchNextBlockMessage(`type`: String, shard_block_id: String, message_id: String, message: String)
 
 final case class DecodedOutput(out_messages: Seq[Json], output: Option[Json])
+
+final case class RequestData(app_request_id: Long, request_data: Json)
 
 /**
   * Overrides for circe decoders where defaults are not match SDK representation

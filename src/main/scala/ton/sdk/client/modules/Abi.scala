@@ -68,19 +68,21 @@ object Abi {
   }
 
   object Request {
-    final case class EncodeMessageBody(abi: AbiJson, call_set: CallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int])
+    final case class EncodeMessageBody(abi: AbiJson, call_set: CallSet, is_internal: Boolean, signer: Signer, processing_try_index: Option[Int], address: Option[String])
     final case class AttachSignatureToMessageBody(abi: AbiJson, public_key: String, message: String, signature: String)
     final case class EncodeMessage(abi: AbiJson, address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], signer: Signer, processing_try_index: Option[Int] = None)
     final case class AttachSignature(abi: AbiJson, public_key: String, message: String, signature: String)
-    final case class DecodeMessage(abi: AbiJson, message: String)
-    final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean)
+    final case class DecodeMessage(abi: AbiJson, message: String, allow_partial: Option[Boolean])
+    final case class DecodeMessageBody(abi: AbiJson, body: String, is_internal: Boolean, allow_partial: Option[Boolean])
     final case class EncodeAccount(state_init: StateInitSource, balance: Option[BigInt], last_trans_lt: Option[BigInt], last_paid: Option[BigDecimal])
     final case class EncodeInternalMessage(abi: Option[AbiJson], address: Option[String], deploy_set: Option[DeploySet], call_set: Option[CallSet], value: String, bounce: Option[Boolean], enable_ihr: Option[Boolean], src_address: Option[String] = None)
-    final case class DecodeAccountData(abi: AbiJson, data: String)
+    final case class DecodeAccountData(abi: AbiJson, data: String, allow_partial: Option[Boolean])
     final case class UpdateInitialData(abi: Option[AbiJson], data: String, initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
     final case class EncodeInitialData(abi: Option[AbiJson], initial_data: Option[Json], initial_pubkey: Option[String], boc_cache: Option[BocCacheType])
-    final case class DecodeInitialData(abi: Option[AbiJson], data: String)
+    final case class DecodeInitialData(abi: Option[AbiJson], data: String, allow_partial: Option[Boolean])
     final case class DecodeBoc(params: Seq[AbiParam], boc: String, allow_partial: Boolean)
+    final case class EncodeBoc(params: Seq[AbiParam], data: Json, boc_cache: Option[BocCacheType])
+    final case class CalcFunctionId(abi: AbiJson, function_name: String, output: Option[Boolean])
   }
 
   object Result {
@@ -95,6 +97,9 @@ object Abi {
     final case class InitialData(data: String)
     final case class DecodedInitialData(initial_data: Option[Json], initial_pubkey: String)
     final case class DecodedBoc(data: Json)
+    final case class EncodedBoc(boc: String)
+    final case class FunctionId(function_id: Long)
+
   }
 
   import io.circe.generic.auto._
@@ -112,5 +117,7 @@ object Abi {
   implicit val decodeInitialData     = new SdkCall[Request.DecodeInitialData, Result.DecodedInitialData]                      { override val function: String = s"$module.decode_initial_data"              }
   implicit val encodeInitialData     = new SdkCall[Request.EncodeInitialData, Result.InitialData]                             { override val function: String = s"$module.encode_initial_data"              }
   implicit val decodeBoc             = new SdkCall[Request.DecodeBoc, Result.DecodedBoc]                                      { override val function: String = s"$module.decode_boc"                       }
+  implicit val encodeBoc             = new SdkCall[Request.EncodeBoc, Result.EncodedBoc]                                      { override val function: String = s"$module.encode_boc"                       }
+  implicit val calcFunctionId        = new SdkCall[Request.CalcFunctionId, Result.FunctionId]                                 { override val function: String = s"$module.calc_function_id"                 }
 
 }

@@ -18,7 +18,13 @@ object Tvm {
   private val module = "tvm"
 
   final case class AccountForExecutor(`type`: String, boc: Option[String], unlimited_balance: Option[Boolean])
-  final case class ExecutionOptions(blockchain_config: Option[String] = None, block_time: Option[Int] = None, block_lt: Option[Int] = None, transaction_lt: Option[Int] = None)
+  final case class ExecutionOptions(
+    blockchain_config: Option[String] = None,
+    block_time: Option[Int] = None,
+    block_lt: Option[Int] = None,
+    transaction_lt: Option[Int] = None,
+    chksig_always_succeed: Option[Boolean] = None
+  )
 
   val emptyExecutionOptions = ExecutionOptions()
 

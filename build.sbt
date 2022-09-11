@@ -1,6 +1,6 @@
 name := "freeton-sdk-client-scala-binding"
 
-version := "1.27.1-M1"
+version := "1.37.1-M1"
 
 organization := "com.dancingcode"
 
@@ -12,12 +12,12 @@ scalaVersion := scala212
 // lazy val crossScalaVersions = List(scala212, scala213)
 
 libraryDependencies ++= Seq(
-  "org.slf4j"      % "slf4j-api"       % "1.7.32",
-  "ch.qos.logback" % "logback-classic" % "1.2.7" % Provided,
-  "org.scalatest"  %% "scalatest"      % "3.2.9" % Test
+  "org.slf4j"      % "slf4j-api"       % "2.0.0",
+  "ch.qos.logback" % "logback-classic" % "1.4.0" % Provided,
+  "org.scalatest"  %% "scalatest"      % "3.2.12" % Test
 )
 
-libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal", "circe-generic-extras").map("io.circe" %% _ % "0.13.0")
+libraryDependencies ++= Seq("circe-core", "circe-generic", "circe-parser", "circe-literal", "circe-generic-extras").map("io.circe" %% _ % "0.14.2")
 
 Compile / scalacOptions  ++= Seq(
   "-Xlog-reflective-calls",
